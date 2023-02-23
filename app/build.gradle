@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace 'my.dictionary.free'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "my.dictionary.free"
         minSdk 24
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -42,6 +42,9 @@ dependencies {
     //firebase
     implementation platform('com.google.firebase:firebase-bom:31.2.2')
     implementation 'com.google.firebase:firebase-analytics-ktx'
+    //facebook
+    implementation 'com.facebook.android:facebook-android-sdk:[4,5)'
+
     //tests
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
