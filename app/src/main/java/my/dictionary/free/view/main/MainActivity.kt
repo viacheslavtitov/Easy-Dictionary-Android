@@ -1,10 +1,13 @@
-package my.dictionary.free
+package my.dictionary.free.view.main
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowInsetsCompat
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.google.firebase.auth.FirebaseAuth
+import my.dictionary.free.R
+import my.dictionary.free.view.ext.visibleSystemBars
 
 
 class MainActivity : AppCompatActivity() {
@@ -19,7 +22,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.statusBars())
+        visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.systemBars())
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             // already signed in

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:motion="http://schemas.android.com/apk/res-auto">
+
+    <Transition
+        android:id="@+id/first"
+        motion:constraintSetEnd="@+id/top"
+        motion:constraintSetStart="@+id/left"
+        motion:duration="1000"/>
+
+    <Transition
+        android:id="@+id/second"
+        motion:constraintSetEnd="@+id/right"
+        motion:constraintSetStart="@+id/top"
+        motion:duration="1000"/>
+
+    <Transition
+        android:id="@+id/third"
+        motion:constraintSetEnd="@+id/bottom"
+        motion:constraintSetStart="@+id/right"
+        motion:duration="1000"/>
+
+    <Transition
+        android:id="@+id/fourth"
+        motion:constraintSetEnd="@+id/left"
+        motion:constraintSetStart="@+id/bottom"
+        motion:duration="1000"/>
+
+    <ConstraintSet android:id="@+id/left">
+        <Constraint
+            android:id="@+id/animView"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="parent" />
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/top">
+        <Constraint
+            android:id="@+id/animView"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="parent" />
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/right">
+        <Constraint
+            android:id="@+id/animView"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintTop_toTopOf="parent" />
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/bottom">
+        <Constraint
+            android:id="@+id/animView"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent" />
+    </ConstraintSet>
+
+</MotionScene>
