@@ -4,4 +4,12 @@
     <string name="facebook_client_token" translatable="false">56789</string>
 
     <string name="app_name">Easy Dictionary</string>
+
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="error">Error</string>
+    <string name="unknown_error">Unknown error</string>
+    <!-- Sign-in -->
+    <string name="sign_in_error_description">%s\nDo you want to retry?</string>
 </resources>
