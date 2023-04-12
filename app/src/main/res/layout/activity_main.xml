@@ -42,9 +42,34 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/menu_main"
-        app:headerLayout="@layout/navigation_drawer_header" />
+        app:headerLayout="@layout/navigation_drawer_header"
+        app:menu="@menu/menu_main">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/nav_log_out"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_baseline_logout_24" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:text="Log out"
+                android:textStyle="bold"
+                android:textColor="@color/main_text"
+                android:textSize="14dp" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>
