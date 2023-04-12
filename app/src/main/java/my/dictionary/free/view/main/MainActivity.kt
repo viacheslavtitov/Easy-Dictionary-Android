@@ -1,5 +1,6 @@
 package my.dictionary.free.view.main
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -15,13 +16,17 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
+import com.firebase.ui.auth.AuthUI
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import my.dictionary.free.R
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
+import my.dictionary.free.view.splash.SplashActivity
 import java.util.*
+
 
 class MainActivity : AbstractBaseActivity() {
 
@@ -41,6 +46,7 @@ class MainActivity : AbstractBaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseAuth.getInstance().addAuthStateListener(signOutListener)
         setContentView(R.layout.activity_main)
         visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.statusBars())
         visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.systemBars())
@@ -49,6 +55,9 @@ class MainActivity : AbstractBaseActivity() {
         navView = findViewById(R.id.nav_view)
         userLogo = navView.getHeaderView(0).findViewById(R.id.user_logo)
         userEmail = navView.getHeaderView(0).findViewById(R.id.user_email)
+        findViewById<View>(R.id.nav_log_out).setOnClickListener {
+            logOut()
+        }
         setSupportActionBar(toolbar)
         supportActionBar?.let { actionBar ->
             actionBar.setDisplayHomeAsUpEnabled(true)
@@ -75,9 +84,6 @@ class MainActivity : AbstractBaseActivity() {
                 R.id.nav_settings -> {
 
                 }
-                R.id.nav_log_out -> {
-
-                }
             }
             true
         }
@@ -96,6 +102,22 @@ class MainActivity : AbstractBaseActivity() {
                     .into(userLogo)
             }
             userEmail.text = user.email
+        }
+    }
+
+    private fun logOut() {
+        AuthUI.getInstance().signOut(this).addOnCompleteListener { task ->
+            if(task.isSuccessful) {
+                FirebaseAuth.getInstance().signOut()
+            }
+        }
+    }
+
+    private val signOutListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        if(firebaseAuth.currentUser == null) {
+            val intent = Intent(applicationContext, SplashActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            startActivity(intent)
         }
     }
 
