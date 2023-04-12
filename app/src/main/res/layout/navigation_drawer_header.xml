@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/user_logo"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_margin="16dp"
+        android:scaleType="fitCenter"
+        android:tint="@color/main"
+        android:src="@drawable/ic_baseline_account_circle_24" />
+
+    <View
+        android:layout_width="match_parent"
+        android:background="@color/main_dark"
+        android:layout_height="1dp"/>
+</androidx.appcompat.widget.LinearLayoutCompat>

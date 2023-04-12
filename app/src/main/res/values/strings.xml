@@ -12,4 +12,7 @@
     <string name="unknown_error">Unknown error</string>
     <!-- Sign-in -->
     <string name="sign_in_error_description">%s\nDo you want to retry?</string>
+
+    <string name="menu_drawer_open">DrawerOpen</string>
+    <string name="menu_drawer_closed">DrawerClosed</string>
 </resources>
