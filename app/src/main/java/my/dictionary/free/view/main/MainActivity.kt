@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -12,6 +13,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -26,6 +29,7 @@ class MainActivity : AbstractBaseActivity() {
     private lateinit var navDrawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var userLogo: AppCompatImageView
+    private lateinit var userEmail: AppCompatTextView
 
     private val navController: NavController by lazy {
         (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
@@ -44,6 +48,7 @@ class MainActivity : AbstractBaseActivity() {
         navDrawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
         userLogo = navView.getHeaderView(0).findViewById(R.id.user_logo)
+        userEmail = navView.getHeaderView(0).findViewById(R.id.user_email)
         setSupportActionBar(toolbar)
         supportActionBar?.let { actionBar ->
             actionBar.setDisplayHomeAsUpEnabled(true)
@@ -76,8 +81,21 @@ class MainActivity : AbstractBaseActivity() {
             }
             true
         }
-        FirebaseAuth.getInstance().currentUser?.photoUrl?.let {
-            userLogo.setImageURI(it)
+        loadUserData()
+    }
+
+    private fun loadUserData() {
+        FirebaseAuth.getInstance().currentUser?.let { user ->
+            user.photoUrl?.let {
+                Glide
+                    .with(this)
+                    .load(it)
+                    .centerCrop()
+                    .apply(RequestOptions.circleCropTransform())
+                    .placeholder(R.drawable.ic_baseline_account_circle_24)
+                    .into(userLogo)
+            }
+            userEmail.text = user.email
         }
     }
 
