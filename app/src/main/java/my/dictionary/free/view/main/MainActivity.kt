@@ -21,7 +21,13 @@ import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.data.repositories.DatabaseRepository
+import my.dictionary.free.domain.models.users.User
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.splash.SplashActivity
@@ -102,6 +108,11 @@ class MainActivity : AbstractBaseActivity() {
                     .into(userLogo)
             }
             userEmail.text = user.email
+            val sendUser = User(name = user.displayName ?: "", email = user.email ?: "", uid = user.email ?: "", providerId = user.providerId)
+            val repository = DatabaseRepository()
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = repository.insertOrUpdateUser(sendUser)
+            }
         }
     }
 
