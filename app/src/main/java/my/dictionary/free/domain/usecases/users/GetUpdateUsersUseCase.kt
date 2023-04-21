@@ -3,8 +3,9 @@ package my.dictionary.free.domain.usecases.users
 import my.dictionary.free.data.models.users.UsersTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.users.User
+import javax.inject.Inject
 
-class GetUpdateUsersUseCase(private val databaseRepository: DatabaseRepository) {
+class GetUpdateUsersUseCase @Inject constructor(private val databaseRepository: DatabaseRepository) {
 
     suspend fun insertOrUpdateUser(user: User): Boolean {
         return databaseRepository.insertOrUpdateUser(

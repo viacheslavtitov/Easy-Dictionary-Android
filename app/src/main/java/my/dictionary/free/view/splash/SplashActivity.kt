@@ -9,6 +9,7 @@ import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import my.dictionary.free.R
 import my.dictionary.free.view.AbstractBaseActivity
@@ -18,6 +19,7 @@ import my.dictionary.free.view.dialogs.TwoButtonsDialogListener
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.main.MainActivity
 
+@AndroidEntryPoint
 class SplashActivity : AbstractBaseActivity() {
 
     companion object {
