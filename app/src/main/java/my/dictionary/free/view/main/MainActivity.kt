@@ -21,6 +21,7 @@ import com.firebase.ui.auth.AuthUI
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
 import my.dictionary.free.R
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
@@ -28,7 +29,7 @@ import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.splash.SplashActivity
 import java.util.*
 
-
+@AndroidEntryPoint
 class MainActivity : AbstractBaseActivity() {
 
     private val sharedViewModel: SharedMainViewModel by viewModels()

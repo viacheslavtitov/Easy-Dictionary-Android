@@ -2,20 +2,21 @@ package my.dictionary.free.data.repositories
 
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.Logger
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.users.UsersTable
+import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class DatabaseRepository(private val database: FirebaseDatabase) {
-
-//    private val database = Firebase.database(BuildConfig.FIREBASE_DATABASE_URL)
+class DatabaseRepository @Inject constructor(private val database: FirebaseDatabase) {
 
     init {
         if (BuildConfig.DEBUG) {
-            database.setLogLevel(Logger.Level.DEBUG)
+            try {
+                database.setLogLevel(Logger.Level.DEBUG)
+            } catch(ex: com.google.firebase.database.DatabaseException) {
+                //skip
+            }
         }
     }
 
