@@ -3,6 +3,7 @@ package my.dictionary.free.view.main
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
@@ -17,17 +18,11 @@ import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.firebase.ui.auth.AuthUI
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import my.dictionary.free.R
-import my.dictionary.free.data.repositories.DatabaseRepository
-import my.dictionary.free.domain.models.users.User
+import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.splash.SplashActivity
@@ -35,6 +30,8 @@ import java.util.*
 
 
 class MainActivity : AbstractBaseActivity() {
+
+    private val sharedViewModel: SharedMainViewModel by viewModels()
 
     private lateinit var toolbar: MaterialToolbar
     private lateinit var navDrawerLayout: DrawerLayout
@@ -108,11 +105,7 @@ class MainActivity : AbstractBaseActivity() {
                     .into(userLogo)
             }
             userEmail.text = user.email
-            val sendUser = User(name = user.displayName ?: "", email = user.email ?: "", uid = user.email ?: "", providerId = user.providerId)
-            val repository = DatabaseRepository()
-            CoroutineScope(Dispatchers.IO).launch {
-                val result = repository.insertOrUpdateUser(sendUser)
-            }
+            sharedViewModel.updateUserData(user)
         }
     }
 

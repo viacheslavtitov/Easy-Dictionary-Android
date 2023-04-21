@@ -1,20 +1,17 @@
 package my.dictionary.free.data.repositories
 
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.Logger
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.users.UsersTable
-import my.dictionary.free.domain.models.users.User
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class DatabaseRepository {
+class DatabaseRepository(private val database: FirebaseDatabase) {
 
-    private val database = Firebase.database(BuildConfig.FIREBASE_DATABASE_URL)
+//    private val database = Firebase.database(BuildConfig.FIREBASE_DATABASE_URL)
 
     init {
         if (BuildConfig.DEBUG) {
@@ -22,7 +19,7 @@ class DatabaseRepository {
         }
     }
 
-    suspend fun getUserByUID(uid: String): User? {
+    suspend fun getUserByUID(uid: String): UsersTable? {
         return suspendCoroutine { cont ->
             database.reference.child(UsersTable._NAME).orderByChild(UsersTable.UID).equalTo(uid)
                 .limitToFirst(1).get()
@@ -30,7 +27,7 @@ class DatabaseRepository {
                     if (it.children.count() > 0) {
                         it.children.firstOrNull()?.let { value ->
                             val map = value.value as HashMap<*, *>
-                            val result = User(
+                            val result = UsersTable(
                                 _id = map[UsersTable._ID] as String?,
                                 name = map[UsersTable.USER_NAME] as String,
                                 email = map[UsersTable.EMAIL] as String,
@@ -51,7 +48,7 @@ class DatabaseRepository {
         }
     }
 
-    suspend fun insertUser(user: User): Boolean {
+    suspend fun insertUser(user: UsersTable): Boolean {
         return suspendCoroutine { cont ->
             val reference = database.reference
             val usersKey = reference.child(UsersTable._NAME).push().key
@@ -81,36 +78,27 @@ class DatabaseRepository {
         }
     }
 
-    suspend fun updateUser(user: User): Boolean {
+    suspend fun updateUser(user: UsersTable): Boolean {
         return suspendCoroutine { cont ->
             val reference = database.reference
             if (user._id == null) {
                 cont.resume(false)
             }
-            user._id?.let { key ->
-                val table = UsersTable(
-                    _id = key,
-                    name = user.name,
-                    email = user.email,
-                    providerId = user.providerId,
-                    uid = user.uid
-                )
-                val childUpdates = hashMapOf<String, Any>(
-                    "/${UsersTable._NAME}/$key" to table.toMap()
-                )
-                reference.updateChildren(childUpdates).addOnSuccessListener {
-                    cont.resume(true)
-                }.addOnFailureListener {
+            val childUpdates = hashMapOf<String, Any>(
+                "/${UsersTable._NAME}/${user._id}" to user.toMap()
+            )
+            reference.updateChildren(childUpdates).addOnSuccessListener {
+                cont.resume(true)
+            }.addOnFailureListener {
 //                    cancel(it.message ?: "Failed to update user ${user.name} ${user.email}")
-                    cont.resume(false)
-                }.addOnCanceledListener {
-                    cont.resume(false)
-                }
+                cont.resume(false)
+            }.addOnCanceledListener {
+                cont.resume(false)
             }
         }
     }
 
-    suspend fun insertOrUpdateUser(user: User): Boolean {
+    suspend fun insertOrUpdateUser(user: UsersTable): Boolean {
         val existUser = getUserByUID(user.uid)
         if (existUser != null && !user.equals(existUser)) return updateUser(existUser)
         return insertUser(user)
