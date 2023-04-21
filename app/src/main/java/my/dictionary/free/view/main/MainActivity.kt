@@ -91,23 +91,20 @@ class MainActivity : AbstractBaseActivity() {
             }
             true
         }
-        loadUserData()
-    }
-
-    private fun loadUserData() {
-        FirebaseAuth.getInstance().currentUser?.let { user ->
-            user.photoUrl?.let {
-                Glide
-                    .with(this)
-                    .load(it)
-                    .centerCrop()
-                    .apply(RequestOptions.circleCropTransform())
-                    .placeholder(R.drawable.ic_baseline_account_circle_24)
-                    .into(userLogo)
-            }
-            userEmail.text = user.email
-            sharedViewModel.updateUserData(user)
+        sharedViewModel.userEmailValue.observe(this) { email ->
+            userEmail.text = email
         }
+        sharedViewModel.userAvatarUri.observe(this) { uri ->
+            Glide
+                .with(this)
+                .load(uri)
+                .centerCrop()
+                .apply(RequestOptions.circleCropTransform())
+                .placeholder(R.drawable.ic_baseline_account_circle_24)
+                .into(userLogo)
+        }
+
+        sharedViewModel.loadUserData()
     }
 
     private fun logOut() {
