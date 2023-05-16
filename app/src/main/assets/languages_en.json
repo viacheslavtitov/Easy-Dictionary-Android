@@ -1,0 +1,418 @@
+[
+    {
+        "key": "spa",
+        "value": "Spanish"
+    },
+    {
+        "key": "ara",
+        "value": "Arabic"
+    },
+    {
+        "key": "eng",
+        "value": "English"
+    },
+    {
+        "key": "bul",
+        "value": "Bulgarian"
+    },
+    {
+        "key": "lit",
+        "value": "Lithuanian"
+    },
+    {
+        "key": "fra",
+        "value": "French"
+    },
+    {
+        "key": "pol",
+        "value": "Polish"
+    },
+    {
+        "key": "swa",
+        "value": "Swahili"
+    },
+    {
+        "key": "por",
+        "value": "Portuguese"
+    },
+    {
+        "key": "zho",
+        "value": "Chinese"
+    },
+    {
+        "key": "ces",
+        "value": "Czech"
+    },
+    {
+        "key": "slk",
+        "value": "Slovak"
+    },
+    {
+        "key": "ukr",
+        "value": "Ukrainian"
+    },
+    {
+        "key": "est",
+        "value": "Estonian"
+    },
+    {
+        "key": "ell",
+        "value": "Greek"
+    },
+    {
+        "key": "kat",
+        "value": "Georgian"
+    },
+    {
+        "key": "nld",
+        "value": "Dutch"
+    },
+    {
+        "key": "afr",
+        "value": "Afrikaans"
+    },
+    {
+        "key": "mkd",
+        "value": "Macedonian"
+    },
+    {
+        "key": "mfe",
+        "value": "Mauritian Creole"
+    },
+    {
+        "key": "kon",
+        "value": "Kikongo"
+    },
+    {
+        "key": "lin",
+        "value": "Lingala"
+    },
+    {
+        "key": "sqi",
+        "value": "Albanian"
+    },
+    {
+        "key": "srp",
+        "value": "Serbian"
+    },
+    {
+        "key": "nso",
+        "value": "Northern Sotho"
+    },
+    {
+        "key": "sot",
+        "value": "Southern Sotho"
+    },
+    {
+        "key": "ssw",
+        "value": "Swazi"
+    },
+    {
+        "key": "xho",
+        "value": "Xhosa"
+    },
+    {
+        "key": "zul",
+        "value": "Zulu"
+    },
+    {
+        "key": "vie",
+        "value": "Vietnamese"
+    },
+    {
+        "key": "grn",
+        "value": "Guaran\u00ed"
+    },
+    {
+        "key": "nno",
+        "value": "Norwegian Nynorsk"
+    },
+    {
+        "key": "nob",
+        "value": "Norwegian Bokm\u00e5l"
+    },
+    {
+        "key": "smi",
+        "value": "Sami"
+    },
+    {
+        "key": "kir",
+        "value": "Kyrgyz"
+    },
+    {
+        "key": "rus",
+        "value": "Russian"
+    },
+    {
+        "key": "hye",
+        "value": "Armenian"
+    },
+    {
+        "key": "dan",
+        "value": "Danish"
+    },
+    {
+        "key": "fao",
+        "value": "Faroese"
+    },
+    {
+        "key": "swe",
+        "value": "Swedish"
+    },
+    {
+        "key": "pov",
+        "value": "Upper Guinea Creole"
+    },
+    {
+        "key": "lav",
+        "value": "Latvian"
+    },
+    {
+        "key": "fil",
+        "value": "Filipino"
+    },
+    {
+        "key": "mri",
+        "value": "M\u0101ori"
+    },
+    {
+        "key": "ron",
+        "value": "Romanian"
+    },
+    {
+        "key": "hin",
+        "value": "Hindi"
+    },
+    {
+        "key": "tam",
+        "value": "Tamil"
+    },
+    {
+        "key": "mya",
+        "value": "Burmese"
+    },
+    {
+        "key": "cnr",
+        "value": "Montenegrin"
+    },
+    {
+        "key": "mon",
+        "value": "Mongolian"
+    },
+    {
+        "key": "de",
+        "value": "German"
+    },
+    {
+        "key": "hun",
+        "value": "Hungarian"
+    },
+    {
+        "key": "ita",
+        "value": "Italian"
+    },
+    {
+        "key": "tur",
+        "value": "Turkish"
+    },
+    {
+        "key": "tha",
+        "value": "Thai"
+    },
+    {
+        "key": "ben",
+        "value": "Bengali"
+    },
+    {
+        "key": "msa",
+        "value": "Malay"
+    },
+    {
+        "key": "gsw",
+        "value": "Swiss German"
+    },
+    {
+        "key": "roh",
+        "value": "Romansh"
+    },
+    {
+        "key": "kal",
+        "value": "Greenlandic"
+    },
+    {
+        "key": "bel",
+        "value": "Belarusian"
+    },
+    {
+        "key": "kaz",
+        "value": "Kazakh"
+    },
+    {
+        "key": "fin",
+        "value": "Finnish"
+    },
+    {
+        "key": "kor",
+        "value": "Korean"
+    },
+    {
+        "key": "kin",
+        "value": "Kinyarwanda"
+    },
+    {
+        "key": "jam",
+        "value": "Jamaican Patois"
+    },
+    {
+        "key": "div",
+        "value": "Maldivian"
+    },
+    {
+        "key": "slv",
+        "value": "Slovene"
+    },
+    {
+        "key": "ind",
+        "value": "Indonesian"
+    },
+    {
+        "key": "mlg",
+        "value": "Malagasy"
+    },
+    {
+        "key": "ckb",
+        "value": "Sorani"
+    },
+    {
+        "key": "ber",
+        "value": "Berber"
+    },
+    {
+        "key": "sin",
+        "value": "Sinhala"
+    },
+    {
+        "key": "hat",
+        "value": "Haitian Creole"
+    },
+    {
+        "key": "tgk",
+        "value": "Tajik"
+    },
+    {
+        "key": "uzb",
+        "value": "Uzbek"
+    },
+    {
+        "key": "gle",
+        "value": "Irish"
+    },
+    {
+        "key": "urd",
+        "value": "Urdu"
+    },
+    {
+        "key": "crs",
+        "value": "Seychellois Creole"
+    },
+    {
+        "key": "nor",
+        "value": "Norwegian"
+    },
+    {
+        "key": "zdj",
+        "value": "Comorian"
+    },
+    {
+        "key": "isl",
+        "value": "Icelandic"
+    },
+    {
+        "key": "jpn",
+        "value": "Japanese"
+    },
+    {
+        "key": "lat",
+        "value": "Latin"
+    },
+    {
+        "key": "fij",
+        "value": "Fijian"
+    },
+    {
+        "key": "hif",
+        "value": "Fiji Hindi"
+    },
+    {
+        "key": "bos",
+        "value": "Bosnian"
+    },
+    {
+        "key": "hrv",
+        "value": "Croatian"
+    },
+    {
+        "key": "mey",
+        "value": "Hassaniya"
+    },
+    {
+        "key": "khm",
+        "value": "Khmer"
+    },
+    {
+        "key": "fas",
+        "value": "Persian (Farsi)"
+    },
+    {
+        "key": "mlt",
+        "value": "Maltese"
+    },
+    {
+        "key": "aze",
+        "value": "Azerbaijani"
+    },
+    {
+        "key": "sag",
+        "value": "Sango"
+    },
+    {
+        "key": "nep",
+        "value": "Nepali"
+    },
+    {
+        "key": "ndc",
+        "value": "Ndau"
+    },
+    {
+        "key": "nde",
+        "value": "Northern Ndebele"
+    },
+    {
+        "key": "sot",
+        "value": "Sotho"
+    },
+    {
+        "key": "lao",
+        "value": "Lao"
+    },
+    {
+        "key": "cat",
+        "value": "Catalan"
+    },
+    {
+        "key": "som",
+        "value": "Somali"
+    },
+    {
+        "key": "run",
+        "value": "Kirundi"
+    },
+    {
+        "key": "amh",
+        "value": "Amharic"
+    },
+    {
+        "key": "ltz",
+        "value": "Luxembourgish"
+    }
+]
