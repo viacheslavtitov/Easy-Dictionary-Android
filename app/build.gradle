@@ -4,6 +4,7 @@ plugins {
     id 'com.google.gms.google-services'
     id 'kotlin-kapt'
     id("com.google.dagger.hilt.android")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -48,6 +49,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     //dependency injections
     implementation("com.google.dagger:hilt-android:2.44")
+    implementation 'androidx.security:security-crypto-ktx:1.1.0-alpha06'
     kapt("com.google.dagger:hilt-android-compiler:2.44")
     //navigation
     implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'

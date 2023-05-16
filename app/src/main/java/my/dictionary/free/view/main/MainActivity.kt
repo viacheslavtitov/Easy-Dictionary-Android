@@ -2,6 +2,7 @@ package my.dictionary.free.view.main
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -23,10 +24,13 @@ import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
+import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.splash.SplashActivity
+import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import java.util.*
 
 @AndroidEntryPoint
@@ -72,24 +76,61 @@ class MainActivity : AbstractBaseActivity() {
         navView.setupWithNavController(navController)
         setupActionBarWithNavController(navController, appBarConfiguration)
         toolbar.setupWithNavController(navController, navDrawerLayout)
-        toolbar.setNavigationOnClickListener {
-            navDrawerLayout.openDrawer(GravityCompat.START)
-        }
         navController.addOnDestinationChangedListener { _, destination, _ ->
-
+            when (destination.id) {
+                R.id.userDictionaryFragment -> {
+                    toolbar.setTitle(R.string.my_dictionaries)
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
+                R.id.addUserDictionaryFragment -> {
+                    toolbar.setTitle(R.string.add_dictionary)
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
+                R.id.languagesFragment -> {
+                    toolbar.setTitle(R.string.add_language)
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
+                R.id.simpleFragment -> {
+                    toolbar.title = "Home"
+                    toolbar.menu.clear()
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+                }
+            }
         }
         navDrawerLayout.addDrawerListener(drawerToggle)
-        drawerToggle.isDrawerIndicatorEnabled = true
-        navController.navigate(R.id.simpleFragment)
-        drawerToggle.syncState()
-        toolbar.title = "Home"
+        drawerToggle.isDrawerIndicatorEnabled = false
+        drawerToggle.setToolbarNavigationClickListener {
+            if (navController.currentDestination != null && navController.currentDestination!!.id != R.id.simpleFragment) {
+                navController.popBackStack()
+            } else {
+                navDrawerLayout.openDrawer(GravityCompat.START)
+            }
+        }
         navView.setNavigationItemSelectedListener { item ->
-            when(item.itemId) {
+            when (item.itemId) {
                 R.id.nav_settings -> {
 
                 }
+                R.id.nav_user_dictionary -> {
+                    navController.navigate(R.id.userDictionaryFragment)
+                }
             }
+            navDrawerLayout.closeDrawer(GravityCompat.START)
             true
+        }
+        navController.navigate(R.id.simpleFragment)
+        sharedViewModel.navigation.observe(this) { navigation ->
+            when (navigation) {
+                is LanguagesScreen -> {
+                    val bundle = Bundle().apply {
+                        putInt(LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY, navigation.langType.ordinal)
+                    }
+                    navController.navigate(R.id.languagesFragment, bundle)
+                }
+                is AddUserDictionaryScreen -> {
+                    navController.navigate(R.id.addUserDictionaryFragment)
+                }
+            }
         }
         sharedViewModel.userEmailValue.observe(this) { email ->
             userEmail.text = email
@@ -107,16 +148,22 @@ class MainActivity : AbstractBaseActivity() {
         sharedViewModel.loadUserData()
     }
 
+    override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onPostCreate(savedInstanceState, persistentState)
+        drawerToggle.syncState()
+    }
+
     private fun logOut() {
         AuthUI.getInstance().signOut(this).addOnCompleteListener { task ->
-            if(task.isSuccessful) {
+            if (task.isSuccessful) {
+                sharedViewModel.clearData()
                 FirebaseAuth.getInstance().signOut()
             }
         }
     }
 
     private val signOutListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-        if(firebaseAuth.currentUser == null) {
+        if (firebaseAuth.currentUser == null) {
             val intent = Intent(applicationContext, SplashActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             startActivity(intent)
@@ -132,7 +179,7 @@ class MainActivity : AbstractBaseActivity() {
         if (navDrawerLayout.isDrawerOpen(GravityCompat.START)) {
             navDrawerLayout.closeDrawer(GravityCompat.START)
         } else {
-            if (navController.popBackStack().not()) {
+            if (navController.backQueue.isEmpty()) {
                 finish()
             } else {
                 super.onBackPressed()

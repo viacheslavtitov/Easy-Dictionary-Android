@@ -9,8 +9,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.users.User
 import my.dictionary.free.domain.usecases.users.GetUpdateUsersUseCase
+import my.dictionary.free.domain.utils.PreferenceUtils
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,10 +21,14 @@ class SharedMainViewModel @Inject constructor() : ViewModel() {
     @Inject
     lateinit var getUpdateUsersUseCase: GetUpdateUsersUseCase
 
+    @Inject
+    lateinit var preferenceUtils: PreferenceUtils
+
     val userEmailValue = MutableLiveData<String>()
     val userAvatarUri = MutableLiveData<Uri>()
+    val navigation = MutableLiveData<AppNavigation>()
 
-    fun updateUserData(user: FirebaseUser) {
+    private fun updateUserData(user: FirebaseUser) {
         CoroutineScope(Dispatchers.IO).launch {
             val result = getUpdateUsersUseCase.insertOrUpdateUser(
                 User(
@@ -43,6 +49,14 @@ class SharedMainViewModel @Inject constructor() : ViewModel() {
             userEmailValue.value = user.email
             updateUserData(user)
         }
+    }
+
+    fun navigateTo(navigateTo: AppNavigation) {
+        navigation.value = navigateTo
+    }
+
+    fun clearData() {
+        preferenceUtils.clear()
     }
 
 }

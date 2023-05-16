@@ -1,0 +1,418 @@
+[
+        {
+            "key": "spa",
+            "value": "Espagnole"
+        },
+        {
+            "key": "ara",
+            "value": "Arabe"
+        },
+        {
+            "key": "eng",
+            "value": "Anglaise"
+        },
+        {
+            "key": "bul",
+            "value": "Bulgare"
+        },
+        {
+            "key": "lit",
+            "value": "Lituanienne"
+        },
+        {
+            "key": "fra",
+            "value": "Français"
+        },
+        {
+            "key": "pol",
+            "value": "Polonais"
+        },
+        {
+            "key": "swa",
+            "value": "Swahili"
+        },
+        {
+            "key": "por",
+            "value": "Portugais"
+        },
+        {
+            "key": "zho",
+            "value": "Chinoise"
+        },
+        {
+            "key": "ces",
+            "value": "Tchèque"
+        },
+        {
+            "key": "slk",
+            "value": "Slovaque"
+        },
+        {
+            "key": "ukr",
+            "value": "Ukrainienne"
+        },
+        {
+            "key": "est",
+            "value": "Estonienne"
+        },
+        {
+            "key": "ell",
+            "value": "Grecque"
+        },
+        {
+            "key": "kat",
+            "value": "Géorgienne"
+        },
+        {
+            "key": "nld",
+            "value": "Néerlandaise"
+        },
+        {
+            "key": "afr",
+            "value": "Afrikaans"
+        },
+        {
+            "key": "mkd",
+            "value": "Macédonien"
+        },
+        {
+            "key": "mfe",
+            "value": "Créole mauricien"
+        },
+        {
+            "key": "kon",
+            "value": "Kikongo"
+        },
+        {
+            "key": "lin",
+            "value": "Lingala"
+        },
+        {
+            "key": "sqi",
+            "value": "Albanaise"
+        },
+        {
+            "key": "srp",
+            "value": "Serbe"
+        },
+        {
+            "key": "nso",
+            "value": "Sotho du Nord"
+        },
+        {
+            "key": "sot",
+            "value": "Sotho du Sud"
+        },
+        {
+            "key": "ssw",
+            "value": "Swazie"
+        },
+        {
+            "key": "xho",
+            "value": "Xhosa"
+        },
+        {
+            "key": "zul",
+            "value": "Zoulou"
+        },
+        {
+            "key": "vie",
+            "value": "Vietnamienne"
+        },
+        {
+            "key": "grn",
+            "value": "Guaran\u00ed"
+        },
+        {
+            "key": "nno",
+            "value": "Norvegian Nynorsk"
+        },
+        {
+            "key": "nob",
+            "value": "Norvegian Bokm\u00e5l"
+        },
+        {
+            "key": "smi",
+            "value": "Samis"
+        },
+        {
+            "key": "kir",
+            "value": "Kirghize"
+        },
+        {
+            "key": "rus",
+            "value": "Russe"
+        },
+        {
+            "key": "hye",
+            "value": "Arménienne"
+        },
+        {
+            "key": "dan",
+            "value": "Danoise"
+        },
+        {
+            "key": "fao",
+            "value": "Féroïen"
+        },
+        {
+            "key": "swe",
+            "value": "Suédoise"
+        },
+        {
+            "key": "pov",
+            "value": "Créole de Haute Guinée"
+        },
+        {
+            "key": "lav",
+            "value": "Letton"
+        },
+        {
+            "key": "fil",
+            "value": "Philippin"
+        },
+        {
+            "key": "mri",
+            "value": "Maorie"
+        },
+        {
+            "key": "ron",
+            "value": "Roumaine"
+        },
+        {
+            "key": "hin",
+            "value": "Hindi"
+        },
+        {
+            "key": "tam",
+            "value": "Tamil"
+        },
+        {
+            "key": "mya",
+            "value": "Birmane"
+        },
+        {
+            "key": "cnr",
+            "value": "Monténégrin"
+        },
+        {
+            "key": "mon",
+            "value": "Mongole"
+        },
+        {
+            "key": "de",
+            "value": "Allemande"
+        },
+        {
+            "key": "hun",
+            "value": "Hongroise"
+        },
+        {
+            "key": "ita",
+            "value": "Italienne"
+        },
+        {
+            "key": "tur",
+            "value": "Turque"
+        },
+        {
+            "key": "tha",
+            "value": "Thaïlandais"
+        },
+        {
+            "key": "ben",
+            "value": "Bengali"
+        },
+        {
+            "key": "msa",
+            "value": "Malaise"
+        },
+        {
+            "key": "gsw",
+            "value": "Suisse allemand"
+        },
+        {
+            "key": "roh",
+            "value": "Romanche"
+        },
+        {
+            "key": "kal",
+            "value": "Groenlandais"
+        },
+        {
+            "key": "bel",
+            "value": "Biélorusse"
+        },
+        {
+            "key": "kaz",
+            "value": "Kazakhe"
+        },
+        {
+            "key": "fin",
+            "value": "Finlandaise"
+        },
+        {
+            "key": "kor",
+            "value": "Coréenne"
+        },
+        {
+            "key": "kin",
+            "value": "Kinyarwanda"
+        },
+        {
+            "key": "jam",
+            "value": "Patois jamaïcain"
+        },
+        {
+            "key": "div",
+            "value": "Maldivien"
+        },
+        {
+            "key": "slv",
+            "value": "Slovène"
+        },
+        {
+            "key": "ind",
+            "value": "Indonésienne"
+        },
+        {
+            "key": "mlg",
+            "value": "Malgache"
+        },
+        {
+            "key": "ckb",
+            "value": "Sorani"
+        },
+        {
+            "key": "ber",
+            "value": "Berbère"
+        },
+        {
+            "key": "sin",
+            "value": "Cinghalais"
+        },
+        {
+            "key": "hat",
+            "value": "Créole haïtien"
+        },
+        {
+            "key": "tgk",
+            "value": "Tadjik"
+        },
+        {
+            "key": "uzb",
+            "value": "Ouzbek"
+        },
+        {
+            "key": "gle",
+            "value": "Irlandaise"
+        },
+        {
+            "key": "urd",
+            "value": "Ourdou"
+        },
+        {
+            "key": "crs",
+            "value": "Créole seychellois"
+        },
+        {
+            "key": "nor",
+            "value": "Norvégienne"
+        },
+        {
+            "key": "zdj",
+            "value": "Comorien"
+        },
+        {
+            "key": "isl",
+            "value": "Islandais"
+        },
+        {
+            "key": "jpn",
+            "value": "Japonaise"
+        },
+        {
+            "key": "lat",
+            "value": "Latine"
+        },
+        {
+            "key": "fij",
+            "value": "Fidjien"
+        },
+        {
+            "key": "hif",
+            "value": "Fidji Hindi"
+        },
+        {
+            "key": "bos",
+            "value": "Bosniaque"
+        },
+        {
+            "key": "hrv",
+            "value": "Croate"
+        },
+        {
+            "key": "mey",
+            "value": "Hassania"
+        },
+        {
+            "key": "khm",
+            "value": "Khmer"
+        },
+        {
+            "key": "fas",
+            "value": "Persan (Farsi)"
+        },
+        {
+            "key": "mlt",
+            "value": "Maltais"
+        },
+        {
+            "key": "aze",
+            "value": "Azerbaïdjanaise"
+        },
+        {
+            "key": "sag",
+            "value": "Sango"
+        },
+        {
+            "key": "nep",
+            "value": "Népalaise"
+        },
+        {
+            "key": "ndc",
+            "value": "Ndau"
+        },
+        {
+            "key": "nde",
+            "value": "Ndebele du Nord"
+        },
+        {
+            "key": "sot",
+            "value": "Sotho"
+        },
+        {
+            "key": "lao",
+            "value": "Laotien"
+        },
+        {
+            "key": "cat",
+            "value": "Catalane"
+        },
+        {
+            "key": "som",
+            "value": "Somali"
+        },
+        {
+            "key": "run",
+            "value": "Kirundi"
+        },
+        {
+            "key": "amh",
+            "value": "Amharique"
+        },
+        {
+            "key": "ltz",
+            "value": "Luxembourgeois"
+        }
+    ]
