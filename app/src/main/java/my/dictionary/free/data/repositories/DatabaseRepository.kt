@@ -94,11 +94,11 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
 
             val userChild = reference.child(UsersTable._NAME).child("${user._id}")
 
-            userChild.child(UsersTable._ID).setValue(user._id).result
-            userChild.child(UsersTable.UID).setValue(user.uid).result
-            userChild.child(UsersTable.EMAIL).setValue(user.email).result
-            userChild.child(UsersTable.USER_NAME).setValue(user.name).result
-            userChild.child(UsersTable.PROVIDER_ID).setValue(user.providerId).result
+            userChild.child(UsersTable._ID).setValue(user._id).isComplete
+            userChild.child(UsersTable.UID).setValue(user.uid).isComplete
+            userChild.child(UsersTable.EMAIL).setValue(user.email).isComplete
+            userChild.child(UsersTable.USER_NAME).setValue(user.name).isComplete
+            userChild.child(UsersTable.PROVIDER_ID).setValue(user.providerId).isComplete
             cont.resume(true)
         }
     }
