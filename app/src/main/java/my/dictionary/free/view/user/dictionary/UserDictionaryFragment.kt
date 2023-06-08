@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
@@ -16,7 +17,6 @@ import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import my.dictionary.free.view.ext.addMenuProvider
-import my.dictionary.free.view.user.dictionary.add.languages.LanguagesAdapter
 
 @AndroidEntryPoint
 class UserDictionaryFragment : Fragment() {
@@ -25,6 +25,7 @@ class UserDictionaryFragment : Fragment() {
     private val viewModel: UserDictionaryViewModel by viewModels()
 
     private lateinit var dictionariesRecyclerView: RecyclerView
+    private var dictionariesAdapter: UserDictionaryAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,8 +35,11 @@ class UserDictionaryFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_user_dictionary, null)
         dictionariesRecyclerView = view.findViewById(R.id.recycler_view)
         dictionariesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        val itemTouchHelper = ItemTouchHelper(SwipeDictionaryItem(requireContext()))
+        itemTouchHelper.attachToRecyclerView(dictionariesRecyclerView)
         viewModel.dictionaries.observe(requireActivity()) { dictionaries ->
-            dictionariesRecyclerView.adapter = UserDictionaryAdapter(dictionaries, onDictionaryClickListener)
+            dictionariesAdapter = UserDictionaryAdapter(dictionaries, onDictionaryClickListener)
+            dictionariesRecyclerView.adapter = dictionariesAdapter
         }
         return view
     }

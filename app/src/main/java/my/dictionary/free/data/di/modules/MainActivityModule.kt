@@ -27,7 +27,10 @@ object MainActivityModule {
     }
 
     @Provides
-    fun provideGetUpdateUsersUseCase(databaseRepository: DatabaseRepository, preferenceUtils: PreferenceUtils): GetUpdateUsersUseCase {
+    fun provideGetUpdateUsersUseCase(
+        databaseRepository: DatabaseRepository,
+        preferenceUtils: PreferenceUtils
+    ): GetUpdateUsersUseCase {
         return GetUpdateUsersUseCase(databaseRepository, preferenceUtils)
     }
 
@@ -37,8 +40,16 @@ object MainActivityModule {
     }
 
     @Provides
-    fun provideGetCreateDictionaryUseCase(databaseRepository: DatabaseRepository, preferenceUtils: PreferenceUtils): GetCreateDictionaryUseCase {
-        return GetCreateDictionaryUseCase(databaseRepository, preferenceUtils)
+    fun provideGetCreateDictionaryUseCase(
+        databaseRepository: DatabaseRepository,
+        preferenceUtils: PreferenceUtils,
+        getDictionaryLanguagesUseCase: GetDictionaryLanguagesUseCase
+    ): GetCreateDictionaryUseCase {
+        return GetCreateDictionaryUseCase(
+            databaseRepository,
+            preferenceUtils,
+            getDictionaryLanguagesUseCase
+        )
     }
 
     @Singleton

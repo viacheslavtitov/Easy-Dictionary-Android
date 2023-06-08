@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import my.dictionary.free.domain.models.dictionary.Dictionary
+import my.dictionary.free.domain.models.dictionary.DictionaryItem
 import my.dictionary.free.domain.models.language.Language
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
@@ -31,8 +32,12 @@ class AddUserDictionaryViewModel @Inject constructor() : ViewModel() {
             val result = dictionaryUseCase.createDictionary(
                 Dictionary(
                     userUUID = userUUID,
-                    langFrom = languageFrom!!.key,
-                    langTo = languageTo!!.key,
+                    dictionaryFrom = DictionaryItem(
+                        lang = languageFrom!!.key
+                    ),
+                    dictionaryTo = DictionaryItem(
+                        lang = languageTo!!.key
+                    ),
                     dialect = dialectValue ?: ""
                 )
             )
