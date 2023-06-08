@@ -5,7 +5,15 @@ import com.google.gson.annotations.SerializedName
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class Language(@SerializedName("key") val key: String, @SerializedName("value") val value: String) :
+data class Language(
+    @SerializedName("key") val key: String,
+    @SerializedName("value") val value: String,
+    @SerializedName("flags") val flags: Flags
+) :
+    Parcelable
+
+@Parcelize
+data class Flags(@SerializedName("png") val png: String, @SerializedName("svg") val svg: String) :
     Parcelable
 
 enum class LangType(type: Int) {

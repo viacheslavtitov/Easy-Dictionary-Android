@@ -1,418 +1,506 @@
 [
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/es.png",
+            "svg": "https://flagcdn.com/es.svg"
+        },
         "key": "spa",
-        "value": "Española"
+        "value": "Espa\u00f1ola"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/sa.png",
+            "svg": "https://flagcdn.com/sa.svg"
+        },
         "key": "ara",
-        "value": "Arábica"
+        "value": "Ar\u00e1bica"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/us.png",
+            "svg": "https://flagcdn.com/us.svg"
+        },
         "key": "eng",
         "value": "Inglesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/bg.png",
+            "svg": "https://flagcdn.com/bg.svg"
+        },
         "key": "bul",
-        "value": "Búlgara"
+        "value": "B\u00falgara"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/lt.png",
+            "svg": "https://flagcdn.com/lt.svg"
+        },
         "key": "lit",
         "value": "Lituana"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/fr.png",
+            "svg": "https://flagcdn.com/fr.svg"
+        },
         "key": "fra",
         "value": "Francesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/pl.png",
+            "svg": "https://flagcdn.com/pl.svg"
+        },
         "key": "pol",
         "value": "Polaca"
     },
     {
-        "key": "swa",
-        "value": "Swahili"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/pt.png",
+            "svg": "https://flagcdn.com/pt.svg"
+        },
         "key": "por",
         "value": "Portuguesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/cn.png",
+            "svg": "https://flagcdn.com/cn.svg"
+        },
         "key": "zho",
         "value": "China"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/cz.png",
+            "svg": "https://flagcdn.com/cz.svg"
+        },
         "key": "ces",
         "value": "Checa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/sk.png",
+            "svg": "https://flagcdn.com/sk.svg"
+        },
         "key": "slk",
         "value": "Eslovaca"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ua.png",
+            "svg": "https://flagcdn.com/ua.svg"
+        },
         "key": "ukr",
         "value": "Ucrania"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ee.png",
+            "svg": "https://flagcdn.com/ee.svg"
+        },
         "key": "est",
         "value": "Estonia"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/gr.png",
+            "svg": "https://flagcdn.com/gr.svg"
+        },
         "key": "ell",
         "value": "Griega"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ge.png",
+            "svg": "https://flagcdn.com/ge.svg"
+        },
         "key": "kat",
         "value": "Georgiana"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/nl.png",
+            "svg": "https://flagcdn.com/nl.svg"
+        },
         "key": "nld",
         "value": "Holandesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/za.png",
+            "svg": "https://flagcdn.com/za.svg"
+        },
         "key": "afr",
         "value": "Africaans"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mk.png",
+            "svg": "https://flagcdn.com/mk.svg"
+        },
         "key": "mkd",
-        "value": "Macedónio"
+        "value": "Maced\u00f3nio"
     },
     {
-        "key": "mfe",
-        "value": "Criollo mauriciano"
-    },
-    {
-        "key": "kon",
-        "value": "Kikongo"
-    },
-    {
-        "key": "lin",
-        "value": "Lingala"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/al.png",
+            "svg": "https://flagcdn.com/al.svg"
+        },
         "key": "sqi",
         "value": "Albanesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/rs.png",
+            "svg": "https://flagcdn.com/rs.svg"
+        },
         "key": "srp",
         "value": "Serbia"
     },
     {
-        "key": "nso",
-        "value": "Sesotho del norte"
-    },
-    {
-        "key": "sot",
-        "value": "Sotho del Sur"
-    },
-    {
-        "key": "ssw",
-        "value": "Suazi"
-    },
-    {
-        "key": "xho",
-        "value": "Xhosa"
-    },
-    {
-        "key": "zul",
-        "value": "Zulú"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/vn.png",
+            "svg": "https://flagcdn.com/vn.svg"
+        },
         "key": "vie",
         "value": "Vietnamita"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/py.png",
+            "svg": "https://flagcdn.com/py.svg"
+        },
         "key": "grn",
         "value": "Guaran\u00ed"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/no.png",
+            "svg": "https://flagcdn.com/no.svg"
+        },
         "key": "nno",
         "value": "Nynorsk noruego"
     },
     {
-        "key": "nob",
-        "value": "Bokmal noruego"
-    },
-    {
-        "key": "smi",
-        "value": "Sami"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kg.png",
+            "svg": "https://flagcdn.com/kg.svg"
+        },
         "key": "kir",
         "value": "Kirguisa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ru.png",
+            "svg": "https://flagcdn.com/ru.svg"
+        },
         "key": "rus",
         "value": "Rusa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/am.png",
+            "svg": "https://flagcdn.com/am.svg"
+        },
         "key": "hye",
         "value": "Armenia"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/dk.png",
+            "svg": "https://flagcdn.com/dk.svg"
+        },
         "key": "dan",
         "value": "Danesa"
     },
     {
-        "key": "fao",
-        "value": "feroés"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/se.png",
+            "svg": "https://flagcdn.com/se.svg"
+        },
         "key": "swe",
         "value": "Sueca"
     },
     {
-        "key": "pov",
-        "value": "Criollo de Alta Guinea"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/lv.png",
+            "svg": "https://flagcdn.com/lv.svg"
+        },
         "key": "lav",
         "value": "Letona"
     },
     {
-        "key": "fil",
-        "value": "Filipina"
-    },
-    {
-        "key": "mri",
-        "value": "Maorí"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ro.png",
+            "svg": "https://flagcdn.com/ro.svg"
+        },
         "key": "ron",
         "value": "Rumana"
     },
     {
-        "key": "hin",
-        "value": "Hindi"
-    },
-    {
-        "key": "tam",
-        "value": "Tamil"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mm.png",
+            "svg": "https://flagcdn.com/mm.svg"
+        },
         "key": "mya",
         "value": "Birmana"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/me.png",
+            "svg": "https://flagcdn.com/me.svg"
+        },
         "key": "cnr",
         "value": "Montenegrina"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mn.png",
+            "svg": "https://flagcdn.com/mn.svg"
+        },
         "key": "mon",
         "value": "Mongola"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/de.png",
+            "svg": "https://flagcdn.com/de.svg"
+        },
         "key": "de",
         "value": "Alemana"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/hu.png",
+            "svg": "https://flagcdn.com/hu.svg"
+        },
         "key": "hun",
-        "value": "Húngara"
+        "value": "H\u00fangara"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/it.png",
+            "svg": "https://flagcdn.com/it.svg"
+        },
         "key": "ita",
         "value": "Italiana"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/tr.png",
+            "svg": "https://flagcdn.com/tr.svg"
+        },
         "key": "tur",
         "value": "Turca"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/th.png",
+            "svg": "https://flagcdn.com/th.svg"
+        },
         "key": "tha",
         "value": "Tailandesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/bd.png",
+            "svg": "https://flagcdn.com/bd.svg"
+        },
         "key": "ben",
-        "value": "Bengalí"
+        "value": "Bengal\u00ed"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/bn.png",
+            "svg": "https://flagcdn.com/bn.svg"
+        },
         "key": "msa",
         "value": "Malaya"
     },
     {
-        "key": "gsw",
-        "value": "Alemana suiza"
-    },
-    {
-        "key": "roh",
-        "value": "Romanche"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/gl.png",
+            "svg": "https://flagcdn.com/gl.svg"
+        },
         "key": "kal",
         "value": "Groenlandesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/by.png",
+            "svg": "https://flagcdn.com/by.svg"
+        },
         "key": "bel",
         "value": "Bielorrusa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kz.png",
+            "svg": "https://flagcdn.com/kz.svg"
+        },
         "key": "kaz",
         "value": "Kazaja"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/fi.png",
+            "svg": "https://flagcdn.com/fi.svg"
+        },
         "key": "fin",
         "value": "Finlandesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kr.png",
+            "svg": "https://flagcdn.com/kr.svg"
+        },
         "key": "kor",
         "value": "Coreana"
     },
     {
-        "key": "kin",
-        "value": "Kinyarwanda"
-    },
-    {
-        "key": "jam",
-        "value": "Patois de Jamaica"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mv.png",
+            "svg": "https://flagcdn.com/mv.svg"
+        },
         "key": "div",
         "value": "Maldiva"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/si.png",
+            "svg": "https://flagcdn.com/si.svg"
+        },
         "key": "slv",
         "value": "Eslovena"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/id.png",
+            "svg": "https://flagcdn.com/id.svg"
+        },
         "key": "ind",
         "value": "Indonesia"
     },
     {
-        "key": "mlg",
-        "value": "Madagascarí"
-    },
-    {
-        "key": "ckb",
-        "value": "Sorani"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/eh.png",
+            "svg": "https://flagcdn.com/eh.svg"
+        },
         "key": "ber",
-        "value": "Beréber"
+        "value": "Ber\u00e9ber"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/lk.png",
+            "svg": "https://flagcdn.com/lk.svg"
+        },
         "key": "sin",
-        "value": "Cingalés"
+        "value": "Cingal\u00e9s"
     },
     {
-        "key": "hat",
-        "value": "Criollo haitiano"
-    },
-    {
-        "key": "tgk",
-        "value": "Tayika"
-    },
-    {
-        "key": "uzb",
-        "value": "Uzbeco"
-    },
-    {
-        "key": "gle",
-        "value": "Irlandesa"
-    },
-    {
-        "key": "urd",
-        "value": "Urdu"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/sc.png",
+            "svg": "https://flagcdn.com/sc.svg"
+        },
         "key": "crs",
         "value": "Criollo de Seychelles"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/no.png",
+            "svg": "https://flagcdn.com/no.svg"
+        },
         "key": "nor",
         "value": "Noruega"
     },
     {
-        "key": "zdj",
-        "value": "Comorano"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/is.png",
+            "svg": "https://flagcdn.com/is.svg"
+        },
         "key": "isl",
         "value": "Islandesa"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/jp.png",
+            "svg": "https://flagcdn.com/jp.svg"
+        },
         "key": "jpn",
         "value": "Japonesa"
     },
     {
-        "key": "lat",
-        "value": "Latina"
-    },
-    {
-        "key": "fij",
-        "value": "Fiyiana"
-    },
-    {
-        "key": "hif",
-        "value": "Fiyi hindi"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ba.png",
+            "svg": "https://flagcdn.com/ba.svg"
+        },
         "key": "bos",
         "value": "Bosnia"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/hr.png",
+            "svg": "https://flagcdn.com/hr.svg"
+        },
         "key": "hrv",
         "value": "Croata"
     },
     {
-        "key": "mey",
-        "value": "Hassaniya"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kh.png",
+            "svg": "https://flagcdn.com/kh.svg"
+        },
         "key": "khm",
         "value": "Jemer"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ir.png",
+            "svg": "https://flagcdn.com/ir.svg"
+        },
         "key": "fas",
         "value": "Persa (Farsi)"
     },
     {
-        "key": "mlt",
-        "value": "Maltesa"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/az.png",
+            "svg": "https://flagcdn.com/az.svg"
+        },
         "key": "aze",
         "value": "Azerbaiyana"
     },
     {
-        "key": "sag",
-        "value": "Sango"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/np.png",
+            "svg": "https://flagcdn.com/np.svg"
+        },
         "key": "nep",
-        "value": "Nepalí"
+        "value": "Nepal\u00ed"
     },
     {
-        "key": "ndc",
-        "value": "Ndau"
-    },
-    {
-        "key": "nde",
-        "value": "Ndebele del norte"
-    },
-    {
-        "key": "sot",
-        "value": "Sesotho"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/la.png",
+            "svg": "https://flagcdn.com/la.svg"
+        },
         "key": "lao",
         "value": "Laosiana"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ad.png",
+            "svg": "https://flagcdn.com/ad.svg"
+        },
         "key": "cat",
         "value": "Catalana"
     },
     {
-        "key": "som",
-        "value": "Somalí"
-    },
-    {
-        "key": "run",
-        "value": "Kirundi"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/et.png",
+            "svg": "https://flagcdn.com/et.svg"
+        },
         "key": "amh",
-        "value": "Amárico"
-    },
-    {
-        "key": "ltz",
-        "value": "Luxemburgués"
+        "value": "Am\u00e1rico"
     }
 ]

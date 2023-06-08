@@ -1,418 +1,506 @@
 [
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/es.png",
+            "svg": "https://flagcdn.com/es.svg"
+        },
         "key": "spa",
-        "value": "Испанский"
+        "value": "\u0418\u0441\u043f\u0430\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/sa.png",
+            "svg": "https://flagcdn.com/sa.svg"
+        },
         "key": "ara",
-        "value": "Арабский"
+        "value": "\u0410\u0440\u0430\u0431\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/us.png",
+            "svg": "https://flagcdn.com/us.svg"
+        },
         "key": "eng",
-        "value": "Английский"
+        "value": "\u0410\u043d\u0433\u043b\u0438\u0439\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/bg.png",
+            "svg": "https://flagcdn.com/bg.svg"
+        },
         "key": "bul",
-        "value": "Болгарский"
+        "value": "\u0411\u043e\u043b\u0433\u0430\u0440\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/lt.png",
+            "svg": "https://flagcdn.com/lt.svg"
+        },
         "key": "lit",
-        "value": "Литовский"
+        "value": "\u041b\u0438\u0442\u043e\u0432\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/fr.png",
+            "svg": "https://flagcdn.com/fr.svg"
+        },
         "key": "fra",
-        "value": "Французский"
+        "value": "\u0424\u0440\u0430\u043d\u0446\u0443\u0437\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/pl.png",
+            "svg": "https://flagcdn.com/pl.svg"
+        },
         "key": "pol",
-        "value": "Польский"
+        "value": "\u041f\u043e\u043b\u044c\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "swa",
-        "value": "Суахили"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/pt.png",
+            "svg": "https://flagcdn.com/pt.svg"
+        },
         "key": "por",
-        "value": "Португальский"
+        "value": "\u041f\u043e\u0440\u0442\u0443\u0433\u0430\u043b\u044c\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/cn.png",
+            "svg": "https://flagcdn.com/cn.svg"
+        },
         "key": "zho",
-        "value": "Китайский"
+        "value": "\u041a\u0438\u0442\u0430\u0439\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/cz.png",
+            "svg": "https://flagcdn.com/cz.svg"
+        },
         "key": "ces",
-        "value": "Чешский"
+        "value": "\u0427\u0435\u0448\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/sk.png",
+            "svg": "https://flagcdn.com/sk.svg"
+        },
         "key": "slk",
-        "value": "Словацкий"
+        "value": "\u0421\u043b\u043e\u0432\u0430\u0446\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ua.png",
+            "svg": "https://flagcdn.com/ua.svg"
+        },
         "key": "ukr",
-        "value": "Украинский"
+        "value": "\u0423\u043a\u0440\u0430\u0438\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ee.png",
+            "svg": "https://flagcdn.com/ee.svg"
+        },
         "key": "est",
-        "value": "Эстонский"
+        "value": "\u042d\u0441\u0442\u043e\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/gr.png",
+            "svg": "https://flagcdn.com/gr.svg"
+        },
         "key": "ell",
-        "value": "Греческий"
+        "value": "\u0413\u0440\u0435\u0447\u0435\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ge.png",
+            "svg": "https://flagcdn.com/ge.svg"
+        },
         "key": "kat",
-        "value": "Грузинский"
+        "value": "\u0413\u0440\u0443\u0437\u0438\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/nl.png",
+            "svg": "https://flagcdn.com/nl.svg"
+        },
         "key": "nld",
-        "value": "Голландский"
+        "value": "\u0413\u043e\u043b\u043b\u0430\u043d\u0434\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/za.png",
+            "svg": "https://flagcdn.com/za.svg"
+        },
         "key": "afr",
-        "value": "Африканский"
+        "value": "\u0410\u0444\u0440\u0438\u043a\u0430\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mk.png",
+            "svg": "https://flagcdn.com/mk.svg"
+        },
         "key": "mkd",
-        "value": "Македонский"
+        "value": "\u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "mfe",
-        "value": "Маврикийский креольский"
-    },
-    {
-        "key": "kon",
-        "value": "Киконго"
-    },
-    {
-        "key": "lin",
-        "value": "Лингала"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/al.png",
+            "svg": "https://flagcdn.com/al.svg"
+        },
         "key": "sqi",
-        "value": "Албанский"
+        "value": "\u0410\u043b\u0431\u0430\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/rs.png",
+            "svg": "https://flagcdn.com/rs.svg"
+        },
         "key": "srp",
-        "value": "Сербский"
+        "value": "\u0421\u0435\u0440\u0431\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "nso",
-        "value": "Северный сото"
-    },
-    {
-        "key": "sot",
-        "value": "Южный сото"
-    },
-    {
-        "key": "ssw",
-        "value": "Свази"
-    },
-    {
-        "key": "xho",
-        "value": "Коса"
-    },
-    {
-        "key": "zul",
-        "value": "Зулу"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/vn.png",
+            "svg": "https://flagcdn.com/vn.svg"
+        },
         "key": "vie",
-        "value": "Вьетнамский"
+        "value": "\u0412\u044c\u0435\u0442\u043d\u0430\u043c\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/py.png",
+            "svg": "https://flagcdn.com/py.svg"
+        },
         "key": "grn",
-        "value": "Гуарани"
+        "value": "\u0413\u0443\u0430\u0440\u0430\u043d\u0438"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/no.png",
+            "svg": "https://flagcdn.com/no.svg"
+        },
         "key": "nno",
-        "value": "Новонорвежский"
+        "value": "\u041d\u043e\u0432\u043e\u043d\u043e\u0440\u0432\u0435\u0436\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "nob",
-        "value": "Норвежский букмол"
-    },
-    {
-        "key": "smi",
-        "value": "Саами"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kg.png",
+            "svg": "https://flagcdn.com/kg.svg"
+        },
         "key": "kir",
-        "value": "Кыргызский"
+        "value": "\u041a\u044b\u0440\u0433\u044b\u0437\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ru.png",
+            "svg": "https://flagcdn.com/ru.svg"
+        },
         "key": "rus",
-        "value": "Русский"
+        "value": "\u0420\u0443\u0441\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/am.png",
+            "svg": "https://flagcdn.com/am.svg"
+        },
         "key": "hye",
-        "value": "Армянский"
+        "value": "\u0410\u0440\u043c\u044f\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/dk.png",
+            "svg": "https://flagcdn.com/dk.svg"
+        },
         "key": "dan",
-        "value": "Датский"
+        "value": "\u0414\u0430\u0442\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "fao",
-        "value": "Фарерский"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/se.png",
+            "svg": "https://flagcdn.com/se.svg"
+        },
         "key": "swe",
-        "value": "Шведский"
+        "value": "\u0428\u0432\u0435\u0434\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "pov",
-        "value": "Верхнегвинейский креольский"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/lv.png",
+            "svg": "https://flagcdn.com/lv.svg"
+        },
         "key": "lav",
-        "value": "Латвийский"
+        "value": "\u041b\u0430\u0442\u0432\u0438\u0439\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "fil",
-        "value": "Филипинский"
-    },
-    {
-        "key": "mri",
-        "value": "Маори"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ro.png",
+            "svg": "https://flagcdn.com/ro.svg"
+        },
         "key": "ron",
-        "value": "Румынский"
+        "value": "\u0420\u0443\u043c\u044b\u043d\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "hin",
-        "value": "Хинди"
-    },
-    {
-        "key": "tam",
-        "value": "Тамильский"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mm.png",
+            "svg": "https://flagcdn.com/mm.svg"
+        },
         "key": "mya",
-        "value": "Бирманский"
+        "value": "\u0411\u0438\u0440\u043c\u0430\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/me.png",
+            "svg": "https://flagcdn.com/me.svg"
+        },
         "key": "cnr",
-        "value": "Черногорский"
+        "value": "\u0427\u0435\u0440\u043d\u043e\u0433\u043e\u0440\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mn.png",
+            "svg": "https://flagcdn.com/mn.svg"
+        },
         "key": "mon",
-        "value": "Монгольский"
+        "value": "\u041c\u043e\u043d\u0433\u043e\u043b\u044c\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/de.png",
+            "svg": "https://flagcdn.com/de.svg"
+        },
         "key": "de",
-        "value": "Немецкий"
+        "value": "\u041d\u0435\u043c\u0435\u0446\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/hu.png",
+            "svg": "https://flagcdn.com/hu.svg"
+        },
         "key": "hun",
-        "value": "Венгерский"
+        "value": "\u0412\u0435\u043d\u0433\u0435\u0440\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/it.png",
+            "svg": "https://flagcdn.com/it.svg"
+        },
         "key": "ita",
-        "value": "Итальянский"
+        "value": "\u0418\u0442\u0430\u043b\u044c\u044f\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/tr.png",
+            "svg": "https://flagcdn.com/tr.svg"
+        },
         "key": "tur",
-        "value": "Турецкий"
+        "value": "\u0422\u0443\u0440\u0435\u0446\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/th.png",
+            "svg": "https://flagcdn.com/th.svg"
+        },
         "key": "tha",
-        "value": "Тайский"
+        "value": "\u0422\u0430\u0439\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/bd.png",
+            "svg": "https://flagcdn.com/bd.svg"
+        },
         "key": "ben",
-        "value": "Бенгальский"
+        "value": "\u0411\u0435\u043d\u0433\u0430\u043b\u044c\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/bn.png",
+            "svg": "https://flagcdn.com/bn.svg"
+        },
         "key": "msa",
-        "value": "Малайский"
+        "value": "\u041c\u0430\u043b\u0430\u0439\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "gsw",
-        "value": "Швейцарско-немецкий"
-    },
-    {
-        "key": "roh",
-        "value": "Романшский"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/gl.png",
+            "svg": "https://flagcdn.com/gl.svg"
+        },
         "key": "kal",
-        "value": "Гренландский"
+        "value": "\u0413\u0440\u0435\u043d\u043b\u0430\u043d\u0434\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/by.png",
+            "svg": "https://flagcdn.com/by.svg"
+        },
         "key": "bel",
-        "value": "Белорусский"
+        "value": "\u0411\u0435\u043b\u043e\u0440\u0443\u0441\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kz.png",
+            "svg": "https://flagcdn.com/kz.svg"
+        },
         "key": "kaz",
-        "value": "Казахский"
+        "value": "\u041a\u0430\u0437\u0430\u0445\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/fi.png",
+            "svg": "https://flagcdn.com/fi.svg"
+        },
         "key": "fin",
-        "value": "Финский"
+        "value": "\u0424\u0438\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kr.png",
+            "svg": "https://flagcdn.com/kr.svg"
+        },
         "key": "kor",
-        "value": "Корейский"
+        "value": "\u041a\u043e\u0440\u0435\u0439\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "kin",
-        "value": "Киньярванда"
-    },
-    {
-        "key": "jam",
-        "value": "Ямайский патуа"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/mv.png",
+            "svg": "https://flagcdn.com/mv.svg"
+        },
         "key": "div",
-        "value": "Мальдивский"
+        "value": "\u041c\u0430\u043b\u044c\u0434\u0438\u0432\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/si.png",
+            "svg": "https://flagcdn.com/si.svg"
+        },
         "key": "slv",
-        "value": "Словенский"
+        "value": "\u0421\u043b\u043e\u0432\u0435\u043d\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/id.png",
+            "svg": "https://flagcdn.com/id.svg"
+        },
         "key": "ind",
-        "value": "Индонезийский"
+        "value": "\u0418\u043d\u0434\u043e\u043d\u0435\u0437\u0438\u0439\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "mlg",
-        "value": "Малагасийский"
-    },
-    {
-        "key": "ckb",
-        "value": "Сорани"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/eh.png",
+            "svg": "https://flagcdn.com/eh.svg"
+        },
         "key": "ber",
-        "value": "Берберский"
+        "value": "\u0411\u0435\u0440\u0431\u0435\u0440\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/lk.png",
+            "svg": "https://flagcdn.com/lk.svg"
+        },
         "key": "sin",
-        "value": "Сингальский"
+        "value": "\u0421\u0438\u043d\u0433\u0430\u043b\u044c\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "hat",
-        "value": "Гаитянский креольский"
-    },
-    {
-        "key": "tgk",
-        "value": "Таджикский"
-    },
-    {
-        "key": "uzb",
-        "value": "Узбекский"
-    },
-    {
-        "key": "gle",
-        "value": "Ирландский"
-    },
-    {
-        "key": "urd",
-        "value": "Урду"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/sc.png",
+            "svg": "https://flagcdn.com/sc.svg"
+        },
         "key": "crs",
-        "value": "Сейшельский креольский"
+        "value": "\u0421\u0435\u0439\u0448\u0435\u043b\u044c\u0441\u043a\u0438\u0439 \u043a\u0440\u0435\u043e\u043b\u044c\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/no.png",
+            "svg": "https://flagcdn.com/no.svg"
+        },
         "key": "nor",
-        "value": "Норвежский"
+        "value": "\u041d\u043e\u0440\u0432\u0435\u0436\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "zdj",
-        "value": "Коморский"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/is.png",
+            "svg": "https://flagcdn.com/is.svg"
+        },
         "key": "isl",
-        "value": "Исландский"
+        "value": "\u0418\u0441\u043b\u0430\u043d\u0434\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/jp.png",
+            "svg": "https://flagcdn.com/jp.svg"
+        },
         "key": "jpn",
-        "value": "Японский"
+        "value": "\u042f\u043f\u043e\u043d\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "lat",
-        "value": "Латинский"
-    },
-    {
-        "key": "fij",
-        "value": "Фиджийский"
-    },
-    {
-        "key": "hif",
-        "value": "Фиджи хинди"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ba.png",
+            "svg": "https://flagcdn.com/ba.svg"
+        },
         "key": "bos",
-        "value": "Боснийский"
+        "value": "\u0411\u043e\u0441\u043d\u0438\u0439\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/hr.png",
+            "svg": "https://flagcdn.com/hr.svg"
+        },
         "key": "hrv",
-        "value": "Хорватский"
+        "value": "\u0425\u043e\u0440\u0432\u0430\u0442\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "mey",
-        "value": "Хассания"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/kh.png",
+            "svg": "https://flagcdn.com/kh.svg"
+        },
         "key": "khm",
-        "value": "Кхемерский"
+        "value": "\u041a\u0445\u0435\u043c\u0435\u0440\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ir.png",
+            "svg": "https://flagcdn.com/ir.svg"
+        },
         "key": "fas",
-        "value": "Персидский (Фарси)"
+        "value": "\u041f\u0435\u0440\u0441\u0438\u0434\u0441\u043a\u0438\u0439 (\u0424\u0430\u0440\u0441\u0438)"
     },
     {
-        "key": "mlt",
-        "value": "Мальтийский"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/az.png",
+            "svg": "https://flagcdn.com/az.svg"
+        },
         "key": "aze",
-        "value": "Азербайжданский"
+        "value": "\u0410\u0437\u0435\u0440\u0431\u0430\u0439\u0436\u0434\u0430\u043d\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "sag",
-        "value": "Санго"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/np.png",
+            "svg": "https://flagcdn.com/np.svg"
+        },
         "key": "nep",
-        "value": "Непальский"
+        "value": "\u041d\u0435\u043f\u0430\u043b\u044c\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "ndc",
-        "value": "Ндау"
-    },
-    {
-        "key": "nde",
-        "value": "Северный ндебеле"
-    },
-    {
-        "key": "sot",
-        "value": "Сотхо"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/la.png",
+            "svg": "https://flagcdn.com/la.svg"
+        },
         "key": "lao",
-        "value": "Лаосский"
+        "value": "\u041b\u0430\u043e\u0441\u0441\u043a\u0438\u0439"
     },
     {
+        "flags": {
+            "png": "https://flagcdn.com/w320/ad.png",
+            "svg": "https://flagcdn.com/ad.svg"
+        },
         "key": "cat",
-        "value": "Каталонский"
+        "value": "\u041a\u0430\u0442\u0430\u043b\u043e\u043d\u0441\u043a\u0438\u0439"
     },
     {
-        "key": "som",
-        "value": "Сомалийский"
-    },
-    {
-        "key": "run",
-        "value": "Кирунди"
-    },
-    {
+        "flags": {
+            "png": "https://flagcdn.com/w320/et.png",
+            "svg": "https://flagcdn.com/et.svg"
+        },
         "key": "amh",
-        "value": "Амхарский"
-    },
-    {
-        "key": "ltz",
-        "value": "Люксембургский"
+        "value": "\u0410\u043c\u0445\u0430\u0440\u0441\u043a\u0438\u0439"
     }
 ]
