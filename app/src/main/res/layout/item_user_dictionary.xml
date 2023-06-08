@@ -4,51 +4,39 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
-    android:orientation="vertical">
+    android:orientation="horizontal"
+    android:paddingLeft="9dp"
+    android:paddingTop="9dp"
+    android:paddingBottom="9dp">
 
     <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_flag_lang_from"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_flag_neutral_default" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/image_flag_lang_to"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginTop="3dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_flag_neutral_default" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/lang_pair"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingLeft="9dp"
-        android:paddingTop="9dp"
-        android:paddingBottom="9dp">
-
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/image_flag_lang_from"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_flag_neutral_default" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/image_flag_lang_to"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginTop="3dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_flag_neutral_default" />
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/lang_pair"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="9dp"
-            android:textColor="@color/main_text"
-            android:textSize="16dp"
-            tools:text="Ukrainian - English" />
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/main_light" />
+        android:paddingHorizontal="9dp"
+        android:textColor="@color/main_text"
+        android:textSize="16dp"
+        tools:text="Ukrainian - English" />
 </androidx.appcompat.widget.LinearLayoutCompat>

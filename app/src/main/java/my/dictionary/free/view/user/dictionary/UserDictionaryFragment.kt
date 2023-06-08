@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,6 +18,7 @@ import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import my.dictionary.free.view.ext.addMenuProvider
+import my.dictionary.free.view.widget.SimpleItemDecoration
 
 @AndroidEntryPoint
 class UserDictionaryFragment : Fragment() {
@@ -37,6 +39,7 @@ class UserDictionaryFragment : Fragment() {
         dictionariesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         val itemTouchHelper = ItemTouchHelper(SwipeDictionaryItem(requireContext()))
         itemTouchHelper.attachToRecyclerView(dictionariesRecyclerView)
+        dictionariesRecyclerView.addItemDecoration(SimpleItemDecoration(requireContext()))
         viewModel.dictionaries.observe(requireActivity()) { dictionaries ->
             dictionariesAdapter = UserDictionaryAdapter(dictionaries, onDictionaryClickListener)
             dictionariesRecyclerView.adapter = dictionariesAdapter

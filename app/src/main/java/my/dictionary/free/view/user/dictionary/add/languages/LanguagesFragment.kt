@@ -20,6 +20,7 @@ import my.dictionary.free.domain.models.language.Language
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.add.languages.LanguagesViewModel
 import my.dictionary.free.view.ext.addMenuProvider
+import my.dictionary.free.view.widget.SimpleItemDecoration
 
 @AndroidEntryPoint
 class LanguagesFragment : Fragment() {
@@ -47,6 +48,7 @@ class LanguagesFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_languages, null)
         recyclerViewLanguages = view.findViewById(R.id.recycler_view)
         recyclerViewLanguages.layoutManager = LinearLayoutManager(requireContext())
+        recyclerViewLanguages.addItemDecoration(SimpleItemDecoration(requireContext()))
         viewModel.languages.observe(requireActivity()) { languages ->
             recyclerViewLanguages.adapter = LanguagesAdapter(languages, onLanguageClickListener)
         }
