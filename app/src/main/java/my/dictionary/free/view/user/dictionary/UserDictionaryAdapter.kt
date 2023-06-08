@@ -37,7 +37,7 @@ class UserDictionaryAdapter(
 
     override fun onBindViewHolder(viewHolder: SimpleViewHolder, position: Int) {
         val dictionary = data[position]
-        if(dictionary.dialect != null) {
+        if(!dictionary.dialect.isNullOrEmpty()) {
             viewHolder.nameTextView.text =
                 "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}\n${dictionary.dialect}"
         } else {
