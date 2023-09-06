@@ -12,12 +12,16 @@ import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 
 class UserDictionaryAdapter(
-    private val data: List<Dictionary>,
+    private val data: MutableList<Dictionary>,
     private val clickListener: OnDictionaryClickListener
 ) :
     RecyclerView.Adapter<UserDictionaryAdapter.SimpleViewHolder>() {
 
+    private var tempRemoveItem: Dictionary? = null
+    private var tempRemoveItemPosition: Int? = null
+
     class SimpleViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        var swipePosition: Int = 0
         val nameTextView: AppCompatTextView
         val flagLangFromImage: AppCompatImageView
         val flagLangToImage: AppCompatImageView
@@ -37,13 +41,14 @@ class UserDictionaryAdapter(
 
     override fun onBindViewHolder(viewHolder: SimpleViewHolder, position: Int) {
         val dictionary = data[position]
-        if(!dictionary.dialect.isNullOrEmpty()) {
+        if (!dictionary.dialect.isNullOrEmpty()) {
             viewHolder.nameTextView.text =
                 "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}\n${dictionary.dialect}"
         } else {
             viewHolder.nameTextView.text =
                 "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}"
         }
+        viewHolder.swipePosition = position
         Glide
             .with(viewHolder.itemView.context)
             .load(dictionary.dictionaryFrom.flag?.png)
@@ -60,6 +65,28 @@ class UserDictionaryAdapter(
     }
 
     override fun getItemCount() = data.size
+
+    fun temporaryRemoveItem(position: Int, needToUpdate: Boolean = true) {
+        tempRemoveItem = data.removeAt(position)
+        tempRemoveItemPosition = position
+        if (needToUpdate) {
+            this.notifyItemRemoved(position)
+        }
+    }
+
+    fun finallyRemoveItem() {
+        tempRemoveItemPosition = null
+        tempRemoveItem = null
+    }
+
+    fun undoRemovedItem() {
+        if (tempRemoveItemPosition != null && tempRemoveItem != null) {
+            data.add(tempRemoveItemPosition!!, tempRemoveItem!!)
+            this.notifyItemInserted(tempRemoveItemPosition!!)
+            tempRemoveItemPosition = null
+            tempRemoveItem = null
+        }
+    }
 
 }
 

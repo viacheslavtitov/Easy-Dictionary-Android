@@ -4,15 +4,16 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
-import android.util.Log
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
+import my.dictionary.free.view.widget.OnItemSwipedListener
 
 class SwipeDictionaryItem(
     private val context: Context,
+    private val onItemSwipedListener: OnItemSwipedListener,
     bckgColor: Int? = null,
 ) : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
 
@@ -39,7 +40,13 @@ class SwipeDictionaryItem(
     }
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-
+        if(direction == ItemTouchHelper.LEFT) {
+            when(viewHolder) {
+                is UserDictionaryAdapter.SimpleViewHolder -> {
+                    onItemSwipedListener.onSwiped(viewHolder.swipePosition)
+                }
+            }
+        }
     }
 
     override fun onChildDraw(
@@ -71,7 +78,6 @@ class SwipeDictionaryItem(
 //            }
             }
         }
-        Log.d("MyTag", "actionState = $actionState")
         super.onChildDraw(canvas, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
     }
 
