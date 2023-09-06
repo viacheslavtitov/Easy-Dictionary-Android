@@ -18,6 +18,7 @@ import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import my.dictionary.free.view.ext.addMenuProvider
+import my.dictionary.free.view.widget.OnItemSwipedListener
 import my.dictionary.free.view.widget.SimpleItemDecoration
 
 @AndroidEntryPoint
@@ -37,11 +38,11 @@ class UserDictionaryFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_user_dictionary, null)
         dictionariesRecyclerView = view.findViewById(R.id.recycler_view)
         dictionariesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        val itemTouchHelper = ItemTouchHelper(SwipeDictionaryItem(requireContext()))
+        val itemTouchHelper = ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
         itemTouchHelper.attachToRecyclerView(dictionariesRecyclerView)
         dictionariesRecyclerView.addItemDecoration(SimpleItemDecoration(requireContext()))
         viewModel.dictionaries.observe(requireActivity()) { dictionaries ->
-            dictionariesAdapter = UserDictionaryAdapter(dictionaries, onDictionaryClickListener)
+            dictionariesAdapter = UserDictionaryAdapter(dictionaries.toMutableList(), onDictionaryClickListener)
             dictionariesRecyclerView.adapter = dictionariesAdapter
         }
         return view
@@ -65,5 +66,12 @@ class UserDictionaryFragment : Fragment() {
         override fun onDictionaryClick(dictionary: Dictionary) {
 
         }
+    }
+
+    private val onItemSwipedListener = object : OnItemSwipedListener {
+        override fun onSwiped(position: Int) {
+            dictionariesAdapter?.temporaryRemoveItem(position)
+        }
+
     }
 }
