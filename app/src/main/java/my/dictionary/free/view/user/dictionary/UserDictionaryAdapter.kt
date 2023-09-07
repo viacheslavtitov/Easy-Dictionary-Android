@@ -67,10 +67,12 @@ class UserDictionaryAdapter(
     override fun getItemCount() = data.size
 
     fun temporaryRemoveItem(position: Int, needToUpdate: Boolean = true) {
-        tempRemoveItem = data.removeAt(position)
-        tempRemoveItemPosition = position
-        if (needToUpdate) {
-            this.notifyItemRemoved(position)
+        if(position < data.size && position > -1) {
+            tempRemoveItem = data.removeAt(position)
+            tempRemoveItemPosition = position
+            if (needToUpdate) {
+                this.notifyItemRemoved(position)
+            }
         }
     }
 
