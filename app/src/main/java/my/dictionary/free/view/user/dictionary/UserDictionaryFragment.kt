@@ -50,7 +50,7 @@ class UserDictionaryFragment : Fragment() {
         }
 
         override fun onFinish() {
-
+            undoRemoveDictionarySnackbar = null
         }
     }
 
@@ -105,5 +105,10 @@ class UserDictionaryFragment : Fragment() {
             undoRemoveDictionarySnackbar?.show()
             undoRemoveDictionaryTimer.start()
         }
+    }
+
+    override fun onStop() {
+        undoRemoveDictionarySnackbar?.dismiss()
+        super.onStop()
     }
 }
