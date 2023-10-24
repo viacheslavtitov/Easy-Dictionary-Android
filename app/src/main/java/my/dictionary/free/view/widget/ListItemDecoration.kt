@@ -12,11 +12,11 @@ import my.dictionary.free.R
 import my.dictionary.free.view.ext.dp
 import my.dictionary.free.view.ext.getColorInt
 
-class SimpleItemDecoration(
+class ListItemDecoration(
     private val context: Context,
     private val dividerHeight: Int = 1.dp,
     private val skipLastPosition: Boolean = true,
-    @ColorRes private val colorRes: Int = R.color.main_dark
+    @ColorRes private val colorRes: Int = R.color.yellow_500
 ) : RecyclerView.ItemDecoration() {
 
     private val backgroundPaint by lazy {
