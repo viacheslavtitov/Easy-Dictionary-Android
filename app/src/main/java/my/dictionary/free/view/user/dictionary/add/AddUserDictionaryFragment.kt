@@ -15,7 +15,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.language.LangType
 import my.dictionary.free.domain.models.language.Language
-import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
@@ -61,7 +60,7 @@ class AddUserDictionaryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        addMenuProvider(R.menu.menu_add_user_dictionary, { }, {
+        addMenuProvider(R.menu.menu_add_user_dictionary, { menu, mi ->}, {
             when (it) {
                 R.id.nav_save_dictionary -> {
                     createDictionary()

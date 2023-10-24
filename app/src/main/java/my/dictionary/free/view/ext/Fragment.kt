@@ -34,3 +34,27 @@ fun Fragment.addMenuProvider(
         Lifecycle.State.RESUMED
     )
 }
+
+fun Fragment.addMenuProvider(
+    @MenuRes menuRes: Int,
+    menuCreated: (menu: Menu, menuInflater: MenuInflater) -> Unit,
+    callbackMenuClicked: (id: Int) -> Boolean
+) {
+    val menuProvider = object : MenuProvider {
+        override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+            menuInflater.inflate(menuRes, menu)
+            menu.iterator().forEach {
+                it.setTint(requireContext(), R.color.white)
+            }
+            menuCreated(menu, menuInflater)
+        }
+
+        override fun onMenuItemSelected(menuItem: MenuItem) = callbackMenuClicked(menuItem.itemId)
+
+    }
+    (requireActivity() as MenuHost).addMenuProvider(
+        menuProvider,
+        viewLifecycleOwner,
+        Lifecycle.State.RESUMED
+    )
+}

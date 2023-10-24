@@ -42,7 +42,7 @@ class SwipeDictionaryItem(
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
         if(direction == ItemTouchHelper.LEFT) {
             when(viewHolder) {
-                is UserDictionaryAdapter.SimpleViewHolder -> {
+                is UserDictionaryAdapter.ViewHolder -> {
                     onItemSwipedListener.onSwiped(viewHolder.swipePosition)
                 }
             }
