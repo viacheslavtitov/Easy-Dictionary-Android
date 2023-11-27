@@ -8,20 +8,28 @@
     <fragment
         android:id="@+id/simpleFragment"
         android:name="my.dictionary.free.view.SimplerFragment"
-        android:label=""
+        android:label="fragment_simple"
         tools:layout="@layout/fragment_simple" />
 
     <fragment
         android:id="@+id/userDictionaryFragment"
         android:name="my.dictionary.free.view.user.dictionary.UserDictionaryFragment"
         android:label="@string/my_dictionaries"
-        tools:layout="@layout/fragment_user_dictionary" />
+        tools:layout="@layout/fragment_user_dictionary" >
+        <action
+            android:id="@+id/action_userDictionaryFragment_to_addUserDictionaryFragment"
+            app:destination="@id/addUserDictionaryFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/addUserDictionaryFragment"
         android:name="my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment"
         android:label="@string/add_dictionary"
-        tools:layout="@layout/fragment_add_new_dictionary" />
+        tools:layout="@layout/fragment_add_new_dictionary" >
+        <action
+            android:id="@+id/action_addUserDictionaryFragment_to_languagesFragment"
+            app:destination="@id/languagesFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/languagesFragment"
