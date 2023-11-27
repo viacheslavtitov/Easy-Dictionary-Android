@@ -89,6 +89,8 @@ class UserDictionaryAdapter(
         tempRemoveItem = null
     }
 
+    fun getRemoveDictionaryByTimer() = tempRemoveItem
+
     fun undoRemovedItem() {
         if (tempRemoveItemPosition != null && tempRemoveItem != null) {
             data.add(tempRemoveItemPosition!!, tempRemoveItem!!)
@@ -131,6 +133,8 @@ class UserDictionaryAdapter(
     fun clearData() {
         data.clear()
         selectedDictionaries.clear()
+        tempRemoveItemPosition = null
+        tempRemoveItem = null
         this.notifyDataSetChanged()
     }
 

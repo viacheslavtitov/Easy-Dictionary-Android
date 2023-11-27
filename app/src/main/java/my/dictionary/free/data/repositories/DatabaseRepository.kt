@@ -205,6 +205,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         return suspendCoroutine { cont ->
             val childRemoves = mutableMapOf<String, Any?>()
             dictionaryIds.forEach {
+                Log.d(TAG, "delete dictionary by id = $it")
                 childRemoves["/${DictionaryTable._NAME}/$it"] = null
             }
             database.reference.child(UsersTable._NAME).child(userId).updateChildren(childRemoves)

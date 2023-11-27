@@ -81,6 +81,12 @@ class UserDictionaryFragment : AbstractBaseFragment() {
 
             override fun onFinish() {
                 undoRemoveDictionarySnackbar = null
+                dictionariesAdapter?.getRemoveDictionaryByTimer()?.let { dict ->
+                    viewModel.deleteDictionaries(
+                        context,
+                        listOf(dict)
+                    )
+                }
                 dictionariesAdapter?.finallyRemoveItem()
             }
         }
@@ -141,6 +147,14 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.loadingUIState.collect { visible ->
                         swipeRefreshLayout?.isRefreshing = visible
+                    }
+                }
+                launch {
+                    viewModel.shouldClearDictionariesUIState.collect { clear ->
+                        if(clear) {
+                            Log.d(TAG, "clear dictionaries")
+                            dictionariesAdapter?.clearData()
+                        }
                     }
                 }
                 launch {

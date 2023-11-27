@@ -34,15 +34,19 @@ class UserDictionaryViewModel @Inject constructor(
 
     private val _clearActionModeUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
-    val clearActionModeUIState: StateFlow<Boolean> = _clearActionModeUIState
+    val clearActionModeUIState: StateFlow<Boolean> = _clearActionModeUIState.asStateFlow()
+
+    private val _shouldClearDictionariesUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val shouldClearDictionariesUIState: StateFlow<Boolean> = _shouldClearDictionariesUIState.asStateFlow()
 
     private val _loadingUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
-    val loadingUIState: StateFlow<Boolean> = _loadingUIState
+    val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
     private val _displayErrorUIState: MutableStateFlow<String> =
         MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
 
     fun loadDictionaries(context: Context?) {
         if (context == null) return
@@ -67,20 +71,29 @@ class UserDictionaryViewModel @Inject constructor(
                         TAG,
                         "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
                     )
-                    _dictionariesUIState.tryEmit(it)
+                    _dictionariesUIState.value = it
                 }
         }
     }
 
     fun deleteDictionaries(context: Context?, list: List<Dictionary>?) {
         if (context == null || list.isNullOrEmpty()) return
+        Log.d(TAG, "deleteDictionaries()")
         viewModelScope.launch {
+            _loadingUIState.value = true
             withContext(Dispatchers.IO) {
                 val result = dictionaryUseCase.deleteDictionaries(list)
-                _clearActionModeUIState.value = true
-                if (!result.first) {
-                    val error = result.second ?: context.getString(R.string.error_delete_dictionary)
-                    _displayErrorUIState.value = error
+                withContext(Dispatchers.Main) {
+                    _clearActionModeUIState.value = true
+                    _loadingUIState.value = false
+                    Log.d(TAG, "delete result is ${result.first}")
+                    if (!result.first) {
+                        val error =
+                            result.second ?: context.getString(R.string.error_delete_dictionary)
+                        _displayErrorUIState.value = error
+                    } else {
+                        _shouldClearDictionariesUIState.value = true
+                    }
                 }
             }
         }.invokeOnCompletion {
