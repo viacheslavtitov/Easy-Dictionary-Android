@@ -1,7 +1,18 @@
 package my.dictionary.free.data.repositories
 
 import android.util.Log
-import com.google.firebase.database.*
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.Logger
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.dictionary.DictionaryTable
 import my.dictionary.free.data.models.users.UsersTable
@@ -11,6 +22,12 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class DatabaseRepository @Inject constructor(private val database: FirebaseDatabase) {
+
+    companion object {
+        private val TAG = DatabaseRepository::class.simpleName
+    }
+
+    private val ioScope = Dispatchers.IO
 
     init {
         if (BuildConfig.DEBUG) {
@@ -105,17 +122,23 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
 
     suspend fun insertOrUpdateUser(user: UsersTable, preferenceUtils: PreferenceUtils): Boolean {
         val existUser = getUserByUID(user.uid)
-        if (existUser != null && !user.equals(existUser)) return updateUser(existUser, preferenceUtils)
-        if(existUser != null) return true
+        if (existUser != null && !user.equals(existUser)) return updateUser(
+            existUser,
+            preferenceUtils
+        )
+        if (existUser != null) return true
         return insertUser(user, preferenceUtils)
     }
 
-    suspend fun createDictionary(userId: String, dictionary: DictionaryTable): Boolean {
+    suspend fun createDictionary(
+        userId: String,
+        dictionary: DictionaryTable
+    ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
             val dictionaryKey = reference.child(DictionaryTable._NAME).push().key
             if (dictionaryKey == null) {
-                cont.resume(false)
+                cont.resume(Pair(false, null))
             }
             dictionaryKey?.let { key ->
                 val table = DictionaryTable(
@@ -129,12 +152,11 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/$key" to table.toMap()
                 )
                 reference.updateChildren(childUpdates).addOnSuccessListener {
-                    cont.resume(true)
+                    cont.resume(Pair(true, null))
                 }.addOnFailureListener {
-//                    cancel(it.message ?: "Failed to update user ${user.name} ${user.email}")
-                    cont.resume(false)
+                    cont.resume(Pair(false, it.message))
                 }.addOnCanceledListener {
-                    cont.resume(false)
+                    cont.resume(Pair(false, null))
                 }
             }
         }
@@ -142,13 +164,14 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
 
     suspend fun getDictionariesByUserUUID(
         userId: String,
-    ): List<DictionaryTable> {
-        return suspendCoroutine { cont ->
-            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
-                .get()
-                .addOnSuccessListener {
-                    val dictionaryList = arrayListOf<DictionaryTable>()
-                    it.children.forEach { data ->
+    ): Flow<DictionaryTable> {
+        Log.d(TAG, "getDictionariesByUserUUID")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
                         val dictionary = DictionaryTable(
                             _id = map[DictionaryTable._ID] as String?,
@@ -157,14 +180,40 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             langTo = map[DictionaryTable.LANG_TO] as String,
                             dialect = map[DictionaryTable.DIALECT] as String
                         )
-                        dictionaryList.add(dictionary)
+                        trySend(dictionary)
                     }
-                    cont.resume(dictionaryList)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun deleteDictionaries(
+        userId: String,
+        dictionaryIds: List<String>
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            dictionaryIds.forEach {
+                childRemoves["/${DictionaryTable._NAME}/$it"] = null
+            }
+            database.reference.child(UsersTable._NAME).child(userId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
                 }.addOnFailureListener {
-//                it.message ?: "Failed to get user's dictionary by id $uid"
-                    cont.resume(emptyList())
+                    cont.resume(Pair(false, it.message))
                 }.addOnCanceledListener {
-                    cont.resume(emptyList())
+                    cont.resume(Pair(false, null))
                 }
         }
     }

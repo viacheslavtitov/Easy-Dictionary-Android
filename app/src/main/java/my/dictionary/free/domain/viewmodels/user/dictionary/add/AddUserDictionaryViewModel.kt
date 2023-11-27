@@ -1,10 +1,15 @@
 package my.dictionary.free.domain.viewmodels.user.dictionary.add
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.dictionary.DictionaryItem
 import my.dictionary.free.domain.models.language.Language
@@ -19,14 +24,26 @@ class AddUserDictionaryViewModel @Inject constructor() : ViewModel() {
     var languageTo: Language? = null
     var dialect: String? = null
 
+    val displayErrorFlow = MutableSharedFlow<String>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    val successCreateDictionaryFlow = MutableSharedFlow<Boolean>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
     @Inject
     lateinit var dictionaryUseCase: GetCreateDictionaryUseCase
 
     @Inject
     lateinit var preferenceUtils: PreferenceUtils
 
-    fun createDictionary(dialectValue: String? = null) {
-        if (languageFrom == null || languageTo == null) return
+    fun createDictionary(context: Context?, dialectValue: String? = null) {
+        if (languageFrom == null || languageTo == null || context == null) return
         val userUUID = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_UUID) ?: return
         CoroutineScope(Dispatchers.IO).launch {
             val result = dictionaryUseCase.createDictionary(
@@ -41,6 +58,14 @@ class AddUserDictionaryViewModel @Inject constructor() : ViewModel() {
                     dialect = dialectValue ?: ""
                 )
             )
+            withContext(Dispatchers.Main) {
+                if (!result.first) {
+                    val error = result.second ?: context.getString(R.string.error_create_dictionary)
+                    displayErrorFlow.emit(error)
+                } else {
+                    successCreateDictionaryFlow.emit(true)
+                }
+            }
         }
     }
 

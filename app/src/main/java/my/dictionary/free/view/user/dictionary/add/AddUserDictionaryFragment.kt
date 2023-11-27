@@ -5,10 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,12 +21,19 @@ import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
+import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
-import java.util.*
 
 @AndroidEntryPoint
-class AddUserDictionaryFragment : Fragment() {
+class AddUserDictionaryFragment : AbstractBaseFragment() {
+
+    companion object {
+        const val BUNDLE_DICTIONARY_CREATED_KEY =
+            "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY"
+        const val BUNDLE_DICTIONARY_CREATED_RESULT =
+            "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT"
+    }
 
     private lateinit var textInputLayoutLangFrom: TextInputLayout
     private lateinit var textInputLayoutLangTo: TextInputLayout
@@ -60,7 +69,26 @@ class AddUserDictionaryFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        addMenuProvider(R.menu.menu_add_user_dictionary, { menu, mi ->}, {
+        lifecycleScope.launchWhenStarted {
+            if (viewModel.successCreateDictionaryFlow.subscriptionCount.value < 1) {
+                viewModel.successCreateDictionaryFlow.collect { success ->
+                    if (success) {
+                        val bundle = Bundle().apply {
+                            putBoolean(BUNDLE_DICTIONARY_CREATED_KEY, true)
+                        }
+                        setFragmentResult(BUNDLE_DICTIONARY_CREATED_RESULT, bundle)
+                        findNavController().popBackStack()
+                    }
+                }
+            }
+            if (viewModel.displayErrorFlow.subscriptionCount.value < 1) {
+                viewModel.displayErrorFlow.collect { errorMessage ->
+                    val aboveView = getView() ?: return@collect
+                    displayError(errorMessage, aboveView)
+                }
+            }
+        }
+        addMenuProvider(R.menu.menu_add_user_dictionary, { menu, mi -> }, {
             when (it) {
                 R.id.nav_save_dictionary -> {
                     createDictionary()
@@ -68,7 +96,7 @@ class AddUserDictionaryFragment : Fragment() {
                 }
                 else -> false
             }
-        } )
+        })
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,6 +132,6 @@ class AddUserDictionaryFragment : Fragment() {
 
     private fun createDictionary() {
         val dialect = textInputEditTextDialect.text?.toString()
-        viewModel.createDictionary(dialect)
+        viewModel.createDictionary(context, dialect)
     }
 }

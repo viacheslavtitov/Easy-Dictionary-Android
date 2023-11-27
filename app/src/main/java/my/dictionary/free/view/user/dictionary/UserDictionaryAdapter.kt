@@ -122,8 +122,20 @@ class UserDictionaryAdapter(
 
     fun getSelectedDictionariesCount() = selectedDictionaries.size
 
+    fun getSelectedDictionaries() = selectedDictionaries
+
     fun clearSelectedDevices() {
         selectedDictionaries.clear()
+        this.notifyDataSetChanged()
+    }
+    fun clearData() {
+        data.clear()
+        selectedDictionaries.clear()
+        this.notifyDataSetChanged()
+    }
+
+    fun add(dict: Dictionary) {
+        data.add(dict)
         this.notifyDataSetChanged()
     }
 

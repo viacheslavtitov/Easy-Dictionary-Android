@@ -5,35 +5,53 @@ import android.app.SearchManager
 import android.content.Context
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.view.*
+import android.util.Log
+import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
+import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
-import my.dictionary.free.view.widget.OnItemSwipedListener
+import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
 import my.dictionary.free.view.widget.ListItemDecoration
+import my.dictionary.free.view.widget.OnItemSwipedListener
 
 
 @AndroidEntryPoint
-class UserDictionaryFragment : Fragment() {
+class UserDictionaryFragment : AbstractBaseFragment() {
 
     companion object {
+        private val TAG = UserDictionaryFragment::class.simpleName
         const val UNDO_SNACKBAR_DURATION: Int = 5000
         const val UNDO_SNACKBAR_DURATION_TIMER = 6000L
         const val UNDO_SNACKBAR_INTERVAL_TIMER = 1000L
@@ -48,6 +66,7 @@ class UserDictionaryFragment : Fragment() {
     private var menuInflater: MenuInflater? = null
     private var menuEdit: MenuItem? = null
     private var actionMode: ActionMode? = null
+    private var swipeRefreshLayout: SwipeRefreshLayout? = null
 
     private val undoRemoveDictionaryTimer =
         object : CountDownTimer(UNDO_SNACKBAR_DURATION_TIMER, UNDO_SNACKBAR_INTERVAL_TIMER) {
@@ -85,16 +104,54 @@ class UserDictionaryFragment : Fragment() {
                 onDictionaryClickListener
             )
         )
-        viewModel.dictionaries.observe(requireActivity()) { dictionaries ->
-            dictionariesAdapter =
-                UserDictionaryAdapter(dictionaries.toMutableList())
-            dictionariesRecyclerView.adapter = dictionariesAdapter
-        }
+        swipeRefreshLayout =
+            view.findViewById<SwipeRefreshLayout?>(R.id.swipe_refresh_layout)?.also {
+                it.setOnRefreshListener {
+                    Log.d(TAG, "onRefresh")
+                    refreshDictionaries()
+                }
+                it.setColorSchemeResources(
+                    R.color.main,
+                    R.color.main_light,
+                    R.color.main_dark
+                )
+            }
+        dictionariesAdapter = UserDictionaryAdapter(mutableListOf())
+        dictionariesRecyclerView.adapter = dictionariesAdapter
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated")
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.clearActionModeUIState.drop(1).collect { clear ->
+                        if (clear) {
+                            actionMode?.finish()
+                        }
+                    }
+                }
+                launch {
+                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
+                        displayError(errorMessage, dictionariesRecyclerView)
+                    }
+                }
+                launch {
+                    viewModel.loadingUIState.collect { visible ->
+                        swipeRefreshLayout?.isRefreshing = visible
+                    }
+                }
+                launch {
+                    viewModel.dictionariesUIState.drop(1).collectLatest { dict ->
+                        Log.d(TAG, "dictionary updated: $dict")
+                        dictionariesAdapter?.add(dict)
+                    }
+                }
+            }
+        }
+
         addMenuProvider(R.menu.menu_user_dictionary, { menu, mi ->
             run {
                 this.menuInflater = mi
@@ -118,10 +175,27 @@ class UserDictionaryFragment : Fragment() {
                     sharedViewModel.navigateTo(AddUserDictionaryScreen())
                     return@addMenuProvider true
                 }
+
                 else -> false
             }
         })
-        viewModel.loadDictionaries(requireContext())
+        refreshDictionaries()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setFragmentResultListener(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT) { requestKey, bundle ->
+            val needUpdate =
+                bundle.getBoolean(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY, false)
+            if (needUpdate) {
+                refreshDictionaries()
+            }
+        }
+    }
+
+    private fun refreshDictionaries() {
+        dictionariesAdapter?.clearData()
+        viewModel.loadDictionaries(context)
     }
 
     private val onDictionariesQueryListener = object : SearchView.OnQueryTextListener {
@@ -161,7 +235,7 @@ class UserDictionaryFragment : Fragment() {
         actionMode?.title =
             "$selectedDictionaryCount ${getString(R.string.selected).uppercase()}"
         menuEdit?.isVisible = selectedDictionaryCount <= 1
-        if(selectedDictionaryCount < 1) {
+        if (selectedDictionaryCount < 1) {
             actionMode?.finish()
             actionMode = null
             menuEdit = null
@@ -203,9 +277,15 @@ class UserDictionaryFragment : Fragment() {
                 R.id.menu_edit -> {
                     true
                 }
+
                 R.id.menu_delete -> {
+                    viewModel.deleteDictionaries(
+                        context,
+                        dictionariesAdapter?.getSelectedDictionaries()
+                    )
                     true
                 }
+
                 else -> false
             }
         }
@@ -238,7 +318,7 @@ class UserDictionaryFragment : Fragment() {
                         }
                     }
                 }
-            }).also { gestureDetector = it }
+            })
 
         override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
             val child = rv.findChildViewUnder(e.x, e.y)
@@ -265,6 +345,7 @@ class UserDictionaryFragment : Fragment() {
     }
 
     override fun onStop() {
+        Log.d(TAG, "onStop()")
         undoRemoveDictionarySnackbar?.dismiss()
         super.onStop()
     }

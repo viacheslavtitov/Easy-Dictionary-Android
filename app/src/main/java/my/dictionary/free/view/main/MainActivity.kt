@@ -125,10 +125,10 @@ class MainActivity : AbstractBaseActivity() {
                     val bundle = Bundle().apply {
                         putInt(LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY, navigation.langType.ordinal)
                     }
-                    navController.navigate(R.id.languagesFragment, bundle)
+                    navController.navigate(R.id.action_addUserDictionaryFragment_to_languagesFragment, bundle)
                 }
                 is AddUserDictionaryScreen -> {
-                    navController.navigate(R.id.addUserDictionaryFragment)
+                    navController.navigate(R.id.action_userDictionaryFragment_to_addUserDictionaryFragment)
                 }
             }
         }
@@ -179,7 +179,7 @@ class MainActivity : AbstractBaseActivity() {
         if (navDrawerLayout.isDrawerOpen(GravityCompat.START)) {
             navDrawerLayout.closeDrawer(GravityCompat.START)
         } else {
-            if (navController.backQueue.isEmpty()) {
+            if (navController.currentBackStack.value.isEmpty()) {
                 finish()
             } else {
                 super.onBackPressed()
