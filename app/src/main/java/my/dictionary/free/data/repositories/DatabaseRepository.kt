@@ -1,7 +1,6 @@
 package my.dictionary.free.data.repositories
 
 import android.util.Log
-import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -16,7 +15,11 @@ import kotlinx.coroutines.flow.flowOn
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.dictionary.DictionaryTable
 import my.dictionary.free.data.models.users.UsersTable
+import my.dictionary.free.data.models.words.WordTable
+import my.dictionary.free.data.models.words.variants.TranslateVariantTable
+import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.utils.PreferenceUtils
+import java.lang.NullPointerException
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -167,7 +170,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Flow<DictionaryTable> {
         Log.d(TAG, "getDictionariesByUserUUID")
         return callbackFlow {
-            val reference = database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME)
             val valueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     Log.d(TAG, "onDataChange ${snapshot.children.count()}")
@@ -181,6 +185,51 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             dialect = map[DictionaryTable.DIALECT] as String
                         )
                         trySend(dictionary)
+                    }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getDictionaryById(
+        userId: String,
+        dictionaryId: String,
+    ): Flow<DictionaryTable> {
+        Log.d(
+            TAG,
+            "getDictionaryById ${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}"
+        )
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.value?.toString()}")
+                    try {
+                        val map = snapshot.value as HashMap<*, *>
+                        val dictionary = DictionaryTable(
+                            _id = map[DictionaryTable._ID] as String?,
+                            userUUID = map[DictionaryTable.USER_UUID] as String,
+                            langFrom = map[DictionaryTable.LANG_FROM] as String,
+                            langTo = map[DictionaryTable.LANG_TO] as String,
+                            dialect = map[DictionaryTable.DIALECT] as String
+                        )
+                        trySend(dictionary)
+                    } catch (ex: ClassCastException) {
+                        Log.e(TAG, "Failed to cast data", ex)
+                    } catch (ex: NullPointerException) {
+                        Log.e(TAG, "Failed to get data", ex)
                     }
                     close()
                 }
@@ -217,5 +266,114 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     cont.resume(Pair(false, null))
                 }
         }
+    }
+
+    suspend fun createWord(
+        userId: String,
+        word: Word
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val wordKey = reference.child(WordTable._NAME).push().key
+            if (wordKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            wordKey?.let { key ->
+                val table = WordTable(
+                    _id = key,
+                    dictionaryId = word.dictionaryId,
+                    original = word.original,
+                    transcription = word.transcription
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${word.dictionaryId}/${WordTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun getTranslationVariantByWordId(
+        userId: String,
+        dictionaryId: String,
+        wordId: String
+    ): Flow<List<TranslateVariantTable>> {
+        Log.d(TAG, "getTranslationVariantByWordId")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
+                .child(wordId).child(TranslateVariantTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val translations = arrayListOf<TranslateVariantTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val translateVariant = TranslateVariantTable(
+                            _id = map[TranslateVariantTable._ID] as String?,
+                            translate = map[TranslateVariantTable.TRANSLATE] as String,
+                            description = map[TranslateVariantTable.DESCRIPTION] as String,
+                            wordId = map[TranslateVariantTable.WORD_ID] as String
+                        )
+                        translations.add(translateVariant)
+                    }
+                    trySend(translations)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getWordsByDictionaryId(
+        userId: String,
+        dictionaryId: String,
+    ): Flow<WordTable> {
+        Log.d(TAG, "getWordsByDictionaryId")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val word = WordTable(
+                            _id = map[WordTable._ID] as String?,
+                            dictionaryId = map[WordTable.DICTIONARY_ID] as String,
+                            original = map[WordTable.ORIGINAL] as String,
+                            transcription = map[WordTable.TRANSCRIPTION] as String
+                        )
+                        trySend(word)
+                    }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
     }
 }

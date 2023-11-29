@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_userDictionaryFragment_to_addUserDictionaryFragment"
             app:destination="@id/addUserDictionaryFragment" />
+        <action
+            android:id="@+id/action_userDictionaryFragment_to_dictionaryWordsFragment"
+            app:destination="@id/dictionaryWordsFragment" />
     </fragment>
 
     <fragment
@@ -40,5 +43,16 @@
             android:name="my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY"
             android:defaultValue="0"
             app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dictionaryWordsFragment"
+        android:name="my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment"
+        android:label="@string/words"
+        tools:layout="@layout/fragment_dictionary_words" >
+        <argument
+            android:name="my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment.BUNDLE_DICTIONARY_ID"
+            android:defaultValue="null"
+            app:argType="string" />
     </fragment>
 </navigation>

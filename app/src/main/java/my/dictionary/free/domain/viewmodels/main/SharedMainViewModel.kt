@@ -8,6 +8,9 @@ import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.users.User
@@ -27,6 +30,10 @@ class SharedMainViewModel @Inject constructor() : ViewModel() {
     val userEmailValue = MutableLiveData<String>()
     val userAvatarUri = MutableLiveData<Uri>()
     val navigation = MutableLiveData<AppNavigation>()
+
+    private val _toolbarTitleUIState: MutableStateFlow<String> =
+        MutableStateFlow("")
+    val toolbarTitleUIState: StateFlow<String> = _toolbarTitleUIState.asStateFlow()
 
     private fun updateUserData(user: FirebaseUser) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -57,6 +64,10 @@ class SharedMainViewModel @Inject constructor() : ViewModel() {
 
     fun clearData() {
         preferenceUtils.clear()
+    }
+
+    fun setTitle(title: String) {
+        _toolbarTitleUIState.value = title
     }
 
 }

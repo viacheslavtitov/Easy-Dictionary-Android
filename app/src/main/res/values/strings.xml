@@ -36,6 +36,9 @@
     <!-- Language -->
     <string name="add_language">Add language</string>
     <string name="search_hint">English</string>
+    <!-- Words -->
+    <string name="words">Words</string>
+    <string name="error_load_data">Something was wrong to load data</string>
 
     <string name="menu_drawer_open">DrawerOpen</string>
     <string name="menu_drawer_closed">DrawerClosed</string>

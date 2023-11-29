@@ -1,4 +1,4 @@
-package my.dictionary.free.view.user.dictionary
+package my.dictionary.free.view.user.dictionary.words
 
 import android.annotation.SuppressLint
 import android.app.SearchManager
@@ -16,7 +16,6 @@ import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -32,61 +31,65 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
-import my.dictionary.free.domain.models.dictionary.Dictionary
-import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
-import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
+import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
+import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
-import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
+import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
-import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
+import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
 import my.dictionary.free.view.widget.ListItemDecoration
 import my.dictionary.free.view.widget.OnItemSwipedListener
 import my.dictionary.free.view.widget.OnListItemClickListener
 import my.dictionary.free.view.widget.OnListTouchListener
 
-
 @AndroidEntryPoint
-class UserDictionaryFragment : AbstractBaseFragment() {
+class DictionaryWordsFragment : AbstractBaseFragment() {
 
     companion object {
-        private val TAG = UserDictionaryFragment::class.simpleName
+        private val TAG = DictionaryWordsFragment::class.simpleName
+        const val BUNDLE_DICTIONARY_ID =
+            "my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment.BUNDLE_DICTIONARY_ID"
         const val UNDO_SNACKBAR_DURATION: Int = 5000
         const val UNDO_SNACKBAR_DURATION_TIMER = 6000L
         const val UNDO_SNACKBAR_INTERVAL_TIMER = 1000L
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
-    private val viewModel: UserDictionaryViewModel by viewModels()
+    private val viewModel: DictionaryWordsViewModel by viewModels()
 
-    private lateinit var dictionariesRecyclerView: RecyclerView
-    private var dictionariesAdapter: UserDictionaryAdapter? = null
-    private var undoRemoveDictionarySnackbar: Snackbar? = null
+    private lateinit var wordsRecyclerView: RecyclerView
+    private var wordsAdapter: DictionaryWordsAdapter? = null
+    private var undoRemoveWordSnackbar: Snackbar? = null
     private var menuInflater: MenuInflater? = null
     private var menuEdit: MenuItem? = null
     private var actionMode: ActionMode? = null
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
+    private var dictionaryId: String? = null
 
-    private val undoRemoveDictionaryTimer =
-        object : CountDownTimer(UNDO_SNACKBAR_DURATION_TIMER, UNDO_SNACKBAR_INTERVAL_TIMER) {
+    private val undoRemoveWordTimer =
+        object : CountDownTimer(
+            UNDO_SNACKBAR_DURATION_TIMER,
+            UNDO_SNACKBAR_INTERVAL_TIMER
+        ) {
             @SuppressLint("RestrictedApi", "SetTextI18n")
             override fun onTick(millisUntilFinished: Long) {
                 val seconds = millisUntilFinished / 1000
-                undoRemoveDictionarySnackbar?.let {
+                undoRemoveWordSnackbar?.let {
                     ((it.view as ViewGroup).getChildAt(0) as SnackbarContentLayout?)?.messageView?.text =
                         "$seconds ${getString(R.string.seconds)}"
                 }
             }
 
             override fun onFinish() {
-                undoRemoveDictionarySnackbar = null
-                dictionariesAdapter?.getRemoveDictionaryByTimer()?.let { dict ->
-                    viewModel.deleteDictionaries(
+                undoRemoveWordSnackbar = null
+                wordsAdapter?.getRemoveWordByTimer()?.let { word ->
+                    viewModel.deleteWords(
                         context,
-                        listOf(dict)
+                        listOf(word)
                     )
                 }
-                dictionariesAdapter?.finallyRemoveItem()
+                wordsAdapter?.finallyRemoveItem()
             }
         }
 
@@ -95,25 +98,25 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_user_dictionary, null)
-        dictionariesRecyclerView = view.findViewById(R.id.recycler_view)
-        dictionariesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        val view = inflater.inflate(R.layout.fragment_dictionary_words, null)
+        wordsRecyclerView = view.findViewById(R.id.recycler_view)
+        wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         val itemTouchHelper =
             ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
-        itemTouchHelper.attachToRecyclerView(dictionariesRecyclerView)
-        dictionariesRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
-        dictionariesRecyclerView.addOnItemTouchListener(
+        itemTouchHelper.attachToRecyclerView(wordsRecyclerView)
+        wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
+        wordsRecyclerView.addOnItemTouchListener(
             OnListTouchListener(
                 requireContext(),
-                dictionariesRecyclerView,
-                onDictionaryClickListener
+                wordsRecyclerView,
+                onWordsClickListener
             )
         )
         swipeRefreshLayout =
             view.findViewById<SwipeRefreshLayout?>(R.id.swipe_refresh_layout)?.also {
                 it.setOnRefreshListener {
                     Log.d(TAG, "onRefresh")
-                    refreshDictionaries()
+                    refreshWords()
                 }
                 it.setColorSchemeResources(
                     R.color.main,
@@ -121,8 +124,8 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                     R.color.main_dark
                 )
             }
-        dictionariesAdapter = UserDictionaryAdapter(mutableListOf())
-        dictionariesRecyclerView.adapter = dictionariesAdapter
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf())
+        wordsRecyclerView.adapter = wordsAdapter
         return view
     }
 
@@ -140,7 +143,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, dictionariesRecyclerView)
+                        displayError(errorMessage, wordsRecyclerView)
                     }
                 }
                 launch {
@@ -149,23 +152,28 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.shouldClearDictionariesUIState.collect { clear ->
+                    viewModel.shouldClearWordsUIState.collect { clear ->
                         if (clear) {
-                            Log.d(TAG, "clear dictionaries")
-                            dictionariesAdapter?.clearData()
+                            Log.d(TAG, "clear words")
+                            wordsAdapter?.clearData()
                         }
                     }
                 }
                 launch {
-                    viewModel.dictionariesUIState.drop(1).collectLatest { dict ->
-                        Log.d(TAG, "dictionary updated: $dict")
-                        dictionariesAdapter?.add(dict)
+                    viewModel.wordsUIState.drop(1).collectLatest { word ->
+                        Log.d(TAG, "word updated: $word")
+                        wordsAdapter?.add(word)
+                    }
+                }
+                launch {
+                    viewModel.titleUIState.drop(1).collectLatest { title ->
+                        Log.d(TAG, "set title: $title")
+                        sharedViewModel.setTitle(title)
                     }
                 }
             }
         }
-
-        addMenuProvider(R.menu.menu_user_dictionary, { menu, mi ->
+        addMenuProvider(R.menu.menu_dictionary_words, { menu, mi ->
             run {
                 this.menuInflater = mi
                 val searchManager =
@@ -179,39 +187,29 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                             activity?.componentName
                         )
                     )
-                    searchView.setOnQueryTextListener(onDictionariesQueryListener)
+                    searchView.setOnQueryTextListener(onWordsQueryListener)
                 }
             }
         }, {
             when (it) {
-                R.id.nav_add_dictionary -> {
-                    sharedViewModel.navigateTo(AddUserDictionaryScreen())
+                R.id.nav_add_word -> {
+                    sharedViewModel.navigateTo(AddDictionaryWordScreen(dictionaryId ?: ""))
                     return@addMenuProvider true
                 }
 
                 else -> false
             }
         })
-        refreshDictionaries()
+        dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
+        refreshWords()
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setFragmentResultListener(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT) { requestKey, bundle ->
-            val needUpdate =
-                bundle.getBoolean(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY, false)
-            if (needUpdate) {
-                refreshDictionaries()
-            }
-        }
+    private fun refreshWords() {
+        wordsAdapter?.clearData()
+        viewModel.loadWords(context, dictionaryId)
     }
 
-    private fun refreshDictionaries() {
-        dictionariesAdapter?.clearData()
-        viewModel.loadDictionaries(context)
-    }
-
-    private val onDictionariesQueryListener = object : SearchView.OnQueryTextListener {
+    private val onWordsQueryListener = object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String): Boolean {
             return true
         }
@@ -222,64 +220,20 @@ class UserDictionaryFragment : AbstractBaseFragment() {
 
     }
 
-    private val onDictionaryClickListener = object : OnListItemClickListener {
-        override fun onListItemClick(childView: View) {
-            dictionariesAdapter?.getItemByPosition(
-                dictionariesRecyclerView.getChildAdapterPosition(childView)
-            )?.let { dictionary ->
-                if (actionMode == null) {
-                    sharedViewModel.navigateTo(DictionaryWordsScreen(dictionary))
-                } else {
-                    selectDictionary(dictionary)
-                }
-            }
-        }
-
-        override fun onListItemLongClick(childView: View) {
-            dictionariesAdapter?.getItemByPosition(
-                dictionariesRecyclerView.getChildAdapterPosition(childView)
-            )?.let { dictionary ->
-                if (activity != null && activity is AppCompatActivity) {
-                    if (actionMode == null) {
-                        actionMode =
-                            (activity as AppCompatActivity).startSupportActionMode(
-                                actionModeCallBack
-                            )
-                    }
-                }
-                selectDictionary(dictionary)
-            }
-        }
-    }
-
-    private fun selectDictionary(dictionary: Dictionary) {
-        dictionariesAdapter?.selectDictionary(dictionary)
-        val selectedDictionaryCount = dictionariesAdapter?.getSelectedDictionariesCount() ?: 0
-        actionMode?.title =
-            "$selectedDictionaryCount ${getString(R.string.selected).uppercase()}"
-        menuEdit?.isVisible = selectedDictionaryCount <= 1
-        if (selectedDictionaryCount < 1) {
-            actionMode?.finish()
-            actionMode = null
-            menuEdit = null
-            dictionariesAdapter?.clearSelectedDevices()
-        }
-    }
-
     private val onItemSwipedListener = object : OnItemSwipedListener {
         override fun onSwiped(position: Int) {
-            dictionariesAdapter?.temporaryRemoveItem(position)
-            undoRemoveDictionarySnackbar = Snackbar.make(
-                dictionariesRecyclerView,
+            wordsAdapter?.temporaryRemoveItem(position)
+            undoRemoveWordSnackbar = Snackbar.make(
+                wordsRecyclerView,
                 R.string.seconds,
                 Snackbar.LENGTH_INDEFINITE
             )
                 .setDuration(UNDO_SNACKBAR_DURATION)
                 .setAction(R.string.undo) {
-                    dictionariesAdapter?.undoRemovedItem()
+                    wordsAdapter?.undoRemovedItem()
                 }
-            undoRemoveDictionarySnackbar?.show()
-            undoRemoveDictionaryTimer.start()
+            undoRemoveWordSnackbar?.show()
+            undoRemoveWordTimer.start()
         }
     }
 
@@ -302,9 +256,9 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 }
 
                 R.id.menu_delete -> {
-                    viewModel.deleteDictionaries(
+                    viewModel.deleteWords(
                         context,
-                        dictionariesAdapter?.getSelectedDictionaries()
+                        wordsAdapter?.getSelectedWords()
                     )
                     true
                 }
@@ -314,14 +268,58 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         }
 
         override fun onDestroyActionMode(mode: ActionMode?) {
-            dictionariesAdapter?.clearSelectedDevices()
+            wordsAdapter?.clearSelectedWords()
             actionMode = null
+        }
+    }
+
+    private val onWordsClickListener = object : OnListItemClickListener {
+        override fun onListItemClick(childView: View) {
+            wordsAdapter?.getItemByPosition(
+                wordsRecyclerView.getChildAdapterPosition(childView)
+            )?.let { word ->
+                if (actionMode == null) {
+                    //navigate to word detail screen
+                } else {
+                    selectWord(word)
+                }
+            }
+        }
+
+        override fun onListItemLongClick(childView: View) {
+            wordsAdapter?.getItemByPosition(
+                wordsRecyclerView.getChildAdapterPosition(childView)
+            )?.let { word ->
+                if (activity != null && activity is AppCompatActivity) {
+                    if (actionMode == null) {
+                        actionMode =
+                            (activity as AppCompatActivity).startSupportActionMode(
+                                actionModeCallBack
+                            )
+                    }
+                }
+                selectWord(word)
+            }
+        }
+    }
+
+    private fun selectWord(word: Word) {
+        wordsAdapter?.selectWord(word)
+        val selectedDictionaryCount = wordsAdapter?.getSelectedWordsCount() ?: 0
+        actionMode?.title =
+            "$selectedDictionaryCount ${getString(R.string.selected).uppercase()}"
+        menuEdit?.isVisible = selectedDictionaryCount <= 1
+        if (selectedDictionaryCount < 1) {
+            actionMode?.finish()
+            actionMode = null
+            menuEdit = null
+            wordsAdapter?.clearSelectedWords()
         }
     }
 
     override fun onStop() {
         Log.d(TAG, "onStop()")
-        undoRemoveDictionarySnackbar?.dismiss()
+        undoRemoveWordSnackbar?.dismiss()
         super.onStop()
     }
 }
