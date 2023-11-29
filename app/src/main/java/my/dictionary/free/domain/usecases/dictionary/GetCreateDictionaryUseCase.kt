@@ -75,6 +75,41 @@ class GetCreateDictionaryUseCase @Inject constructor(
             }
     }
 
+    suspend fun getDictionaryById(context: Context, dictionaryId: String): Flow<Dictionary> {
+            val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
+            if (userId.isNullOrEmpty()) {
+                return emptyFlow()
+            } else {
+                val allLanguages = languagesUseCase.getLanguages(context)
+                return databaseRepository.getDictionaryById(userId, dictionaryId)
+                    .map { dict ->
+                        val foundLanguageFrom = allLanguages.find { it.key == dict.langFrom }
+                        val foundLanguageTo = allLanguages.find { it.key == dict.langTo }
+                        return@map Dictionary(
+                            _id = dict._id,
+                            userUUID = dict.userUUID,
+                            dictionaryFrom = DictionaryItem(
+                                lang = dict.langFrom,
+                                langFull = foundLanguageFrom?.value,
+                                flag = Flags(
+                                    png = foundLanguageFrom?.flags?.png ?: "",
+                                    svg = foundLanguageFrom?.flags?.svg ?: ""
+                                )
+                            ),
+                            dictionaryTo = DictionaryItem(
+                                lang = dict.langTo,
+                                langFull = foundLanguageTo?.value,
+                                flag = Flags(
+                                    png = foundLanguageTo?.flags?.png ?: "",
+                                    svg = foundLanguageTo?.flags?.svg ?: ""
+                                )
+                            ),
+                            dialect = dict.dialect
+                        )
+                    }
+            }
+    }
+
     suspend fun deleteDictionaries(dictionaries: List<Dictionary>): Pair<Boolean, String?> {
         val userId =
             preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)

@@ -14,6 +14,7 @@ import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import my.dictionary.free.domain.usecases.users.GetUpdateUsersUseCase
+import my.dictionary.free.domain.usecases.words.WordsUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
 import javax.inject.Singleton
 
@@ -37,6 +38,14 @@ object MainActivityModule {
     @Provides
     fun provideGetDictionaryLanguagesUseCase(): GetDictionaryLanguagesUseCase {
         return GetDictionaryLanguagesUseCase()
+    }
+
+    @Provides
+    fun provideWordsUseCase(
+        databaseRepository: DatabaseRepository,
+        preferenceUtils: PreferenceUtils
+    ): WordsUseCase {
+        return WordsUseCase(databaseRepository, preferenceUtils)
     }
 
     @Provides

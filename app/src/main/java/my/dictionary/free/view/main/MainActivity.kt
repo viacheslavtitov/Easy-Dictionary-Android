@@ -11,6 +11,9 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -23,14 +26,19 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
+import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.splash.SplashActivity
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
+import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import java.util.*
 
 @AndroidEntryPoint
@@ -90,6 +98,10 @@ class MainActivity : AbstractBaseActivity() {
                     toolbar.setTitle(R.string.add_language)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
+                R.id.dictionaryWordsFragment -> {
+                    toolbar.setTitle(R.string.words)
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
                 R.id.simpleFragment -> {
                     toolbar.title = "Home"
                     toolbar.menu.clear()
@@ -130,6 +142,18 @@ class MainActivity : AbstractBaseActivity() {
                 is AddUserDictionaryScreen -> {
                     navController.navigate(R.id.action_userDictionaryFragment_to_addUserDictionaryFragment)
                 }
+                is DictionaryWordsScreen -> {
+                    val bundle = Bundle().apply {
+                        putString(DictionaryWordsFragment.BUNDLE_DICTIONARY_ID, navigation.dictionary._id)
+                    }
+                    navController.navigate(R.id.action_userDictionaryFragment_to_dictionaryWordsFragment, bundle)
+                }
+                is AddDictionaryWordScreen -> {
+//                    val bundle = Bundle().apply {
+//                        putString(DictionaryWordsFragment.BUNDLE_DICTIONARY_ID, navigation.dictionary._id)
+//                    }
+//                    navController.navigate(R.id.action_userDictionaryFragment_to_dictionaryWordsFragment, bundle)
+                }
             }
         }
         sharedViewModel.userEmailValue.observe(this) { email ->
@@ -144,7 +168,15 @@ class MainActivity : AbstractBaseActivity() {
                 .placeholder(R.drawable.ic_baseline_account_circle_24)
                 .into(userLogo)
         }
-
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                sharedViewModel.toolbarTitleUIState.drop(1).collect { title ->
+                    if(!title.isNullOrEmpty()) {
+                        toolbar.title = title
+                    }
+                }
+            }
+        }
         sharedViewModel.loadUserData()
     }
 

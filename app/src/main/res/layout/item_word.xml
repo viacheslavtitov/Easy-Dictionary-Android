@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="1dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="9dp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/original_word"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:textColor="@color/main_text"
+        android:textStyle="bold"
+        android:textSize="16dp"
+        tools:text="Hello" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/translated_word"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:textColor="@color/main_text"
+        android:paddingLeft="9dp"
+        android:textSize="16dp"
+        tools:text="- Привіт..." />
+</androidx.appcompat.widget.LinearLayoutCompat>
