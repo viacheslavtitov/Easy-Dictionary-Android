@@ -70,6 +70,7 @@
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
         <item name="android:textColor">@color/main_text</item>
+        <item name="endIconTint">@color/main_dark</item>
     </style>
 
     <style name="Widget.TextInputEditText.OutlinedBox" parent="@style/Widget.Material3.TextInputEditText.OutlinedBox">

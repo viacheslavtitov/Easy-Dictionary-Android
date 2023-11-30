@@ -39,6 +39,7 @@ import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.splash.SplashActivity
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
+import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
 import java.util.*
 
 @AndroidEntryPoint
@@ -149,10 +150,10 @@ class MainActivity : AbstractBaseActivity() {
                     navController.navigate(R.id.action_userDictionaryFragment_to_dictionaryWordsFragment, bundle)
                 }
                 is AddDictionaryWordScreen -> {
-//                    val bundle = Bundle().apply {
-//                        putString(DictionaryWordsFragment.BUNDLE_DICTIONARY_ID, navigation.dictionary._id)
-//                    }
-//                    navController.navigate(R.id.action_userDictionaryFragment_to_dictionaryWordsFragment, bundle)
+                    val bundle = Bundle().apply {
+                        putString(AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID, navigation.dictionaryId)
+                    }
+                    navController.navigate(R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment, bundle)
                 }
             }
         }
