@@ -54,5 +54,19 @@
             android:name="my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment.BUNDLE_DICTIONARY_ID"
             android:defaultValue="null"
             app:argType="string" />
+        <action
+            android:id="@+id/action_dictionaryWordsFragment_to_addDictionaryWordFragment"
+            app:destination="@id/addDictionaryWordFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addDictionaryWordFragment"
+        android:name="my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment"
+        android:label="@string/words"
+        tools:layout="@layout/fragment_dictionary_words" >
+        <argument
+            android:name="my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID"
+            android:defaultValue="null"
+            app:argType="string" />
     </fragment>
 </navigation>

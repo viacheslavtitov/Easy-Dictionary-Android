@@ -39,6 +39,9 @@
     <!-- Words -->
     <string name="words">Words</string>
     <string name="error_load_data">Something was wrong to load data</string>
+    <string name="tap_your_word">Tap to add your word here</string>
+    <string name="tap_to_add_phonetics">Tap to add phonetics</string>
+    <string name="translation_variants">Translation variants</string>
 
     <string name="menu_drawer_open">DrawerOpen</string>
     <string name="menu_drawer_closed">DrawerClosed</string>
