@@ -283,7 +283,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     _id = key,
                     dictionaryId = word.dictionaryId,
                     original = word.original,
-                    transcription = word.transcription
+                    phonetic = word.phonetic
                 )
                 val childUpdates = hashMapOf<String, Any>(
                     "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${word.dictionaryId}/${WordTable._NAME}/$key" to table.toMap()
@@ -357,7 +357,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             _id = map[WordTable._ID] as String?,
                             dictionaryId = map[WordTable.DICTIONARY_ID] as String,
                             original = map[WordTable.ORIGINAL] as String,
-                            transcription = map[WordTable.TRANSCRIPTION] as String
+                            phonetic = map[WordTable.PHONETIC] as String
                         )
                         trySend(word)
                     }

@@ -4,7 +4,7 @@ data class Word(
     val _id: String? = null,
     val dictionaryId: String,
     val original: String,
-    val transcription: String? = null,
+    val phonetic: String? = null,
     val translates: List<TranslateVariant>
 ) {
     companion object {
@@ -12,7 +12,7 @@ data class Word(
             _id = null,
             dictionaryId = "",
             original = "",
-            transcription = null,
+            phonetic = null,
             translates = emptyList()
         )
     }

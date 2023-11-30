@@ -103,6 +103,10 @@ class MainActivity : AbstractBaseActivity() {
                     toolbar.setTitle(R.string.words)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
+                R.id.addDictionaryWordFragment -> {
+                    toolbar.setTitle(R.string.add_word)
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
                 R.id.simpleFragment -> {
                     toolbar.title = "Home"
                     toolbar.menu.clear()
