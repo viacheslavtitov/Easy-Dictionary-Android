@@ -6,14 +6,14 @@ data class WordTable(
     val _id: String? = null,
     val dictionaryId: String,
     val original: String,
-    val transcription: String? = null
+    val phonetic: String? = null
 ) {
     companion object {
         const val _NAME = "word"
         const val _ID = "id"
         const val DICTIONARY_ID = "dictionaryId"
         const val ORIGINAL = "original"
-        const val TRANSCRIPTION = "transcription"
+        const val PHONETIC = "phonetic"
     }
 
     @Exclude
@@ -22,11 +22,11 @@ data class WordTable(
             _ID to _id,
             DICTIONARY_ID to dictionaryId,
             ORIGINAL to original,
-            TRANSCRIPTION to transcription,
+            PHONETIC to phonetic,
         )
     }
 
     override fun equals(other: Any?): Boolean {
-        return other != null && other is WordTable && _id == other._id && dictionaryId == other.dictionaryId && original == other.original && transcription == other.transcription
+        return other != null && other is WordTable && _id == other._id && dictionaryId == other.dictionaryId && original == other.original && phonetic == other.phonetic
     }
 }
