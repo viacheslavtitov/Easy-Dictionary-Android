@@ -58,9 +58,9 @@ class WordsUseCase @Inject constructor(
         }
     }
 
-    suspend fun getPhonetics(context: Context): List<String> {
+    suspend fun getPhonetics(context: Context, langCode: String): List<String> {
         val languageType =
-            LanguageType.values().firstOrNull { it.name == Locale.getDefault().language }
+            LanguageType.values().firstOrNull { it.name == langCode }
                 ?: LanguageType.EN
         var phoneticFileName = when (languageType) {
             LanguageType.EN -> "phonetic_en.json"

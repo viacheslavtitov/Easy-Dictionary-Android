@@ -2,8 +2,10 @@ package my.dictionary.free.view.user.dictionary.words.add
 
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.OnFocusChangeListener
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -11,6 +13,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.Slide
+import androidx.transition.Transition
+import androidx.transition.TransitionManager
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
@@ -22,7 +27,10 @@ import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
-import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
+import my.dictionary.free.view.ext.hideKeyboard
+import my.dictionary.free.view.widget.phonetic.OnPhoneticClickListener
+import my.dictionary.free.view.widget.phonetic.PhoneticsView
+
 
 @AndroidEntryPoint
 class AddDictionaryWordFragment : AbstractBaseFragment() {
@@ -31,6 +39,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         private val TAG = AddDictionaryWordFragment::class.simpleName
         const val BUNDLE_DICTIONARY_ID =
             "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID"
+        private const val PHONETICS_ANIMATION_TIME: Long = 400
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -41,8 +50,11 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
     private lateinit var textInputEditTextWord: TextInputEditText
     private lateinit var textInputLayoutPhonetic: TextInputLayout
     private lateinit var textInputEditTextPhonetic: TextInputEditText
+    private lateinit var phoneticsView: PhoneticsView
+    private lateinit var rootView: ViewGroup
 
     private var dictionaryId: String? = null
+    private var phonetics: List<String>? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,12 +67,44 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         textInputEditTextWord = view.findViewById(R.id.edit_text_word)
         textInputLayoutPhonetic = view.findViewById(R.id.text_input_phonetic)
         textInputEditTextPhonetic = view.findViewById(R.id.edit_text_phonetic)
+        phoneticsView = view.findViewById(R.id.phonetic_view)
+        rootView = view.findViewById(R.id.root)
+        phoneticsView.setOnClickListener(phoneticClickListener)
         view.findViewById<View>(R.id.add_variants_container).setOnClickListener {
-
+            context?.hideKeyboard(textInputEditTextWord)
+            context?.hideKeyboard(textInputEditTextPhonetic)
+            if (!phonetics.isNullOrEmpty()) {
+                togglePhoneticsView(false)
+            }
         }
         textInputLayoutPhonetic.setEndIconOnClickListener {
-
+            context?.hideKeyboard(textInputEditTextWord)
+            context?.hideKeyboard(textInputEditTextPhonetic)
+            if (!phonetics.isNullOrEmpty()) {
+                togglePhoneticsView(phoneticsView.visibility == View.GONE)
+            } else {
+                displayError(
+                    getString(R.string.error_not_found_phonetics),
+                    translationsRecyclerView
+                )
+            }
         }
+        textInputEditTextWord.onFocusChangeListener =
+            OnFocusChangeListener { view, focused ->
+                if (focused) {
+                    if (!phonetics.isNullOrEmpty()) {
+                        togglePhoneticsView(false)
+                    }
+                }
+            }
+        textInputEditTextPhonetic.onFocusChangeListener =
+            OnFocusChangeListener { view, focused ->
+                if (focused) {
+                    if (!phonetics.isNullOrEmpty()) {
+                        togglePhoneticsView(false)
+                    }
+                }
+            }
         return view
     }
 
@@ -80,8 +124,9 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.phoneticsUIState.drop(1).collectLatest { phonetics ->
-                        Log.d(TAG, "phonetics updated: ${phonetics.size}")
+                    viewModel.phoneticsUIState.drop(1).collectLatest { phoneticList ->
+                        Log.d(TAG, "phonetics updated: ${phoneticList.size}")
+                        phonetics = phoneticList
                     }
                 }
             }
@@ -99,4 +144,45 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         viewModel.loadData(context, dictionaryId)
     }
 
+    private fun togglePhoneticsView(show: Boolean) {
+        if (show && phoneticsView.visibility == View.VISIBLE) return
+        if (!show && phoneticsView.visibility == View.GONE) return
+        val transition: Transition = Slide(Gravity.BOTTOM)
+        transition.duration = PHONETICS_ANIMATION_TIME
+        transition.addTarget(R.id.phonetic_view)
+        transition.addListener(object : Transition.TransitionListener {
+            override fun onTransitionStart(transition: Transition) {
+            }
+
+            override fun onTransitionEnd(transition: Transition) {
+                phonetics?.let {
+                    phoneticsView.setPhonetics(it)
+                }
+            }
+
+            override fun onTransitionCancel(transition: Transition) {
+            }
+
+            override fun onTransitionPause(transition: Transition) {
+            }
+
+            override fun onTransitionResume(transition: Transition) {
+            }
+
+        })
+        TransitionManager.beginDelayedTransition(rootView, transition)
+        phoneticsView.visibility = if (show) View.VISIBLE else View.GONE
+    }
+
+    private val phoneticClickListener = object : OnPhoneticClickListener {
+        override fun onPhoneticClick(position: Int, symbol: String) {
+            val cursorPosition = textInputEditTextPhonetic.selectionStart
+            val oldText = textInputEditTextPhonetic.text?.toString() ?: ""
+            val textBeforeCursor = oldText.substring(0, cursorPosition)
+            val textAfterCursor = oldText.substring(cursorPosition, oldText.length)
+            val newText = "$textBeforeCursor$symbol$textAfterCursor"
+            textInputEditTextPhonetic.setText(newText)
+            textInputEditTextPhonetic.setSelection(cursorPosition + 1)
+        }
+    }
 }

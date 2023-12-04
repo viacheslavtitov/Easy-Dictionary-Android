@@ -71,16 +71,16 @@ class AddDictionaryWordViewModel @Inject constructor(
                     dictionary = it
                 }
         }.invokeOnCompletion {
-            loadPhonetic(context)
+            loadPhonetic(context, dictionary)
         }
     }
 
-    private fun loadPhonetic(context: Context) {
-        viewModelScope.launch {
-            val phonetics = wordsUseCase.getPhonetics(context)
-            Log.d(TAG, "found phonetics count ${phonetics.size}")
-            phonetics.forEach {
-                Log.d(TAG, it)
+    private fun loadPhonetic(context: Context, dictionary: Dictionary?) {
+        dictionary?.let {dict ->
+            viewModelScope.launch {
+                val phonetics = wordsUseCase.getPhonetics(context, dict.dictionaryFrom.lang)
+                Log.d(TAG, "found phonetics count ${phonetics.size}")
+                _phoneticsUIState.value = phonetics
             }
         }
     }
