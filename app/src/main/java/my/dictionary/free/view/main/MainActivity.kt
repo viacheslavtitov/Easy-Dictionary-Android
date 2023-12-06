@@ -222,7 +222,7 @@ class MainActivity : AbstractBaseActivity() {
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                sharedViewModel.toolbarTitleUIState.drop(1).collect { title ->
+                sharedViewModel.toolbarTitleUIState.collect { title ->
                     if (!title.isNullOrEmpty()) {
                         toolbar.title = title
                     }

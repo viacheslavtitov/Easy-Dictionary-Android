@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,11 +15,13 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
+import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import javax.inject.Inject
 
 @HiltViewModel
@@ -52,11 +55,12 @@ class DictionaryWordsViewModel @Inject constructor(
         MutableStateFlow("")
     val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
 
-    private var dictionary: Dictionary? = null
+    val titleUIState: MutableSharedFlow<String> = MutableSharedFlow(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
-    private val _titleUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val titleUIState: StateFlow<String> = _titleUIState.asStateFlow()
+    private var dictionary: Dictionary? = null
 
     fun loadWords(context: Context?, dictionaryId: String?) {
         if (context == null) return
@@ -90,7 +94,7 @@ class DictionaryWordsViewModel @Inject constructor(
                     wordsUIState.tryEmit(it)
                 }
         }.invokeOnCompletion {
-            if(dictionary == null) {
+            if (dictionary == null) {
                 viewModelScope.launch {
                     getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
                         .catch {
@@ -112,15 +116,42 @@ class DictionaryWordsViewModel @Inject constructor(
                                 "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
                             )
                             dictionary = it
-                            _titleUIState.value = "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
+                            titleUIState.tryEmit(
+                                "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
+                            )
                         }
+                }
+            } else {
+                dictionary?.let {
+                    titleUIState.tryEmit(
+                        "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
+                    )
                 }
             }
         }
     }
 
     fun deleteWords(context: Context?, words: List<Word>?) {
-
+        if (context == null || words.isNullOrEmpty()) return
+        val dictionaryId = dictionary?._id ?: return
+        Log.d(TAG, "deleteWords(${words.size})")
+        viewModelScope.launch {
+            _loadingUIState.value = true
+            val result = wordsUseCase.deleteWords(dictionaryId, words)
+            _clearActionModeUIState.value = true
+            _loadingUIState.value = false
+            Log.d(TAG, "delete result is ${result.first}")
+            if (!result.first) {
+                val error =
+                    result.second ?: context.getString(R.string.error_delete_word)
+                _displayErrorUIState.value = error
+            } else {
+                _shouldClearWordsUIState.value = true
+            }
+            _clearActionModeUIState.value = true
+        }.invokeOnCompletion {
+            loadWords(context, dictionaryId)
+        }
     }
 
 }

@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
+import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
 import my.dictionary.free.view.widget.OnItemSwipedListener
 
 class SwipeDictionaryItem(
@@ -43,6 +44,9 @@ class SwipeDictionaryItem(
         if(direction == ItemTouchHelper.LEFT) {
             when(viewHolder) {
                 is UserDictionaryAdapter.ViewHolder -> {
+                    onItemSwipedListener.onSwiped(viewHolder.swipePosition)
+                }
+                is DictionaryWordsAdapter.ViewHolder -> {
                     onItemSwipedListener.onSwiped(viewHolder.swipePosition)
                 }
             }

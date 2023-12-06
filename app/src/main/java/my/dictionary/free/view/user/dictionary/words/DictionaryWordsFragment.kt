@@ -166,7 +166,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.titleUIState.drop(1).collectLatest { title ->
+                    viewModel.titleUIState.collect { title ->
                         Log.d(TAG, "set title: $title")
                         sharedViewModel.setTitle(title)
                     }
@@ -222,6 +222,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
 
     private val onItemSwipedListener = object : OnItemSwipedListener {
         override fun onSwiped(position: Int) {
+            Log.d(TAG, "swipe item by position $position")
             wordsAdapter?.temporaryRemoveItem(position)
             undoRemoveWordSnackbar = Snackbar.make(
                 wordsRecyclerView,
