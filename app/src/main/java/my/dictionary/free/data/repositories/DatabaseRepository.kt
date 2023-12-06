@@ -14,12 +14,12 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.dictionary.DictionaryTable
+import my.dictionary.free.data.models.words.variants.TranslationCategoryTable
 import my.dictionary.free.data.models.users.UsersTable
 import my.dictionary.free.data.models.words.WordTable
-import my.dictionary.free.data.models.words.variants.TranslateVariantTable
+import my.dictionary.free.data.models.words.variants.TranslationVariantTable
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.utils.PreferenceUtils
-import java.lang.NullPointerException
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -165,6 +165,69 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun createCategory(
+        userId: String,
+        category: TranslationCategoryTable
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val categoryKey = reference.child(TranslationCategoryTable._NAME).push().key
+            if (categoryKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            categoryKey?.let { key ->
+                val table = TranslationCategoryTable(
+                    _id = key,
+                    userUUID = category.userUUID,
+                    categoryName = category.categoryName
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${TranslationCategoryTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun createTranslation(
+        userId: String,
+        dictionaryId: String,
+        translation: TranslationVariantTable
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val translationKey = reference.child(TranslationVariantTable._NAME).push().key
+            if (translationKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            translationKey?.let { key ->
+                val table = TranslationVariantTable(
+                    _id = key,
+                    wordId = translation.wordId,
+                    categoryId = translation.categoryId,
+                    translate = translation.translate,
+                    description = translation.description,
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${WordTable._NAME}/${translation.wordId}/${TranslationVariantTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
     suspend fun getDictionariesByUserUUID(
         userId: String,
     ): Flow<DictionaryTable> {
@@ -185,6 +248,41 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             dialect = map[DictionaryTable.DIALECT] as String
                         )
                         trySend(dictionary)
+                    }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getCategories(
+        userId: String,
+    ): Flow<TranslationCategoryTable> {
+        Log.d(TAG, "getCategories")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(TranslationCategoryTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val category = TranslationCategoryTable(
+                            _id = map[TranslationCategoryTable._ID] as String?,
+                            userUUID = map[TranslationCategoryTable.USER_UUID] as String,
+                            categoryName = map[TranslationCategoryTable.CATEGORY_NAME] as String
+                        )
+                        trySend(category)
                     }
                     close()
                 }
@@ -268,15 +366,34 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun deleteWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            childRemoves["/${WordTable._NAME}/$wordId"] = null
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME).child(dictionaryId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
     suspend fun createWord(
         userId: String,
         word: Word
-    ): Pair<Boolean, String?> {
+    ): Triple<Boolean, String?, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
             val wordKey = reference.child(WordTable._NAME).push().key
             if (wordKey == null) {
-                cont.resume(Pair(false, null))
+                cont.resume(Triple(false, null, null))
             }
             wordKey?.let { key ->
                 val table = WordTable(
@@ -289,11 +406,11 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${word.dictionaryId}/${WordTable._NAME}/$key" to table.toMap()
                 )
                 reference.updateChildren(childUpdates).addOnSuccessListener {
-                    cont.resume(Pair(true, null))
+                    cont.resume(Triple(true, null, wordKey))
                 }.addOnFailureListener {
-                    cont.resume(Pair(false, it.message))
+                    cont.resume(Triple(false, it.message, null))
                 }.addOnCanceledListener {
-                    cont.resume(Pair(false, null))
+                    cont.resume(Triple(false, null, null))
                 }
             }
         }
@@ -303,23 +420,24 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         userId: String,
         dictionaryId: String,
         wordId: String
-    ): Flow<List<TranslateVariantTable>> {
+    ): Flow<List<TranslationVariantTable>> {
         Log.d(TAG, "getTranslationVariantByWordId")
         return callbackFlow {
             val reference = database.reference.child(UsersTable._NAME).child(userId)
                 .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
-                .child(wordId).child(TranslateVariantTable._NAME)
+                .child(wordId).child(TranslationVariantTable._NAME)
             val valueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     Log.d(TAG, "onDataChange ${snapshot.children.count()}")
-                    val translations = arrayListOf<TranslateVariantTable>()
+                    val translations = arrayListOf<TranslationVariantTable>()
                     snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
-                        val translateVariant = TranslateVariantTable(
-                            _id = map[TranslateVariantTable._ID] as String?,
-                            translate = map[TranslateVariantTable.TRANSLATE] as String,
-                            description = map[TranslateVariantTable.DESCRIPTION] as String,
-                            wordId = map[TranslateVariantTable.WORD_ID] as String
+                        val translateVariant = TranslationVariantTable(
+                            _id = map[TranslationVariantTable._ID] as String?,
+                            translate = map[TranslationVariantTable.TRANSLATE] as String,
+                            description = map[TranslationVariantTable.DESCRIPTION] as String?,
+                            wordId = map[TranslationVariantTable.WORD_ID] as String,
+                            categoryId = map[TranslationVariantTable.CATEGORY_ID] as String?,
                         )
                         translations.add(translateVariant)
                     }

@@ -42,15 +42,34 @@
                 android:textStyle="bold"
                 tools:text="Error" />
 
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/description"
-                android:layout_width="wrap_content"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/text_input_layout"
+                style="@style/Widget.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:textColor="@color/secondary_text"
-                android:textSize="16dp"
-                android:textStyle="normal"
-                tools:text="Some text" />
+                android:layout_marginTop="9dp"
+                android:textColorHint="@color/gray_500">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_text_layout"
+                    style="@style/Widget.TextInputEditText.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:minHeight="48dp"
+                    android:paddingRight="48dp"
+                    tools:ignore="SpeakableTextPresentCheck" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/description"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:textColor="@color/secondary_text"
+                    android:textSize="16dp"
+                    android:textStyle="normal"
+                    tools:text="Some text" />
+            </com.google.android.material.textfield.TextInputLayout>
         </androidx.appcompat.widget.LinearLayoutCompat>
     </androidx.appcompat.widget.LinearLayoutCompat>
 
@@ -68,9 +87,9 @@
             android:id="@+id/btn_cancel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:gravity="center"
             android:padding="24dp"
-            android:layout_weight="1"
             android:textAllCaps="true"
             android:textColor="@color/secondary_text"
             android:textSize="18dp"
@@ -81,9 +100,9 @@
             android:id="@+id/btn_ok"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:gravity="center"
             android:padding="24dp"
-            android:layout_weight="1"
             android:textAllCaps="true"
             android:textColor="@color/secondary_text"
             android:textSize="18dp"

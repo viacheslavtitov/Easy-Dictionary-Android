@@ -10,12 +10,11 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.language.LanguageType
-import my.dictionary.free.domain.models.words.TranslateVariant
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.utils.PreferenceUtils
 import my.dictionary.free.view.ext.toUnicode
 import java.io.IOException
-import java.util.Locale
 import javax.inject.Inject
 
 class WordsUseCase @Inject constructor(
@@ -27,13 +26,30 @@ class WordsUseCase @Inject constructor(
         private val TAG = WordsUseCase::class.simpleName
     }
 
+    /**
+     * @return first - if true word was created success
+     * @return second - error message exists if respond returns error
+     * @return third - created word id
+     */
+    suspend fun createWord(word: Word): Triple<Boolean, String?, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Triple(false, null, null)
+        return databaseRepository.createWord(userId, word)
+    }
+
+    suspend fun deleteWord(word: Word): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.deleteWord(userId, word.dictionaryId, word._id!!)
+    }
+
     suspend fun getWordsByDictionaryId(dictionaryId: String): Flow<Word> {
         val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
         if (userId.isNullOrEmpty()) {
             return emptyFlow()
         } else {
             return databaseRepository.getWordsByDictionaryId(userId, dictionaryId)
-                .map {table ->
+                .map { table ->
                     return@map Word(
                         _id = table._id,
                         dictionaryId = table.dictionaryId,
@@ -43,17 +59,21 @@ class WordsUseCase @Inject constructor(
                     )
                 }
                 .map {
-                    val translations = databaseRepository.getTranslationVariantByWordId(userId, dictionaryId, it._id ?: "").firstOrNull()
-                    it.translates.toMutableList().also {translates ->
-                        translations?.forEach {
-                            translates.add(TranslateVariant(
-                                _id = it._id,
-                                translate = it.translate,
-                                description = it.description,
-                            ))
-                        }
+                    val converted : MutableList<TranslationVariant> = mutableListOf()
+                    val translations = databaseRepository.getTranslationVariantByWordId(
+                        userId,
+                        dictionaryId,
+                        it._id ?: ""
+                    ).firstOrNull()?.forEach {
+                        converted.add(TranslationVariant(
+                            _id = it._id,
+                            wordId = it.wordId,
+                            categoryId = it.categoryId,
+                            example = it.description,
+                            translation = it.translate
+                        ))
                     }
-                    return@map it
+                    return@map it.copyWithNewTranslations(converted)
                 }
         }
     }

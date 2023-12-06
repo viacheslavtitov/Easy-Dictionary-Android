@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
+import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
@@ -40,6 +41,7 @@ import my.dictionary.free.view.splash.SplashActivity
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
+import my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment
 import java.util.*
 
 @AndroidEntryPoint
@@ -91,22 +93,32 @@ class MainActivity : AbstractBaseActivity() {
                     toolbar.setTitle(R.string.my_dictionaries)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
+
                 R.id.addUserDictionaryFragment -> {
                     toolbar.setTitle(R.string.add_dictionary)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
+
                 R.id.languagesFragment -> {
                     toolbar.setTitle(R.string.add_language)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
+
                 R.id.dictionaryWordsFragment -> {
                     toolbar.setTitle(R.string.words)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
+
                 R.id.addDictionaryWordFragment -> {
                     toolbar.setTitle(R.string.add_word)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
+
+                R.id.addTranslationVariant -> {
+                    toolbar.setTitle(R.string.add_translation_variants)
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
+
                 R.id.simpleFragment -> {
                     toolbar.title = "Home"
                     toolbar.menu.clear()
@@ -128,6 +140,7 @@ class MainActivity : AbstractBaseActivity() {
                 R.id.nav_settings -> {
 
                 }
+
                 R.id.nav_user_dictionary -> {
                     navController.navigate(R.id.userDictionaryFragment)
                 }
@@ -140,24 +153,58 @@ class MainActivity : AbstractBaseActivity() {
             when (navigation) {
                 is LanguagesScreen -> {
                     val bundle = Bundle().apply {
-                        putInt(LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY, navigation.langType.ordinal)
+                        putInt(
+                            LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY,
+                            navigation.langType.ordinal
+                        )
                     }
-                    navController.navigate(R.id.action_addUserDictionaryFragment_to_languagesFragment, bundle)
+                    navController.navigate(
+                        R.id.action_addUserDictionaryFragment_to_languagesFragment,
+                        bundle
+                    )
                 }
+
                 is AddUserDictionaryScreen -> {
                     navController.navigate(R.id.action_userDictionaryFragment_to_addUserDictionaryFragment)
                 }
+
                 is DictionaryWordsScreen -> {
                     val bundle = Bundle().apply {
-                        putString(DictionaryWordsFragment.BUNDLE_DICTIONARY_ID, navigation.dictionary._id)
+                        putString(
+                            DictionaryWordsFragment.BUNDLE_DICTIONARY_ID,
+                            navigation.dictionary._id
+                        )
                     }
-                    navController.navigate(R.id.action_userDictionaryFragment_to_dictionaryWordsFragment, bundle)
+                    navController.navigate(
+                        R.id.action_userDictionaryFragment_to_dictionaryWordsFragment,
+                        bundle
+                    )
                 }
+
                 is AddDictionaryWordScreen -> {
                     val bundle = Bundle().apply {
-                        putString(AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID, navigation.dictionaryId)
+                        putString(
+                            AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID,
+                            navigation.dictionaryId
+                        )
                     }
-                    navController.navigate(R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment, bundle)
+                    navController.navigate(
+                        R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment,
+                        bundle
+                    )
+                }
+
+                is AddTranslationVariantsScreen -> {
+                    val bundle = Bundle().apply {
+                        putString(
+                            AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
+                            navigation.word
+                        )
+                    }
+                    navController.navigate(
+                        R.id.action_addDictionaryWordFragment_to_addTranslationVariant,
+                        bundle
+                    )
                 }
             }
         }
@@ -176,7 +223,7 @@ class MainActivity : AbstractBaseActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 sharedViewModel.toolbarTitleUIState.drop(1).collect { title ->
-                    if(!title.isNullOrEmpty()) {
+                    if (!title.isNullOrEmpty()) {
                         toolbar.title = title
                     }
                 }

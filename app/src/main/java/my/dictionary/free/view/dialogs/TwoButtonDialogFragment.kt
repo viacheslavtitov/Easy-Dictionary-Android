@@ -8,12 +8,12 @@ import androidx.appcompat.widget.AppCompatTextView
 import my.dictionary.free.R
 import my.dictionary.free.view.ext.visible
 
-class TwoButtonDialogFragment(
+open class TwoButtonDialogFragment(
     override val listener: TwoButtonsDialogListener? = null
 ) : SimpleInfoDialogFragment(listener) {
 
     companion object {
-        private const val BUNDLE_BUTTON_CANCEL_TITLE =
+        const val BUNDLE_BUTTON_CANCEL_TITLE =
             "my.dictionary.free.view.dialogs.TwoButtonDialogFragment.BUNDLE_BUTTON_CANCEL_TITLE"
 
         fun create(

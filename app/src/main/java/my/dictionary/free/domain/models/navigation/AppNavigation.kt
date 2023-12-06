@@ -11,3 +11,4 @@ class AddUserDictionaryScreen() : AppNavigation()
 
 class DictionaryWordsScreen(val dictionary: Dictionary) : AppNavigation()
 class AddDictionaryWordScreen(val dictionaryId: String) : AppNavigation()
+class AddTranslationVariantsScreen(val word: String?) : AppNavigation()

@@ -102,4 +102,56 @@ class DialogBuilders {
             )
         }
     }
+
+    object InputDialogBuilder : AbstractDialogBuilder(), IInputDialogBuilder {
+
+        private var buttonCancelTitle: String? = null
+
+        override fun cancelButtonTitle(cancelButtonTitle: String?): IInputDialogBuilder {
+            this.buttonCancelTitle = cancelButtonTitle
+            return this
+        }
+
+        override fun listener(listener: InputDialogListener?): IInputDialogBuilder {
+            this.listener = listener
+            return this
+        }
+
+        override fun listener(listener: TwoButtonsDialogListener?): ITwoButtonDialogBuilder {
+            this.listener = listener
+            return this
+        }
+
+        override fun title(title: String?): IInputDialogBuilder {
+            return super.title(title) as IInputDialogBuilder
+        }
+
+        override fun description(description: String?): IInputDialogBuilder {
+            return super.description(description) as IInputDialogBuilder
+        }
+
+        override fun okButtonTitle(okButtonTitle: String?): IInputDialogBuilder {
+            return super.okButtonTitle(okButtonTitle) as IInputDialogBuilder
+        }
+
+        override fun iconRes(iconRes: Int?): IInputDialogBuilder {
+            return super.iconRes(iconRes) as IInputDialogBuilder
+        }
+
+        override fun iconTintColorRes(iconTintColorRes: Int?): IInputDialogBuilder {
+            return super.iconTintColorRes(iconTintColorRes) as IInputDialogBuilder
+        }
+
+        override fun build(): InputDialogFragment {
+            return InputDialogFragment.create(
+                title = title,
+                description = description,
+                iconRes = iconRes,
+                iconTintColorRes = iconTintColorRes,
+                buttonOkTitle = okButtonTitle,
+                buttonCancelTitle = buttonCancelTitle,
+                listener = listener as InputDialogListener?
+            )
+        }
+    }
 }

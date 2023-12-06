@@ -8,10 +8,13 @@ import android.view.View
 import android.view.View.OnFocusChangeListener
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Slide
 import androidx.transition.Transition
@@ -23,6 +26,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
+import my.dictionary.free.domain.models.words.variants.TranslationCategory
+import my.dictionary.free.domain.models.words.variants.TranslationVariant
+import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import my.dictionary.free.view.AbstractBaseFragment
@@ -39,6 +46,12 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         private val TAG = AddDictionaryWordFragment::class.simpleName
         const val BUNDLE_DICTIONARY_ID =
             "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID"
+        const val BUNDLE_TRANSLATION_VARIANT =
+            "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT"
+        const val BUNDLE_TRANSLATION_VARIANT_CATEGORY =
+            "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_CATEGORY"
+        const val BUNDLE_TRANSLATION_VARIANT_RESULT =
+            "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_RESULT"
         private const val PHONETICS_ANIMATION_TIME: Long = 400
     }
 
@@ -55,6 +68,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     private var dictionaryId: String? = null
     private var phonetics: List<String>? = null
+    private val translationVariantsAdapter = TranslationVariantsAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -76,6 +90,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
             if (!phonetics.isNullOrEmpty()) {
                 togglePhoneticsView(false)
             }
+            sharedViewModel.navigateTo(AddTranslationVariantsScreen(textInputEditTextWord.text?.toString()))
         }
         textInputLayoutPhonetic.setEndIconOnClickListener {
             context?.hideKeyboard(textInputEditTextWord)
@@ -124,6 +139,18 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
+                    viewModel.validateWord.collect { error ->
+                        textInputLayoutWord.error = error
+                    }
+                }
+                launch {
+                    viewModel.successCreateWordUIState.collect { success ->
+                        if(success) {
+                            findNavController().popBackStack()
+                        }
+                    }
+                }
+                launch {
                     viewModel.phoneticsUIState.drop(1).collectLatest { phoneticList ->
                         Log.d(TAG, "phonetics updated: ${phoneticList.size}")
                         phonetics = phoneticList
@@ -134,6 +161,12 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         addMenuProvider(R.menu.menu_add_dictionary_word, { menu, mi -> }, {
             when (it) {
                 R.id.nav_save_word -> {
+                    val word = textInputEditTextWord.text?.toString()
+                    val translations = translationVariantsAdapter.getData()
+                    if(viewModel.validate(context, word, translations)) {
+                        val phonetic = textInputEditTextPhonetic.text?.toString()
+                        viewModel.save(context, word, translations, phonetic)
+                    }
                     return@addMenuProvider true
                 }
 
@@ -141,7 +174,29 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
             }
         })
         dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
+        translationsRecyclerView.layoutManager = LinearLayoutManager(context)
+        translationsRecyclerView.adapter = translationVariantsAdapter
         viewModel.loadData(context, dictionaryId)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setFragmentResultListener(BUNDLE_TRANSLATION_VARIANT_RESULT) { requestKey, bundle ->
+            val translation: TranslationVariant? =
+                if (hasTiramisu()) bundle.getParcelable(
+                    BUNDLE_TRANSLATION_VARIANT,
+                    TranslationVariant::class.java
+                ) else bundle.getParcelable(BUNDLE_TRANSLATION_VARIANT)
+            val category: TranslationCategory? =
+                if (hasTiramisu()) bundle.getParcelable(
+                    BUNDLE_TRANSLATION_VARIANT_CATEGORY,
+                    TranslationCategory::class.java
+                ) else bundle.getParcelable(BUNDLE_TRANSLATION_VARIANT_CATEGORY)
+            translation?.let {
+                it.category = category
+                translationVariantsAdapter.add(it)
+            }
+        }
     }
 
     private fun togglePhoneticsView(show: Boolean) {

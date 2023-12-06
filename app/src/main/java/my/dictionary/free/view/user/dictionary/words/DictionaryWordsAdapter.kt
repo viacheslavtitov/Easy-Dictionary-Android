@@ -41,8 +41,8 @@ class DictionaryWordsAdapter(
         val word = data[position]
         val context = viewHolder.itemView.context
         viewHolder.originalTextView.text = word.original
-        val firstTranslatedWord = word.translates.firstOrNull()?.translate ?: ""
-        val translatedText = if(word.translates.isEmpty()) "- $firstTranslatedWord" else "- $firstTranslatedWord..."
+        val firstTranslatedWord = word.translates.firstOrNull()?.translation ?: ""
+        val translatedText = if(word.translates.size <= 1) "- $firstTranslatedWord" else "- $firstTranslatedWord..."
         viewHolder.translatedTextView.text = translatedText
         viewHolder.swipePosition = position
         val selected = selectedWords.firstOrNull { it._id == word._id } != null
