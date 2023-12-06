@@ -43,6 +43,14 @@ class WordsUseCase @Inject constructor(
         return databaseRepository.deleteWord(userId, word.dictionaryId, word._id!!)
     }
 
+    suspend fun deleteWords(dictionaryId: String, words: List<Word>): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        val requestDeleteWordIds = mutableListOf<String>()
+        words.forEach { if (it._id != null) requestDeleteWordIds.add(it._id) }
+        return databaseRepository.deleteWords(userId, dictionaryId, requestDeleteWordIds)
+    }
+
     suspend fun getWordsByDictionaryId(dictionaryId: String): Flow<Word> {
         val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
         if (userId.isNullOrEmpty()) {

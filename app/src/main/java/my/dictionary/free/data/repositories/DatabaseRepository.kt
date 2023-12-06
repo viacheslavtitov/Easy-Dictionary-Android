@@ -366,6 +366,28 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun deleteWords(
+        userId: String,
+        dictionaryId: String,
+        wordsIds: List<String>
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            wordsIds.forEach {
+                Log.d(TAG, "delete word by id = $it")
+                childRemoves["/${WordTable._NAME}/$it"] = null
+            }
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME).child(dictionaryId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
     suspend fun deleteWord(
         userId: String,
         dictionaryId: String,
