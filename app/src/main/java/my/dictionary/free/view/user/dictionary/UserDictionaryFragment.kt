@@ -122,6 +122,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 )
             }
         dictionariesAdapter = UserDictionaryAdapter(mutableListOf())
+        dictionariesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         dictionariesRecyclerView.adapter = dictionariesAdapter
         return view
     }
@@ -157,7 +158,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.dictionariesUIState.drop(1).collectLatest { dict ->
+                    viewModel.dictionariesUIState.collect { dict ->
                         Log.d(TAG, "dictionary updated: $dict")
                         dictionariesAdapter?.add(dict)
                     }

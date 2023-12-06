@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,9 +30,10 @@ class UserDictionaryViewModel @Inject constructor(
         private val TAG = UserDictionaryViewModel::class.simpleName
     }
 
-    private val _dictionariesUIState: MutableStateFlow<Dictionary> =
-        MutableStateFlow(Dictionary.empty())
-    val dictionariesUIState: StateFlow<Dictionary> = _dictionariesUIState.asStateFlow()
+    val dictionariesUIState: MutableSharedFlow<Dictionary> = MutableSharedFlow(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
     private val _clearActionModeUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -60,10 +63,12 @@ class UserDictionaryViewModel @Inject constructor(
                 }
                 .onStart {
                     Log.d(TAG, "onStart")
+                    _shouldClearDictionariesUIState.value = true
                     _loadingUIState.value = true
                 }
                 .onCompletion {
                     Log.d(TAG, "onCompletion")
+                    _shouldClearDictionariesUIState.value = false
                     _loadingUIState.value = false
                 }
                 .collect {
@@ -71,7 +76,7 @@ class UserDictionaryViewModel @Inject constructor(
                         TAG,
                         "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
                     )
-                    _dictionariesUIState.value = it
+                    dictionariesUIState.tryEmit(it)
                 }
         }
     }
