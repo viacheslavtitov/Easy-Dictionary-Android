@@ -6,13 +6,14 @@ import com.google.firebase.ktx.Firebase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.languages.GetDictionaryLanguagesUseCase
+import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
+import my.dictionary.free.domain.usecases.translations.GetCreateTranslationsUseCase
 import my.dictionary.free.domain.usecases.users.GetUpdateUsersUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
@@ -58,6 +59,28 @@ object MainActivityModule {
             databaseRepository,
             preferenceUtils,
             getDictionaryLanguagesUseCase
+        )
+    }
+
+    @Provides
+    fun provideGetCreateTranslationsUseCase(
+        databaseRepository: DatabaseRepository,
+        preferenceUtils: PreferenceUtils
+    ): GetCreateTranslationsUseCase {
+        return GetCreateTranslationsUseCase(
+            databaseRepository,
+            preferenceUtils
+        )
+    }
+
+    @Provides
+    fun provideGetCreateTranslationCategoriesUseCase(
+        databaseRepository: DatabaseRepository,
+        preferenceUtils: PreferenceUtils
+    ): GetCreateTranslationCategoriesUseCase {
+        return GetCreateTranslationCategoriesUseCase(
+            databaseRepository,
+            preferenceUtils
         )
     }
 

@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,9 +31,10 @@ class DictionaryWordsViewModel @Inject constructor(
         private val TAG = DictionaryWordsViewModel::class.simpleName
     }
 
-    private val _wordsUIState: MutableStateFlow<Word> =
-        MutableStateFlow(Word.empty())
-    val wordsUIState: StateFlow<Word> = _wordsUIState.asStateFlow()
+    val wordsUIState: MutableSharedFlow<Word> = MutableSharedFlow(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
     private val _clearActionModeUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -71,10 +74,12 @@ class DictionaryWordsViewModel @Inject constructor(
                 }
                 .onStart {
                     Log.d(TAG, "onStart")
+                    _shouldClearWordsUIState.value = true
                     _loadingUIState.value = true
                 }
                 .onCompletion {
                     Log.d(TAG, "onCompletion")
+                    _shouldClearWordsUIState.value = false
                     _loadingUIState.value = false
                 }
                 .collect {
@@ -82,7 +87,7 @@ class DictionaryWordsViewModel @Inject constructor(
                         TAG,
                         "collect word ${it.original} | translates ${it.translates.size}"
                     )
-                    _wordsUIState.value = it
+                    wordsUIState.tryEmit(it)
                 }
         }.invokeOnCompletion {
             if(dictionary == null) {

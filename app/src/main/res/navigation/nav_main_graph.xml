@@ -62,10 +62,24 @@
     <fragment
         android:id="@+id/addDictionaryWordFragment"
         android:name="my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment"
-        android:label="@string/words"
+        android:label="@string/add_word"
         tools:layout="@layout/fragment_dictionary_words" >
         <argument
             android:name="my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID"
+            android:defaultValue="null"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_addDictionaryWordFragment_to_addTranslationVariant"
+            app:destination="@id/addTranslationVariant" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addTranslationVariant"
+        android:name="my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment"
+        android:label="@string/add_translation_variants"
+        tools:layout="@layout/fragment_dictionary_words" >
+        <argument
+            android:name="my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD"
             android:defaultValue="null"
             app:argType="string" />
     </fragment>

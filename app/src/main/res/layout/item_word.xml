@@ -7,7 +7,7 @@
     android:layout_marginBottom="1dp"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="9dp">
+    android:padding="16dp">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/original_word"

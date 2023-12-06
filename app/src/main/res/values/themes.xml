@@ -30,6 +30,8 @@
         <!-- Snackbar -->
         <item name="snackbarStyle">@style/Widget.App.Snackbar</item>
         <item name="snackbarButtonStyle">@style/Widget.App.SnackbarButton</item>
+        <!-- Spinner -->
+        <item name="spinnerStyle">@style/Widget.App.Spinner</item>
     </style>
 
     <style name="SplashTheme" parent="@style/Theme.AppCompat.NoActionBar">
@@ -96,5 +98,9 @@
         <item name="titleTextStyle">?attr/textAppearanceHeadline6</item>
         <item name="subtitleTextStyle">?attr/textAppearanceSubtitle1</item>
         <item name="background">@color/gray_500</item>
+    </style>
+
+    <style name="Widget.App.Spinner" parent="Widget.AppCompat.Spinner">
+        <item name="background">@drawable/baseline_arrow_drop_down_24</item>
     </style>
 </resources>

@@ -3,7 +3,9 @@ package my.dictionary.free.view
 import android.view.View
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import my.dictionary.free.R
 
 abstract class AbstractBaseFragment: Fragment() {
 
@@ -26,6 +28,13 @@ abstract class AbstractBaseFragment: Fragment() {
                 Snackbar.LENGTH_SHORT
             )
             errorSnackbar?.show()
+        }
+    }
+
+    fun displayInputDialog(title: String?, message: String?) {
+        context?.let {ctx ->
+            val builder = MaterialAlertDialogBuilder(ctx).setView(R.layout.fragment_dialog_input)
+            builder.create().listView
         }
     }
 

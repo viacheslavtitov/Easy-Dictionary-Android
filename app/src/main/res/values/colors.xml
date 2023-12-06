@@ -8,6 +8,8 @@
     <color name="gray_500">#607D8B</color>
     <color name="light_blue_200">#81D4FA</color>
     <color name="yellow_500">#FFEB3B</color>
+    <color name="green_a_400">#00E676</color>
+    <color name="green_a_700">#00C853</color>
 
     <color name="main">#2196f3</color>
     <color name="main_light">#6ec5ff</color>
