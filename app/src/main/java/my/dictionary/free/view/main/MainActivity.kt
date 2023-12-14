@@ -32,8 +32,12 @@ import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
+import my.dictionary.free.domain.models.navigation.AddUserQuizeScreen
+import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
+import my.dictionary.free.domain.models.navigation.UserQuizeScreen
+import my.dictionary.free.domain.models.navigation.WordsMultiChooseScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
@@ -41,6 +45,7 @@ import my.dictionary.free.view.splash.SplashActivity
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
+import my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment
 import my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment
 import java.util.*
 
@@ -144,6 +149,10 @@ class MainActivity : AbstractBaseActivity() {
                 R.id.nav_user_dictionary -> {
                     navController.navigate(R.id.userDictionaryFragment)
                 }
+
+                R.id.nav_quize -> {
+                    navController.navigate(R.id.userQuizzesFragment)
+                }
             }
             navDrawerLayout.closeDrawer(GravityCompat.START)
             true
@@ -205,6 +214,37 @@ class MainActivity : AbstractBaseActivity() {
                         R.id.action_addDictionaryWordFragment_to_addTranslationVariant,
                         bundle
                     )
+                }
+
+                is UserQuizeScreen -> {
+//                    val bundle = Bundle().apply {
+//                        putString(
+//                            AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
+//                            navigation.word
+//                        )
+//                    }
+//                    navController.navigate(R.id.action_userQuizzesFragment_to_addQuizFragment)
+                }
+
+                is AddUserQuizeScreen -> {
+                    navController.navigate(R.id.action_userQuizzesFragment_to_addQuizFragment)
+                }
+
+                is WordsMultiChooseScreen -> {
+                    val bundle = Bundle().apply {
+                        putString(
+                            WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID,
+                            navigation.dictionaryId
+                        )
+                    }
+                    navController.navigate(
+                        R.id.action_addQuizFragment_to_wordsMultiChooseFragment,
+                        bundle
+                    )
+                }
+
+                is DictionaryChooseScreen -> {
+                    navController.navigate(R.id.action_addQuizFragment_to_dictionaryChooseDialogFragment)
                 }
             }
         }

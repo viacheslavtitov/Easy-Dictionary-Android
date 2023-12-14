@@ -18,7 +18,7 @@ abstract class AbstractBaseFragment: Fragment() {
 
     fun displayError(errorMessage: String?, view: View) {
         if(!errorMessage.isNullOrEmpty()) {
-            if(errorSnackbar != null || errorSnackbar!!.isShown) {
+            if(errorSnackbar != null || errorSnackbar?.isShown == true) {
                 errorSnackbar?.dismiss()
                 errorSnackbar = null
             }

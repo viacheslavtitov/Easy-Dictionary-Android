@@ -14,9 +14,11 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.dictionary.DictionaryTable
-import my.dictionary.free.data.models.words.variants.TranslationCategoryTable
+import my.dictionary.free.data.models.quiz.QuizTable
+import my.dictionary.free.data.models.quiz.QuizWordsTable
 import my.dictionary.free.data.models.users.UsersTable
 import my.dictionary.free.data.models.words.WordTable
+import my.dictionary.free.data.models.words.variants.TranslationCategoryTable
 import my.dictionary.free.data.models.words.variants.TranslationVariantTable
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.utils.PreferenceUtils
@@ -35,7 +37,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     init {
         if (BuildConfig.DEBUG) {
             try {
-                database.setLogLevel(Logger.Level.DEBUG)
+//                database.setLogLevel(Logger.Level.DEBUG)
             } catch (ex: com.google.firebase.database.DatabaseException) {
                 //skip
             }
@@ -265,6 +267,143 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }.flowOn(ioScope)
     }
 
+    suspend fun getQuizzesByUserUUID(
+        userId: String,
+    ): Flow<QuizTable> {
+        Log.d(TAG, "getQuizzesByUserUUID")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(QuizTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val quize = QuizTable(
+                            _id = map[QuizTable._ID] as String?,
+                            userId = map[QuizTable.USER_ID] as String,
+                            dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
+                            name = map[QuizTable.NAME] as String,
+                            timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
+                        )
+                        trySend(quize)
+                    }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun createQuiz(
+        userId: String,
+        quiz: QuizTable
+    ): Triple<Boolean, String?, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val quizKey = reference.child(QuizTable._NAME).push().key
+            if (quizKey == null) {
+                cont.resume(Triple(false, null, null))
+            }
+            quizKey?.let { key ->
+                val table = QuizTable(
+                    _id = key,
+                    userId = userId,
+                    dictionaryId = quiz.dictionaryId,
+                    name = quiz.name,
+                    timeInSeconds = quiz.timeInSeconds
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${QuizTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Triple(true, null, key))
+                }.addOnFailureListener {
+                    cont.resume(Triple(false, it.message, null))
+                }.addOnCanceledListener {
+                    cont.resume(Triple(false, null, null))
+                }
+            }
+        }
+    }
+
+    suspend fun addWordToQuiz(
+        userId: String,
+        quizId: String, wordId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val wordKey = reference.child(WordTable._NAME).push().key
+            if (wordKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            wordKey?.let { key ->
+                val table = QuizWordsTable(
+                    _id = key,
+                    quizId = quizId,
+                    wordId = wordId
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${QuizTable._NAME}/${table.quizId}/${QuizWordsTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun getQuizWords(
+        userId: String,
+        quizId: String,
+    ): Flow<List<QuizWordsTable>> {
+        Log.d(TAG, "getQuizzesByUserUUID")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(QuizTable._NAME).child(quizId).child(QuizWordsTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val quizWords = mutableListOf<QuizWordsTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val quizeWord = QuizWordsTable(
+                            _id = map[QuizWordsTable._ID] as String?,
+                            quizId = map[QuizWordsTable.QUIZ_ID] as String,
+                            wordId = map[QuizWordsTable.WORD_ID] as String
+                        )
+                        quizWords.add(quizeWord)
+                    }
+                    trySend(quizWords)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
     suspend fun getCategories(
         userId: String,
     ): Flow<TranslationCategoryTable> {
@@ -366,6 +505,27 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun deleteQuizzes(
+        userId: String,
+        quizeIds: List<String>
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            quizeIds.forEach {
+                Log.d(TAG, "delete quize by id = $it")
+                childRemoves["/${QuizTable._NAME}/$it"] = null
+            }
+            database.reference.child(UsersTable._NAME).child(userId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
     suspend fun deleteWords(
         userId: String,
         dictionaryId: String,
@@ -377,7 +537,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                 Log.d(TAG, "delete word by id = $it")
                 childRemoves["/${WordTable._NAME}/$it"] = null
             }
-            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME).child(dictionaryId).updateChildren(childRemoves)
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId).updateChildren(childRemoves)
                 .addOnSuccessListener {
                     cont.resume(Pair(true, null))
                 }.addOnFailureListener {
@@ -396,7 +557,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         return suspendCoroutine { cont ->
             val childRemoves = mutableMapOf<String, Any?>()
             childRemoves["/${WordTable._NAME}/$wordId"] = null
-            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME).child(dictionaryId).updateChildren(childRemoves)
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId).updateChildren(childRemoves)
                 .addOnSuccessListener {
                     cont.resume(Pair(true, null))
                 }.addOnFailureListener {
@@ -500,6 +662,49 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             phonetic = map[WordTable.PHONETIC] as String
                         )
                         trySend(word)
+                    }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getWordById(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+    ): Flow<WordTable> {
+        Log.d(TAG, "getWordById")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
+                .child(wordId)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    try {
+                        val map = snapshot.value as HashMap<*, *>
+                        val word = WordTable(
+                            _id = map[WordTable._ID] as String?,
+                            dictionaryId = map[WordTable.DICTIONARY_ID] as String,
+                            original = map[WordTable.ORIGINAL] as String,
+                            phonetic = map[WordTable.PHONETIC] as String
+                        )
+                        trySend(word)
+                    } catch (ex: ClassCastException) {
+                        Log.e(TAG, "Failed to cast data", ex)
+                    } catch (ex: NullPointerException) {
+                        Log.e(TAG, "Failed to get data", ex)
                     }
                     close()
                 }

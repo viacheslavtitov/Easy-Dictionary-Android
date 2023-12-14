@@ -12,6 +12,7 @@ import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.languages.GetDictionaryLanguagesUseCase
+import my.dictionary.free.domain.usecases.quize.GetCreateQuizUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationsUseCase
 import my.dictionary.free.domain.usecases.users.GetUpdateUsersUseCase
@@ -80,6 +81,19 @@ object MainActivityModule {
     ): GetCreateTranslationCategoriesUseCase {
         return GetCreateTranslationCategoriesUseCase(
             databaseRepository,
+            preferenceUtils
+        )
+    }
+
+    @Provides
+    fun provideGetCreateQuizeUseCase(
+        databaseRepository: DatabaseRepository,
+        getCreateDictionaryUseCase: GetCreateDictionaryUseCase,
+        preferenceUtils: PreferenceUtils
+    ): GetCreateQuizUseCase {
+        return GetCreateQuizUseCase(
+            databaseRepository,
+            getCreateDictionaryUseCase,
             preferenceUtils
         )
     }

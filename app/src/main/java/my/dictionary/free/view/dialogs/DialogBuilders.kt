@@ -103,6 +103,72 @@ class DialogBuilders {
         }
     }
 
+    object NumberPickerDialogBuilder : AbstractDialogBuilder(), INumberPickerDialogBuilder {
+
+        private var buttonCancelTitle: String? = null
+        private var minNumberValue: Int? = null
+        private var maxNumberValue: Int? = null
+
+        override fun cancelButtonTitle(cancelButtonTitle: String?): INumberPickerDialogBuilder {
+            this.buttonCancelTitle = cancelButtonTitle
+            return this
+        }
+
+        override fun listener(listener: ValueDialogListener?): INumberPickerDialogBuilder {
+            this.listener = listener
+            return this
+        }
+
+        override fun listener(listener: TwoButtonsDialogListener?): INumberPickerDialogBuilder {
+            this.listener = listener
+            return this
+        }
+
+        override fun minValue(value: Int?): INumberPickerDialogBuilder {
+            this.minNumberValue = value
+            return this
+        }
+
+        override fun maxValue(value: Int?): INumberPickerDialogBuilder {
+            this.maxNumberValue = value
+            return this
+        }
+
+        override fun title(title: String?): INumberPickerDialogBuilder {
+            return super.title(title) as INumberPickerDialogBuilder
+        }
+
+        override fun description(description: String?): INumberPickerDialogBuilder {
+            return super.description(description) as INumberPickerDialogBuilder
+        }
+
+        override fun okButtonTitle(okButtonTitle: String?): INumberPickerDialogBuilder {
+            return super.okButtonTitle(okButtonTitle) as INumberPickerDialogBuilder
+        }
+
+        override fun iconRes(iconRes: Int?): INumberPickerDialogBuilder {
+            return super.iconRes(iconRes) as INumberPickerDialogBuilder
+        }
+
+        override fun iconTintColorRes(iconTintColorRes: Int?): INumberPickerDialogBuilder {
+            return super.iconTintColorRes(iconTintColorRes) as INumberPickerDialogBuilder
+        }
+
+        override fun build(): NumberPickerDialogFragment {
+            return NumberPickerDialogFragment.create(
+                title = title,
+                description = description,
+                iconRes = iconRes,
+                iconTintColorRes = iconTintColorRes,
+                buttonOkTitle = okButtonTitle,
+                buttonCancelTitle = buttonCancelTitle,
+                minValue = minNumberValue,
+                maxValue = maxNumberValue,
+                listener = listener as ValueDialogListener?
+            )
+        }
+    }
+
     object InputDialogBuilder : AbstractDialogBuilder(), IInputDialogBuilder {
 
         private var buttonCancelTitle: String? = null

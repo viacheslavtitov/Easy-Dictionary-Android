@@ -66,10 +66,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="16dp"
-                android:text="Log out"
-                android:textStyle="bold"
+                android:text="@string/log_out"
                 android:textColor="@color/main_text"
-                android:textSize="14dp" />
+                android:textSize="14dp"
+                android:textStyle="bold" />
         </androidx.appcompat.widget.LinearLayoutCompat>
     </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>

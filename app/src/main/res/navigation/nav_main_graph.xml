@@ -83,4 +83,40 @@
             android:defaultValue="null"
             app:argType="string" />
     </fragment>
+    <fragment
+        android:id="@+id/userQuizzesFragment"
+        android:name="my.dictionary.free.view.quize.UserQuizzesFragment"
+        android:label="@string/my_quizzes"
+        tools:layout="@layout/fragment_dictionary_words">
+        <action
+            android:id="@+id/action_userQuizzesFragment_to_addQuizFragment"
+            app:destination="@id/addQuizFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/dictionaryChooseDialogFragment"
+        android:name="my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment"
+        tools:layout="@layout/fragment_dictionary_choose"
+        android:label="@string/choose_dictionary" />
+    <fragment
+        android:id="@+id/addQuizFragment"
+        android:name="my.dictionary.free.view.quize.add.AddQuizFragment"
+        android:label="AddQuizFragment"
+        tools:layout="@layout/fragment_add_quiz">
+        <action
+            android:id="@+id/action_addQuizFragment_to_dictionaryChooseDialogFragment"
+            app:destination="@id/dictionaryChooseDialogFragment" />
+        <action
+            android:id="@+id/action_addQuizFragment_to_wordsMultiChooseFragment"
+            app:destination="@id/wordsMultiChooseFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/wordsMultiChooseFragment"
+        android:name="my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment"
+        android:label="WordsMultiChooseFragment"
+        tools:layout="@layout/fragment_words_multichoose">
+        <argument
+            android:name="my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID"
+            android:defaultValue="null"
+            app:argType="string" />
+    </fragment>
 </navigation>
