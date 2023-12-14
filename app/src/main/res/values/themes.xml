@@ -101,6 +101,6 @@
     </style>
 
     <style name="Widget.App.Spinner" parent="Widget.AppCompat.Spinner">
-        <item name="background">@drawable/baseline_arrow_drop_down_24</item>
+        <item name="background">@drawable/ic_baseline_arrow_drop_down_24</item>
     </style>
 </resources>

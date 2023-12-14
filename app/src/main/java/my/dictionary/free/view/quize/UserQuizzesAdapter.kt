@@ -1,4 +1,4 @@
-package my.dictionary.free.view.user.dictionary.words
+package my.dictionary.free.view.quize
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,47 +6,46 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
-import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.view.ext.getColorInt
 
-class DictionaryWordsAdapter(
-    private val data: MutableList<Word>
+class UserQuizzesAdapter(
+    private val data: MutableList<Quiz>
 ) :
-    RecyclerView.Adapter<DictionaryWordsAdapter.ViewHolder>() {
+    RecyclerView.Adapter<UserQuizzesAdapter.ViewHolder>() {
 
-    private var tempRemoveItem: Word? = null
+    private var tempRemoveItem: Quiz? = null
     private var tempRemoveItemPosition: Int? = null
-    private var selectedWords = mutableListOf<Word>()
+    private var selectedQuizzes = mutableListOf<Quiz>()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var swipePosition: Int = 0
-        val originalTextView: AppCompatTextView
-        val translatedTextView: AppCompatTextView
-        val rootView: View
+        val nameTextView: AppCompatTextView
+        val langsTextView: AppCompatTextView
 
         init {
-            originalTextView = view.findViewById(R.id.original_word)
-            translatedTextView = view.findViewById(R.id.translated_word)
-            rootView = view.findViewById(R.id.root)
+            nameTextView = view.findViewById(R.id.name)
+            langsTextView = view.findViewById(R.id.lang_pair)
         }
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(viewGroup.context)
-            .inflate(R.layout.item_word, viewGroup, false)
+            .inflate(R.layout.item_quiz, viewGroup, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        val word = data[position]
+        val quize = data[position]
         val context = viewHolder.itemView.context
-        viewHolder.originalTextView.text = word.original
-        val firstTranslatedWord = word.translates.firstOrNull()?.translation ?: ""
-        val translatedText = if(word.translates.size <= 1) "- $firstTranslatedWord" else "- $firstTranslatedWord..."
-        viewHolder.translatedTextView.text = translatedText
+        viewHolder.nameTextView.text = quize.name
+        quize.dictionary?.let { dictionary ->
+            viewHolder.langsTextView.text =
+                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}"
+        }
         viewHolder.swipePosition = position
-        val selected = selectedWords.firstOrNull { it._id == word._id } != null
-        viewHolder.rootView.setBackgroundColor(
+        val selected = selectedQuizzes.firstOrNull { it._id == quize._id } != null
+        viewHolder.itemView.setBackgroundColor(
             if (selected) context.getColorInt(R.color.gray_300) else context.getColorInt(
                 R.color.gray_200
             )
@@ -70,7 +69,7 @@ class DictionaryWordsAdapter(
         tempRemoveItem = null
     }
 
-    fun getRemoveWordByTimer() = tempRemoveItem
+    fun getRemoveQuizeByTimer() = tempRemoveItem
 
     fun undoRemovedItem() {
         if (tempRemoveItemPosition != null && tempRemoveItem != null) {
@@ -81,21 +80,21 @@ class DictionaryWordsAdapter(
         }
     }
 
-    fun getItemByPosition(position: Int): Word? {
+    fun getItemByPosition(position: Int): Quiz? {
         return if (position < data.size && position > -1) data[position] else null
     }
 
-    fun selectWord(word: Word) {
-        val position = data.indexOfFirst { it._id == word._id }
-        if (selectedWords.firstOrNull { it._id == word._id } == null) {
-            selectedWords.add(word)
+    fun selectQuize(quiz: Quiz) {
+        val position = data.indexOfFirst { it._id == quiz._id }
+        if (selectedQuizzes.firstOrNull { it._id == quiz._id } == null) {
+            selectedQuizzes.add(quiz)
             if (position > -1) {
                 this.notifyItemChanged(position)
             }
         } else {
-            val selectedPosition = selectedWords.indexOfFirst { it._id == word._id }
-            if(selectedPosition > -1) {
-                selectedWords.removeAt(selectedPosition)
+            val selectedPosition = selectedQuizzes.indexOfFirst { it._id == quiz._id }
+            if (selectedPosition > -1) {
+                selectedQuizzes.removeAt(selectedPosition)
             }
             if (position > -1) {
                 this.notifyItemChanged(position)
@@ -103,26 +102,25 @@ class DictionaryWordsAdapter(
         }
     }
 
-    fun getSelectedWordsCount() = selectedWords.size
+    fun getSelectedQuizzesCount() = selectedQuizzes.size
 
-    fun getSelectedWords() = selectedWords
+    fun getSelectedQuizzes() = selectedQuizzes
 
-    fun getWords() = data
-
-    fun clearSelectedWords() {
-        selectedWords.clear()
+    fun clearSelectedQuizzes() {
+        selectedQuizzes.clear()
         this.notifyDataSetChanged()
     }
+
     fun clearData() {
         data.clear()
-        selectedWords.clear()
+        selectedQuizzes.clear()
         tempRemoveItemPosition = null
         tempRemoveItem = null
         this.notifyDataSetChanged()
     }
 
-    fun add(dict: Word) {
-        data.add(dict)
+    fun add(quiz: Quiz) {
+        data.add(quiz)
         this.notifyDataSetChanged()
     }
 

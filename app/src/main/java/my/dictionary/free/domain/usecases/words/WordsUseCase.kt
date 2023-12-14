@@ -33,7 +33,11 @@ class WordsUseCase @Inject constructor(
      */
     suspend fun createWord(word: Word): Triple<Boolean, String?, String?> {
         val userId =
-            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Triple(false, null, null)
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Triple(
+                false,
+                null,
+                null
+            )
         return databaseRepository.createWord(userId, word)
     }
 
@@ -67,19 +71,58 @@ class WordsUseCase @Inject constructor(
                     )
                 }
                 .map {
-                    val converted : MutableList<TranslationVariant> = mutableListOf()
-                    val translations = databaseRepository.getTranslationVariantByWordId(
+                    val converted: MutableList<TranslationVariant> = mutableListOf()
+                    databaseRepository.getTranslationVariantByWordId(
                         userId,
                         dictionaryId,
                         it._id ?: ""
                     ).firstOrNull()?.forEach {
-                        converted.add(TranslationVariant(
-                            _id = it._id,
-                            wordId = it.wordId,
-                            categoryId = it.categoryId,
-                            example = it.description,
-                            translation = it.translate
-                        ))
+                        converted.add(
+                            TranslationVariant(
+                                _id = it._id,
+                                wordId = it.wordId,
+                                categoryId = it.categoryId,
+                                example = it.description,
+                                translation = it.translate
+                            )
+                        )
+                    }
+                    return@map it.copyWithNewTranslations(converted)
+                }
+        }
+    }
+
+    suspend fun getWordById(dictionaryId: String, wordId: String): Flow<Word> {
+        val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
+        if (userId.isNullOrEmpty()) {
+            return emptyFlow()
+        } else {
+            return databaseRepository.getWordById(userId, dictionaryId, wordId)
+                .map { table ->
+                    return@map Word(
+                        _id = table._id,
+                        dictionaryId = table.dictionaryId,
+                        original = table.original,
+                        phonetic = table.phonetic,
+                        translates = emptyList()
+                    )
+                }
+                .map {
+                    val converted: MutableList<TranslationVariant> = mutableListOf()
+                    databaseRepository.getTranslationVariantByWordId(
+                        userId,
+                        dictionaryId,
+                        it._id ?: ""
+                    ).firstOrNull()?.forEach {
+                        converted.add(
+                            TranslationVariant(
+                                _id = it._id,
+                                wordId = it.wordId,
+                                categoryId = it.categoryId,
+                                example = it.description,
+                                translation = it.translate
+                            )
+                        )
                     }
                     return@map it.copyWithNewTranslations(converted)
                 }

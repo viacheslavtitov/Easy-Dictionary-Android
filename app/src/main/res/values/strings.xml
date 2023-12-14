@@ -6,6 +6,7 @@
     <string name="app_name">Easy Dictionary</string>
 
     <string name="ok">Ok</string>
+    <string name="set">Set</string>
     <string name="cancel">Cancel</string>
     <string name="retry">Retry</string>
     <string name="error">Error</string>
@@ -21,11 +22,28 @@
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
     <string name="selected">Selected</string>
+    <string name="log_out">Log out</string>
+    <string name="name">Name</string>
     <!-- Sign-in -->
     <string name="sign_in_error_description">%s\nDo you want to retry?</string>
     <!-- Menu -->
     <string name="settings">Settings</string>
     <string name="my_dictionaries">My dictionaries</string>
+    <string name="quiz">Quiz</string>
+    <!-- Quiz -->
+    <string name="my_quizzes">My quizzes</string>
+    <string name="set_dictionary">Set dictionary</string>
+    <string name="set_duration">Set duration</string>
+    <string name="seconds_value">%d seconds</string>
+    <string name="seconds_dialog_description">Choose time (seconds) for each word</string>
+    <string name="add_words">Add words</string>
+    <string name="choose_dictionary">Set dictionary</string>
+    <string name="set_dictionary_description">Please choose dictionary which you want to make a quiz</string>
+    <string name="error_set_dictionary_first">You should set dictionary first</string>
+    <string name="error_empty_duration">Please select duration</string>
+    <string name="error_empty_dictionary">Please select dictionary</string>
+    <string name="error_empty_words">Please choose at least one word for quiz</string>
+    <string name="error_create_quiz">Something was wrong to create quiz</string>
     <!-- Dictionary -->
     <string name="add_dictionary">Add dictionary</string>
     <string name="dialect">Dialect</string>
