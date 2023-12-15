@@ -1,4 +1,4 @@
-package my.dictionary.free.view.quize
+package my.dictionary.free.view.quiz
 
 import android.annotation.SuppressLint
 import android.app.SearchManager
@@ -30,11 +30,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
-import my.dictionary.free.domain.models.navigation.AddUserQuizeScreen
-import my.dictionary.free.domain.models.navigation.UserQuizeScreen
+import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
+import my.dictionary.free.domain.models.navigation.UserQuizScreen
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
-import my.dictionary.free.domain.viewmodels.quize.UserQuizzesViewModel
+import my.dictionary.free.domain.viewmodels.quiz.UserQuizzesViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
@@ -157,9 +157,9 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.quizzesUIState.collect { quize ->
-                        Log.d(TAG, "quize updated: $quize")
-                        quizzesAdapter?.add(quize)
+                    viewModel.quizzesUIState.collect { quiz ->
+                        Log.d(TAG, "quiz updated: $quiz")
+                        quizzesAdapter?.add(quiz)
                     }
                 }
             }
@@ -185,7 +185,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
         }, {
             when (it) {
                 R.id.nav_add_quize -> {
-                    sharedViewModel.navigateTo(AddUserQuizeScreen())
+                    sharedViewModel.navigateTo(AddUserQuizScreen())
                     return@addMenuProvider true
                 }
 
@@ -215,11 +215,11 @@ class UserQuizzesFragment : AbstractBaseFragment() {
         override fun onListItemClick(childView: View) {
             quizzesAdapter?.getItemByPosition(
                 quizzesRecyclerView.getChildAdapterPosition(childView)
-            )?.let { quize ->
+            )?.let { quiz ->
                 if (actionMode == null) {
-                    sharedViewModel.navigateTo(UserQuizeScreen(quize))
+                    sharedViewModel.navigateTo(UserQuizScreen(quiz))
                 } else {
-                    selectQuize(quize)
+                    selectQuiz(quiz)
                 }
             }
         }
@@ -227,7 +227,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
         override fun onListItemLongClick(childView: View) {
             quizzesAdapter?.getItemByPosition(
                 quizzesRecyclerView.getChildAdapterPosition(childView)
-            )?.let { quize ->
+            )?.let { quiz ->
                 if (activity != null && activity is AppCompatActivity) {
                     if (actionMode == null) {
                         actionMode =
@@ -236,18 +236,18 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                             )
                     }
                 }
-                selectQuize(quize)
+                selectQuiz(quiz)
             }
         }
     }
 
-    private fun selectQuize(quiz: Quiz) {
+    private fun selectQuiz(quiz: Quiz) {
         quizzesAdapter?.selectQuize(quiz)
-        val selectedQuizeCount = quizzesAdapter?.getSelectedQuizzesCount() ?: 0
+        val selectedQuizCount = quizzesAdapter?.getSelectedQuizzesCount() ?: 0
         actionMode?.title =
-            "$selectedQuizeCount ${getString(R.string.selected).uppercase()}"
-        menuEdit?.isVisible = selectedQuizeCount <= 1
-        if (selectedQuizeCount < 1) {
+            "$selectedQuizCount ${getString(R.string.selected).uppercase()}"
+        menuEdit?.isVisible = selectedQuizCount <= 1
+        if (selectedQuizCount < 1) {
             actionMode?.finish()
             actionMode = null
             menuEdit = null

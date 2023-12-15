@@ -4,7 +4,6 @@ import android.util.Log
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.Logger
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -279,14 +278,56 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     Log.d(TAG, "onDataChange ${snapshot.children.count()}")
                     snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
-                        val quize = QuizTable(
+                        val quiz = QuizTable(
                             _id = map[QuizTable._ID] as String?,
                             userId = map[QuizTable.USER_ID] as String,
                             dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
                             name = map[QuizTable.NAME] as String,
                             timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
                         )
-                        trySend(quize)
+                        trySend(quiz)
+                    }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getQuizById(
+        userId: String,
+        quizId: String,
+    ): Flow<QuizTable> {
+        Log.d(TAG, "getQuizById")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(QuizTable._NAME).child(quizId)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.value?.toString()}")
+                    try {
+                        val map = snapshot.value as HashMap<*, *>
+                        val quiz = QuizTable(
+                            _id = map[QuizTable._ID] as String?,
+                            userId = map[QuizTable.USER_ID] as String,
+                            dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
+                            name = map[QuizTable.NAME] as String,
+                            timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
+                        )
+                        trySend(quiz)
+                    } catch (ex: ClassCastException) {
+                        Log.e(TAG, "Failed to cast data", ex)
+                    } catch (ex: NullPointerException) {
+                        Log.e(TAG, "Failed to get data", ex)
                     }
                     close()
                 }

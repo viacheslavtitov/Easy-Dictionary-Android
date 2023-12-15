@@ -15,7 +15,7 @@
         android:id="@+id/userDictionaryFragment"
         android:name="my.dictionary.free.view.user.dictionary.UserDictionaryFragment"
         android:label="@string/my_dictionaries"
-        tools:layout="@layout/fragment_user_dictionary" >
+        tools:layout="@layout/fragment_user_dictionary">
         <action
             android:id="@+id/action_userDictionaryFragment_to_addUserDictionaryFragment"
             app:destination="@id/addUserDictionaryFragment" />
@@ -28,7 +28,7 @@
         android:id="@+id/addUserDictionaryFragment"
         android:name="my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment"
         android:label="@string/add_dictionary"
-        tools:layout="@layout/fragment_add_new_dictionary" >
+        tools:layout="@layout/fragment_add_new_dictionary">
         <action
             android:id="@+id/action_addUserDictionaryFragment_to_languagesFragment"
             app:destination="@id/languagesFragment" />
@@ -38,7 +38,7 @@
         android:id="@+id/languagesFragment"
         android:name="my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment"
         android:label="@string/add_language"
-        tools:layout="@layout/fragment_languages" >
+        tools:layout="@layout/fragment_languages">
         <argument
             android:name="my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY"
             android:defaultValue="0"
@@ -49,7 +49,7 @@
         android:id="@+id/dictionaryWordsFragment"
         android:name="my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment"
         android:label="@string/words"
-        tools:layout="@layout/fragment_dictionary_words" >
+        tools:layout="@layout/fragment_dictionary_words">
         <argument
             android:name="my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment.BUNDLE_DICTIONARY_ID"
             android:defaultValue="null"
@@ -63,7 +63,7 @@
         android:id="@+id/addDictionaryWordFragment"
         android:name="my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment"
         android:label="@string/add_word"
-        tools:layout="@layout/fragment_dictionary_words" >
+        tools:layout="@layout/fragment_dictionary_words">
         <argument
             android:name="my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID"
             android:defaultValue="null"
@@ -77,7 +77,7 @@
         android:id="@+id/addTranslationVariant"
         android:name="my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment"
         android:label="@string/add_translation_variants"
-        tools:layout="@layout/fragment_dictionary_words" >
+        tools:layout="@layout/fragment_dictionary_words">
         <argument
             android:name="my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD"
             android:defaultValue="null"
@@ -85,21 +85,24 @@
     </fragment>
     <fragment
         android:id="@+id/userQuizzesFragment"
-        android:name="my.dictionary.free.view.quize.UserQuizzesFragment"
+        android:name="my.dictionary.free.view.quiz.UserQuizzesFragment"
         android:label="@string/my_quizzes"
         tools:layout="@layout/fragment_dictionary_words">
         <action
             android:id="@+id/action_userQuizzesFragment_to_addQuizFragment"
             app:destination="@id/addQuizFragment" />
+        <action
+            android:id="@+id/action_userQuizzesFragment_to_quizDetailFragment"
+            app:destination="@id/quizDetailFragment" />
     </fragment>
     <fragment
         android:id="@+id/dictionaryChooseDialogFragment"
         android:name="my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment"
-        tools:layout="@layout/fragment_dictionary_choose"
-        android:label="@string/choose_dictionary" />
+        android:label="@string/choose_dictionary"
+        tools:layout="@layout/fragment_dictionary_choose" />
     <fragment
         android:id="@+id/addQuizFragment"
-        android:name="my.dictionary.free.view.quize.add.AddQuizFragment"
+        android:name="my.dictionary.free.view.quiz.add.AddQuizFragment"
         android:label="AddQuizFragment"
         tools:layout="@layout/fragment_add_quiz">
         <action
@@ -116,6 +119,16 @@
         tools:layout="@layout/fragment_words_multichoose">
         <argument
             android:name="my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID"
+            android:defaultValue="null"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/quizDetailFragment"
+        android:name="my.dictionary.free.view.quiz.detail.QuizDetailFragment"
+        android:label="QuizDetailFragment"
+        tools:layout="@layout/fragment_quiz_detail">
+        <argument
+            android:name="my.dictionary.free.view.quiz.detail.QuizDetailFragment.BUNDLE_QUIZ_ID"
             android:defaultValue="null"
             app:argType="string" />
     </fragment>

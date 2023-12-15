@@ -1,4 +1,4 @@
-package my.dictionary.free.domain.viewmodels.quize
+package my.dictionary.free.domain.viewmodels.quiz
 
 import android.content.Context
 import android.util.Log
@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserQuizzesViewModel @Inject constructor(
-    private val getCreateQuizeUseCase: GetCreateQuizUseCase,
+    private val getCreateQuizUseCase: GetCreateQuizUseCase,
     private val wordsUseCase: WordsUseCase
 ) : ViewModel() {
 
@@ -56,7 +56,7 @@ class UserQuizzesViewModel @Inject constructor(
         if (context == null) return
         Log.d(TAG, "loadQuizzes()")
         viewModelScope.launch {
-            getCreateQuizeUseCase.getQuizzes(context)
+            getCreateQuizUseCase.getQuizzes(context)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
                     _displayErrorUIState.value =
@@ -73,7 +73,7 @@ class UserQuizzesViewModel @Inject constructor(
                     _loadingUIState.value = false
                 }
                 .collect { quiz ->
-                    Log.d(TAG, "collect quize $quiz")
+                    Log.d(TAG, "collect quiz $quiz")
                     loadWords(context, quiz)
                 }
         }
@@ -82,7 +82,7 @@ class UserQuizzesViewModel @Inject constructor(
     private fun loadWords(context: Context, quiz: Quiz) {
         Log.d(TAG, "loadWords(${quiz.name})")
         viewModelScope.launch {
-            getCreateQuizeUseCase.getWordsIdsForQuiz(quiz._id ?: "").firstOrNull()
+            getCreateQuizUseCase.getWordsIdsForQuiz(quiz._id ?: "").firstOrNull()
                 ?.forEach { id ->
                     quiz.dictionary?._id?.let { dictionaryId ->
                         wordsUseCase.getWordById(dictionaryId, id)
@@ -113,7 +113,7 @@ class UserQuizzesViewModel @Inject constructor(
         Log.d(TAG, "deleteQuizzes(${list.size})")
         viewModelScope.launch {
             _loadingUIState.value = true
-            val result = getCreateQuizeUseCase.deleteQuizzes(list)
+            val result = getCreateQuizUseCase.deleteQuizzes(list)
             _clearActionModeUIState.value = true
             _loadingUIState.value = false
             Log.d(TAG, "delete result is ${result.first}")

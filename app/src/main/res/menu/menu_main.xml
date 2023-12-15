@@ -12,7 +12,7 @@
             android:title="@string/my_dictionaries" />
         <item
             android:id="@+id/nav_quize"
-            android:icon="@drawable/ic_quize"
+            android:icon="@drawable/ic_quiz"
             android:iconTint="@color/main"
             android:title="@string/quiz" />
     </group>

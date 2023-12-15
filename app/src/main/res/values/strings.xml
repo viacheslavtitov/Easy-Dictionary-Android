@@ -34,6 +34,7 @@
     <string name="my_quizzes">My quizzes</string>
     <string name="set_dictionary">Set dictionary</string>
     <string name="set_duration">Set duration</string>
+    <string name="duration">Duration</string>
     <string name="seconds_value">%d seconds</string>
     <string name="seconds_dialog_description">Choose time (seconds) for each word</string>
     <string name="add_words">Add words</string>
@@ -45,6 +46,7 @@
     <string name="error_empty_words">Please choose at least one word for quiz</string>
     <string name="error_create_quiz">Something was wrong to create quiz</string>
     <!-- Dictionary -->
+    <string name="dictionary">Dictionary</string>
     <string name="add_dictionary">Add dictionary</string>
     <string name="dialect">Dialect</string>
     <string name="select_language_from">Select language from</string>

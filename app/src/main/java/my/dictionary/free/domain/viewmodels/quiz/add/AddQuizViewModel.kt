@@ -1,4 +1,4 @@
-package my.dictionary.free.domain.viewmodels.quize.add
+package my.dictionary.free.domain.viewmodels.quiz.add
 
 import android.content.Context
 import android.util.Log
