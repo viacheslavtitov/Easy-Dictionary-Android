@@ -1,4 +1,4 @@
-package my.dictionary.free.view.quize
+package my.dictionary.free.view.quiz
 
 import android.view.LayoutInflater
 import android.view.View
@@ -36,15 +36,15 @@ class UserQuizzesAdapter(
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        val quize = data[position]
+        val quiz = data[position]
         val context = viewHolder.itemView.context
-        viewHolder.nameTextView.text = quize.name
-        quize.dictionary?.let { dictionary ->
+        viewHolder.nameTextView.text = quiz.name
+        quiz.dictionary?.let { dictionary ->
             viewHolder.langsTextView.text =
                 "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}"
         }
         viewHolder.swipePosition = position
-        val selected = selectedQuizzes.firstOrNull { it._id == quize._id } != null
+        val selected = selectedQuizzes.firstOrNull { it._id == quiz._id } != null
         viewHolder.itemView.setBackgroundColor(
             if (selected) context.getColorInt(R.color.gray_300) else context.getColorInt(
                 R.color.gray_200

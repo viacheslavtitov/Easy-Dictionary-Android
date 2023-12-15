@@ -1,4 +1,4 @@
-package my.dictionary.free.view.quize.add
+package my.dictionary.free.view.quiz.add
 
 import android.os.Bundle
 import android.util.Log
@@ -28,14 +28,13 @@ import my.dictionary.free.domain.models.navigation.WordsMultiChooseScreen
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
-import my.dictionary.free.domain.viewmodels.quize.add.AddQuizViewModel
+import my.dictionary.free.domain.viewmodels.quiz.add.AddQuizViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.dialogs.DialogBuilders
 import my.dictionary.free.view.dialogs.ValueDialogListener
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.findAndDismissDialog
 import my.dictionary.free.view.ext.visible
-import my.dictionary.free.view.quize.UserQuizzesFragment
 import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
 import my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter

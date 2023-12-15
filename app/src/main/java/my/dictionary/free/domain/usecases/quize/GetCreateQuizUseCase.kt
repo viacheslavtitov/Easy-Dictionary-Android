@@ -56,14 +56,42 @@ class GetCreateQuizUseCase @Inject constructor(
                     )
                 }
                 .map { pair ->
-                    val quize = pair.first
+                    val quiz = pair.first
                     val dictionary = pair.second
                     return@map Quiz(
-                        _id = quize._id,
-                        userId = quize.userId,
+                        _id = quiz._id,
+                        userId = quiz.userId,
                         dictionary = dictionary,
-                        name = quize.name,
-                        timeInSeconds = quize.timeInSeconds,
+                        name = quiz.name,
+                        timeInSeconds = quiz.timeInSeconds,
+                    )
+                }
+        }
+    }
+
+    suspend fun getQuiz(context: Context, quizId: String): Flow<Quiz> {
+        Log.d(TAG, "getQuiz $quizId")
+        val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
+        if (userId.isNullOrEmpty()) {
+            return emptyFlow()
+        } else {
+            return databaseRepository.getQuizById(userId, quizId)
+                .map {
+                    return@map Pair(
+                        it,
+                        getCreateDictionaryUseCase.getDictionaryById(context, it.dictionaryId)
+                            .firstOrNull()
+                    )
+                }
+                .map { pair ->
+                    val quiz = pair.first
+                    val dictionary = pair.second
+                    return@map Quiz(
+                        _id = quiz._id,
+                        userId = quiz.userId,
+                        dictionary = dictionary,
+                        name = quiz.name,
+                        timeInSeconds = quiz.timeInSeconds,
                     )
                 }
         }
