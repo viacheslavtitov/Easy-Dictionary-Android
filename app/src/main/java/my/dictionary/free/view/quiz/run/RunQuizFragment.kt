@@ -62,7 +62,7 @@ class RunQuizFragment : AbstractBaseFragment() {
         timeTextView = view.findViewById(R.id.time)
         btnNext = view.findViewById<Button?>(R.id.btn_next)?.also {
             it.setOnClickListener {
-                nextOrSkip(it.isActivated)
+                nextOrSkip(!it.isActivated)
             }
         }
         return view
@@ -115,6 +115,14 @@ class RunQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
+                    viewModel.successSaveQuizUIState.drop(1).collect { success ->
+                        Log.d(TAG, "quiz result save: $success")
+                        if (success) {
+                            findNavController().popBackStack()
+                        }
+                    }
+                }
+                launch {
                     viewModel.titleQuizUIState.collect { titlePair ->
                         sharedViewModel.setTitle(
                             getString(
@@ -140,7 +148,7 @@ class RunQuizFragment : AbstractBaseFragment() {
                             btnNext?.isActivated = true
                             btnNext?.text = getString(R.string.finish)
                             btnNext?.setOnClickListener {
-                                findNavController().popBackStack()
+                                viewModel.saveQuiz(context)
                             }
                         }
                     }
@@ -202,8 +210,8 @@ class RunQuizFragment : AbstractBaseFragment() {
             Log.d(TAG, "skip current word")
             viewModel.skipAnswer()
         } else {
-            Log.d(TAG, "next word")
             val answer = answerEditText?.text?.toString() ?: ""
+            Log.d(TAG, "answer is $answer")
             viewModel.nextWord(answer)
         }
     }
@@ -219,7 +227,7 @@ class RunQuizFragment : AbstractBaseFragment() {
 
         override fun afterTextChanged(text: Editable?) {
             val isTimerRunning = quizTimer?.isRunning() ?: false
-            if(isTimerRunning) {
+            if (isTimerRunning) {
                 val newAnswer = text?.toString()?.trim()
                 viewModel.checkAnswer(context, newAnswer)
             }

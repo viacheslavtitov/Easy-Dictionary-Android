@@ -13,7 +13,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.dictionary.DictionaryTable
+import my.dictionary.free.data.models.quiz.QuizResultTable
 import my.dictionary.free.data.models.quiz.QuizTable
+import my.dictionary.free.data.models.quiz.QuizWordResultTable
 import my.dictionary.free.data.models.quiz.QuizWordsTable
 import my.dictionary.free.data.models.users.UsersTable
 import my.dictionary.free.data.models.words.WordTable
@@ -548,12 +550,12 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
 
     suspend fun deleteQuizzes(
         userId: String,
-        quizeIds: List<String>
+        quizIds: List<String>
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val childRemoves = mutableMapOf<String, Any?>()
-            quizeIds.forEach {
-                Log.d(TAG, "delete quize by id = $it")
+            quizIds.forEach {
+                Log.d(TAG, "delete quiz by id = $it")
                 childRemoves["/${QuizTable._NAME}/$it"] = null
             }
             database.reference.child(UsersTable._NAME).child(userId).updateChildren(childRemoves)
@@ -761,5 +763,90 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                 reference.removeEventListener(valueEventListener)
             }
         }.flowOn(ioScope)
+    }
+
+    suspend fun saveQuizResults(
+        userId: String,
+        quizTable: QuizResultTable
+    ): Triple<Boolean, String?, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val quizResultKey = reference.child(QuizResultTable._NAME).push().key
+            if (quizResultKey == null) {
+                cont.resume(Triple(false, null, null))
+            }
+            quizResultKey?.let { key ->
+                val table = QuizResultTable(
+                    _id = key,
+                    quizId = quizTable.quizId,
+                    wordsCount = quizTable.wordsCount,
+                    rightAnswers = quizTable.rightAnswers,
+                    unixDateTimeStamp = quizTable.unixDateTimeStamp
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${QuizTable._NAME}/${table.quizId}/${QuizResultTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Triple(true, null, key))
+                }.addOnFailureListener {
+                    cont.resume(Triple(false, it.message, null))
+                }.addOnCanceledListener {
+                    cont.resume(Triple(false, null, null))
+                }
+            }
+        }
+    }
+
+    suspend fun addWordToQuizResult(
+        userId: String,
+        quizResultId: String,
+        quizWordResult: QuizWordResultTable
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val wordKey = reference.child(QuizWordResultTable._NAME).push().key
+            if (wordKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            wordKey?.let { key ->
+                val table = QuizWordResultTable(
+                    _id = key,
+                    quizId = quizWordResult.quizId,
+                    wordId = quizWordResult.wordId,
+                    originalWord = quizWordResult.originalWord,
+                    answer = quizWordResult.answer
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${QuizTable._NAME}/${table.quizId}/${QuizResultTable._NAME}/${quizResultId}/${QuizWordResultTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun deleteQuizResult(
+        userId: String,
+        quizId: String,
+        quizResultId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            childRemoves["/${QuizResultTable._NAME}/$quizResultId"] = null
+            database.reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME)
+                .child(quizId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
     }
 }
