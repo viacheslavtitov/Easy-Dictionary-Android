@@ -2,7 +2,6 @@ package my.dictionary.free.view.quiz.run
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -16,6 +15,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.utils.QuizTimer
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.run.RunQuizViewModel
@@ -36,7 +37,6 @@ class RunQuizFragment : AbstractBaseFragment() {
         private val TAG = RunQuizFragment::class.simpleName
         const val BUNDLE_QUIZ =
             "my.dictionary.free.view.quiz.run.RunQuizFragment.BUNDLE_QUIZ"
-        private const val INTERVAL_MILLISECONDS = 1000L
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -89,7 +89,8 @@ class RunQuizFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.validationSuccessUIState.drop(1).collect { success ->
                         btnNext?.isActivated = success
-                        if(success) {
+                        context?.hideKeyboard(answerEditText)
+                        if (success) {
                             btnNext?.text = getString(R.string.next)
                             timeTextView?.text = getString(R.string.success)
                             quizTimer?.cancel()
@@ -100,7 +101,7 @@ class RunQuizFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.validationErrorUIState.collect { error ->
-                        if(answerEditText?.text?.isNullOrEmpty() == false) {
+                        if (answerEditText?.text?.isNullOrEmpty() == false) {
                             answerInputLayout?.error = error
                         } else {
                             answerInputLayout?.error = ""
@@ -114,10 +115,33 @@ class RunQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.quizEndedUIState.collect { isEnded ->
+                    viewModel.titleQuizUIState.collect { titlePair ->
+                        sharedViewModel.setTitle(
+                            getString(
+                                R.string.quiz_title,
+                                titlePair.first,
+                                titlePair.second
+                            )
+                        )
+                    }
+                }
+                launch {
+                    viewModel.quizEndedUIState.drop(1).collect { endResult ->
+                        val isEnded = endResult.first
+                        val countWord = endResult.third
+                        val successWord = endResult.second
                         Log.d(TAG, "quiz is ended = $isEnded")
-                        if(isEnded) {
-
+                        if (isEnded) {
+                            wordTextView?.text =
+                                getString(R.string.quiz_ended_result, successWord, countWord)
+                            phoneticTextView?.text = ""
+                            answerEditText?.setText("")
+                            timeTextView?.text = ""
+                            btnNext?.isActivated = true
+                            btnNext?.text = getString(R.string.finish)
+                            btnNext?.setOnClickListener {
+                                findNavController().popBackStack()
+                            }
                         }
                     }
                 }
@@ -136,18 +160,19 @@ class RunQuizFragment : AbstractBaseFragment() {
         quiz?.let {
             Log.d(TAG, "millisInFuture = ${it.timeInSeconds.toLong()}")
             quizTimer?.cancel()
-            quizTimer = object : CountDownTimer(
-                it.timeInSeconds.toLong() * 1000L,
-                INTERVAL_MILLISECONDS
+            quizTimer = object : QuizTimer(
+                millisInFuture = it.timeInSeconds.toLong() * 1000L
             ) {
                 @SuppressLint("RestrictedApi", "SetTextI18n")
                 override fun onTick(millisUntilFinished: Long) {
+                    super.onTick(millisUntilFinished)
                     Log.d(TAG, "change timer $millisUntilFinished")
                     val seconds = millisUntilFinished / 1000
                     timeTextView?.text = "$seconds"
                 }
 
                 override fun onFinish() {
+                    super.onFinish()
                     Log.d(TAG, "timer is finished")
                     btnNext?.isActivated = false
                     btnNext?.text = getString(R.string.skip)
@@ -163,7 +188,7 @@ class RunQuizFragment : AbstractBaseFragment() {
         answerEditText?.setText("")
         timeTextView?.text = ""
         wordTextView?.text = word.original
-        phoneticTextView?.text = if(word.phonetic != null) "[${word.phonetic}]" else ""
+        phoneticTextView?.text = if (word.phonetic != null) "[${word.phonetic}]" else ""
         quizTimer?.start()
         answerEditText?.requestFocus()
         btnNext?.isActivated = false
@@ -178,11 +203,12 @@ class RunQuizFragment : AbstractBaseFragment() {
             viewModel.skipAnswer()
         } else {
             Log.d(TAG, "next word")
-            viewModel.nextWord()
+            val answer = answerEditText?.text?.toString() ?: ""
+            viewModel.nextWord(answer)
         }
     }
 
-    private val onAnswerChangeListener = object: TextWatcher {
+    private val onAnswerChangeListener = object : TextWatcher {
         override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
         }
@@ -192,11 +218,14 @@ class RunQuizFragment : AbstractBaseFragment() {
         }
 
         override fun afterTextChanged(text: Editable?) {
-            val newAnswer = text?.toString()?.trim()
-            viewModel.checkAnswer(context, newAnswer)
+            val isTimerRunning = quizTimer?.isRunning() ?: false
+            if(isTimerRunning) {
+                val newAnswer = text?.toString()?.trim()
+                viewModel.checkAnswer(context, newAnswer)
+            }
         }
 
     }
 
-    private var quizTimer: CountDownTimer? = null
+    private var quizTimer: QuizTimer? = null
 }

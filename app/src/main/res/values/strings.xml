@@ -27,6 +27,7 @@
     <string name="next">Next</string>
     <string name="skip">Skip</string>
     <string name="success">Success</string>
+    <string name="finish">Finish</string>
     <!-- Sign-in -->
     <string name="sign_in_error_description">%s\nDo you want to retry?</string>
     <!-- Menu -->
@@ -51,6 +52,8 @@
     <string name="translation">Translation</string>
     <string name="error_validation">Answer is not mismatch</string>
     <string name="fail_time_over">Failed. Time is over</string>
+    <string name="quiz_ended_result">Quiz is ended. Your score: %d/%d</string>
+    <string name="quiz_title">Quiz: %d/%d</string>
     <!-- Dictionary -->
     <string name="dictionary">Dictionary</string>
     <string name="add_dictionary">Add dictionary</string>
