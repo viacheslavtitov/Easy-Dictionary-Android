@@ -17,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.navigation.RunQuizScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.detail.QuizDetailViewModel
 import my.dictionary.free.view.AbstractBaseFragment
@@ -115,7 +116,10 @@ class QuizDetailFragment : AbstractBaseFragment() {
                 }
 
                 R.id.run_quiz -> {
-
+                    viewModel.getQuiz()?.let {
+                        Log.d(TAG, "run quiz")
+                        sharedViewModel.navigateTo(RunQuizScreen(it))
+                    }
                     return@addMenuProvider true
                 }
 

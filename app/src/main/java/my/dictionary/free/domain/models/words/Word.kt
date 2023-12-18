@@ -28,4 +28,8 @@ data class Word(
         phonetic = phonetic,
         translates = translateList
     )
+
+    override fun toString(): String {
+        return "$original | $phonetic"
+    }
 }

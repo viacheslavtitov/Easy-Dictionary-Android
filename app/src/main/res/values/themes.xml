@@ -32,6 +32,7 @@
         <item name="snackbarButtonStyle">@style/Widget.App.SnackbarButton</item>
         <!-- Spinner -->
         <item name="spinnerStyle">@style/Widget.App.Spinner</item>
+        <item name="buttonStyle">@style/Widget.App.Button</item>
     </style>
 
     <style name="SplashTheme" parent="@style/Theme.AppCompat.NoActionBar">
@@ -102,5 +103,11 @@
 
     <style name="Widget.App.Spinner" parent="Widget.AppCompat.Spinner">
         <item name="background">@drawable/ic_baseline_arrow_drop_down_24</item>
+    </style>
+
+    <style name="Widget.App.Button" parent="Widget.AppCompat.Button.Borderless.Colored">
+        <item name="android:background">@drawable/button_selector</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">18dp</item>
     </style>
 </resources>

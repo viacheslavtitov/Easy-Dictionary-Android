@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.view.View
+import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.AppCompatImageView
@@ -35,12 +36,14 @@ import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
+import my.dictionary.free.domain.models.navigation.RunQuizScreen
 import my.dictionary.free.domain.models.navigation.UserQuizScreen
 import my.dictionary.free.domain.models.navigation.WordsMultiChooseScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.quiz.detail.QuizDetailFragment
+import my.dictionary.free.view.quiz.run.RunQuizFragment
 import my.dictionary.free.view.splash.SplashActivity
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
@@ -73,6 +76,7 @@ class MainActivity : AbstractBaseActivity() {
         setContentView(R.layout.activity_main)
         visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.statusBars())
         visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.systemBars())
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
         toolbar = findViewById(R.id.toolbar)
         navDrawerLayout = findViewById(R.id.drawer_layout)
         navView = findViewById(R.id.nav_view)
@@ -124,6 +128,11 @@ class MainActivity : AbstractBaseActivity() {
                 }
 
                 R.id.quizDetailFragment -> {
+                    toolbar.setTitle(R.string.quiz)
+                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
+
+                R.id.runQuizFragment -> {
                     toolbar.setTitle(R.string.quiz)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
@@ -228,6 +237,16 @@ class MainActivity : AbstractBaseActivity() {
                         )
                     }
                     navController.navigate(R.id.action_userQuizzesFragment_to_quizDetailFragment, bundle)
+                }
+
+                is RunQuizScreen -> {
+                    val bundle = Bundle().apply {
+                        putParcelable(
+                            RunQuizFragment.BUNDLE_QUIZ,
+                            navigation.quiz
+                        )
+                    }
+                    navController.navigate(R.id.action_quizDetailFragment_to_runQuizFragment, bundle)
                 }
 
                 is AddUserQuizScreen -> {

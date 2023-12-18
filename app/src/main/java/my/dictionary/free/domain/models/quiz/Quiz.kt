@@ -1,8 +1,11 @@
 package my.dictionary.free.domain.models.quiz
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
 
+@Parcelize
 data class Quiz(
     val _id: String? = null,
     val userId: String,
@@ -10,7 +13,7 @@ data class Quiz(
     val name: String,
     val timeInSeconds: Int,
     val words: MutableList<Word> = mutableListOf()
-) {
+) : Parcelable {
     companion object {
         const val DEFAULT_QUIZE_TIME = 60
         fun empty(): Quiz = Quiz(

@@ -64,7 +64,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
     private var quizzesAdapter: UserQuizzesAdapter? = null
 
-    private val undoRemoveQuizeTimer =
+    private val undoRemoveQuizTimer =
         object : CountDownTimer(
             UNDO_SNACKBAR_DURATION_TIMER, UNDO_SNACKBAR_INTERVAL_TIMER
         ) {
@@ -105,7 +105,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
             OnListTouchListener(
                 requireContext(),
                 quizzesRecyclerView,
-                onQuizeClickListener
+                onQuizClickListener
             )
         )
         swipeRefreshLayout =
@@ -211,7 +211,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
 
     }
 
-    private val onQuizeClickListener = object : OnListItemClickListener {
+    private val onQuizClickListener = object : OnListItemClickListener {
         override fun onListItemClick(childView: View) {
             quizzesAdapter?.getItemByPosition(
                 quizzesRecyclerView.getChildAdapterPosition(childView)
@@ -268,7 +268,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                     quizzesAdapter?.undoRemovedItem()
                 }
             undoRemoveQuizeSnackbar?.show()
-            undoRemoveQuizeTimer.start()
+            undoRemoveQuizTimer.start()
         }
     }
 
