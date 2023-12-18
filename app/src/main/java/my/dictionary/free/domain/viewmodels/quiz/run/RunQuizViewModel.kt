@@ -3,20 +3,25 @@ package my.dictionary.free.domain.viewmodels.quiz.run
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.quiz.QuizWordResult
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.usecases.quize.GetCreateQuizUseCase
 import javax.inject.Inject
 
 @HiltViewModel
-class RunQuizViewModel @Inject constructor() : ViewModel() {
+class RunQuizViewModel @Inject constructor(
+    private val getCreateQuizUseCase: GetCreateQuizUseCase
+) : ViewModel() {
     companion object {
         private val TAG = RunQuizViewModel::class.simpleName
     }
@@ -51,6 +56,10 @@ class RunQuizViewModel @Inject constructor() : ViewModel() {
         MutableStateFlow(Pair(0, 0))
     val titleQuizUIState: StateFlow<Pair<Int, Int>> = _titleQuizUIState.asStateFlow()
 
+    private val _successSaveQuizUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val successSaveQuizUIState: StateFlow<Boolean> = _successSaveQuizUIState.asStateFlow()
+
     private var quiz: Quiz? = null
     private var currentStep: Int = -1
     private var currentWord: Word? = null
@@ -71,12 +80,12 @@ class RunQuizViewModel @Inject constructor() : ViewModel() {
             if (currentStep >= 0 && currentStep < it.size) {
                 currentWord = it[currentStep]
                 nextWordUIState.tryEmit(currentWord!!)
-                _titleQuizUIState.value= Pair(currentStep + 1, it.size)
+                _titleQuizUIState.value = Pair(currentStep + 1, it.size)
             } else {
                 val countWords = result.size
                 val countAnswers = result.filter { it.answer?.isNotEmpty() == true }.size
                 Log.d(TAG, "quiz is ended. Passed $countWords and right answers is $countAnswers")
-                _titleQuizUIState.value= Pair(currentStep, it.size)
+                _titleQuizUIState.value = Pair(currentStep, it.size)
                 _quizEndedUIState.value = Triple(true, countAnswers, countWords)
             }
         }
@@ -125,6 +134,46 @@ class RunQuizViewModel @Inject constructor() : ViewModel() {
             )
         }
         provideNextWord()
+    }
+
+    fun saveQuiz(context: Context?) {
+        if (context == null) return
+        viewModelScope.launch {
+            _loadingUIState.value = true
+            _successSaveQuizUIState.value = false
+            val countWords = result.size
+            val countAnswers = result.filter { it.answer?.isNotEmpty() == true }.size
+            val quizResult = getCreateQuizUseCase.saveQuizResult(
+                quizId = quiz?._id ?: "",
+                wordsCount = countWords,
+                rightAnswers = countAnswers,
+                unixDateTimeStamp = System.currentTimeMillis()
+            )
+            _loadingUIState.value = false
+            if (!quizResult.first) {
+                val error = quizResult.second ?: context.getString(R.string.error_save_result_quiz)
+                _displayErrorUIState.value = error
+            } else {
+                var quizSavedSuccess = true
+                val quizResultId = quizResult.third ?: ""
+                for (word in result) {
+                    val wordResult = getCreateQuizUseCase.addWordToQuizResult(quizResultId, word)
+                    if (!wordResult.first) {
+                        val error =
+                            wordResult.second ?: context.getString(R.string.error_save_result_quiz)
+                        _displayErrorUIState.value = error
+                        getCreateQuizUseCase.deleteQuizResult(
+                            quizId = quiz?._id ?: "",
+                            quizResultId = quizResultId
+                        )
+                        quizSavedSuccess = false
+                        break
+                    }
+                }
+                _loadingUIState.value = false
+                _successSaveQuizUIState.value = quizSavedSuccess
+            }
+        }
     }
 
 }

@@ -6,9 +6,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import my.dictionary.free.data.models.quiz.QuizResultTable
 import my.dictionary.free.data.models.quiz.QuizTable
+import my.dictionary.free.data.models.quiz.QuizWordResultTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.quiz.Quiz
+import my.dictionary.free.domain.models.quiz.QuizWordResult
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
 import javax.inject.Inject
@@ -119,12 +122,58 @@ class GetCreateQuizUseCase @Inject constructor(
     suspend fun deleteQuizzes(quizzes: List<Quiz>): Pair<Boolean, String?> {
         val userId =
             preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
-        val requestDeleteQuizeIds = mutableListOf<String>()
-        quizzes.forEach { if (it._id != null) requestDeleteQuizeIds.add(it._id) }
-        return databaseRepository.deleteQuizzes(userId, requestDeleteQuizeIds)
+        val requestDeleteQuizIds = mutableListOf<String>()
+        quizzes.forEach { if (it._id != null) requestDeleteQuizIds.add(it._id) }
+        return databaseRepository.deleteQuizzes(userId, requestDeleteQuizIds)
     }
 
     suspend fun deleteQuiz(quiz: Quiz): Pair<Boolean, String?> {
         return deleteQuizzes(listOf(quiz))
+    }
+
+    suspend fun saveQuizResult(
+        quizId: String,
+        wordsCount: Int,
+        rightAnswers: Int,
+        unixDateTimeStamp: Long
+    ): Triple<Boolean, String?, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Triple(
+                false,
+                null,
+                null
+            )
+        return databaseRepository.saveQuizResults(
+            userId, QuizResultTable(
+                _id = null,
+                quizId = quizId,
+                wordsCount = wordsCount,
+                rightAnswers = rightAnswers,
+                unixDateTimeStamp = unixDateTimeStamp
+            )
+        )
+    }
+
+    suspend fun addWordToQuizResult(
+        quizResultId: String,
+        quizWordResult: QuizWordResult
+    ): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.addWordToQuizResult(
+            userId, quizResultId, QuizWordResultTable(
+                _id = null,
+                quizId = quizWordResult.quizId,
+                wordId = quizWordResult.wordId,
+                originalWord = quizWordResult.originalWord,
+                answer = quizWordResult.answer
+            )
+        )
+    }
+
+    suspend fun deleteQuizResult(quizId: String, quizResultId: String): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.deleteQuizResult(userId, quizId, quizResultId)
     }
 }
