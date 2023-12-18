@@ -12,6 +12,7 @@ class AddUserDictionaryScreen() : AppNavigation()
 class AddUserQuizScreen() : AppNavigation()
 
 class UserQuizScreen(val quiz: Quiz) : AppNavigation()
+class RunQuizScreen(val quiz: Quiz) : AppNavigation()
 class DictionaryWordsScreen(val dictionary: Dictionary) : AppNavigation()
 class AddDictionaryWordScreen(val dictionaryId: String) : AppNavigation()
 class WordsMultiChooseScreen(val dictionaryId: String) : AppNavigation()

@@ -12,7 +12,9 @@ fun Context.getColorInt(@ColorRes colorResId: Int) = ContextCompat.getColor(this
 /**
  * Hide keyboard which focused in passed view
  */
-fun Context.hideKeyboard(view: View) {
-    val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-    imm.hideSoftInputFromWindow(view.windowToken, 0)
+fun Context.hideKeyboard(view: View?) {
+    view?.let {
+        val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
 }

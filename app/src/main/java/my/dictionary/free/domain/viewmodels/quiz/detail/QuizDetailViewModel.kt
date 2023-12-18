@@ -125,4 +125,6 @@ class QuizDetailViewModel @Inject constructor(
         }
     }
 
+    fun getQuiz() = quizModel
+
 }
