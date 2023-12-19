@@ -17,11 +17,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
-import my.dictionary.free.domain.models.navigation.RunQuizScreen
+import my.dictionary.free.domain.models.quiz.Quiz
+import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.detail.QuizDetailViewModel
 import my.dictionary.free.view.AbstractBaseFragment
-import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
 import my.dictionary.free.view.widget.ListItemDecoration
 
@@ -30,8 +30,8 @@ class QuizDetailFragment : AbstractBaseFragment() {
 
     companion object {
         private val TAG = QuizDetailFragment::class.simpleName
-        const val BUNDLE_QUIZ_ID =
-            "my.dictionary.free.view.quiz.detail.QuizDetailFragment.BUNDLE_QUIZ_ID"
+        const val BUNDLE_QUIZ =
+            "my.dictionary.free.view.quiz.detail.QuizDetailFragment.BUNDLE_QUIZ"
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -43,7 +43,7 @@ class QuizDetailFragment : AbstractBaseFragment() {
     private var dictionaryTextView: AppCompatTextView? = null
 
     private var wordsAdapter: DictionaryWordsAdapter? = null
-    private var quizId: String? = null
+    private var quiz: Quiz? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -78,55 +78,33 @@ class QuizDetailFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.shouldClearWordsUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear words")
-                            wordsAdapter?.clearData()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.nameUIState.drop(1).collect { value ->
+                    viewModel.nameUIState.collect { value ->
                         nameTextView?.text = value
                     }
                 }
                 launch {
-                    viewModel.durationUIState.drop(1).collect { value ->
+                    viewModel.durationUIState.collect { value ->
                         durationTextView?.text = value
                     }
                 }
                 launch {
-                    viewModel.dictionaryUIState.drop(1).collect { value ->
+                    viewModel.dictionaryUIState.collect { value ->
                         dictionaryTextView?.text = value
                     }
                 }
                 launch {
-                    viewModel.wordUIState.collect { word ->
-                        wordsAdapter?.add(word)
+                    viewModel.wordUIState.collect { words ->
+                        words.forEach {
+                            wordsAdapter?.add(it)
+                        }
                     }
                 }
             }
         }
-        addMenuProvider(R.menu.menu_quiz_detail, { menu, mi ->
-        }, {
-            when (it) {
-                R.id.edit -> {
-
-                    return@addMenuProvider true
-                }
-
-                R.id.run_quiz -> {
-                    viewModel.getQuiz()?.let {
-                        Log.d(TAG, "run quiz")
-                        sharedViewModel.navigateTo(RunQuizScreen(it))
-                    }
-                    return@addMenuProvider true
-                }
-
-                else -> false
-            }
-        })
-        quizId = arguments?.getString(BUNDLE_QUIZ_ID, null)
-        viewModel.loadQuiz(context, quizId)
+        quiz = if (hasTiramisu()) arguments?.getParcelable(
+            BUNDLE_QUIZ,
+            Quiz::class.java
+        ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
+        viewModel.loadQuiz(context, quiz)
     }
 }

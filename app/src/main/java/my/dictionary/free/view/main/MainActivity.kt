@@ -43,6 +43,7 @@ import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.quiz.detail.QuizDetailFragment
+import my.dictionary.free.view.quiz.detail.QuizDetailTabsFragment
 import my.dictionary.free.view.quiz.run.RunQuizFragment
 import my.dictionary.free.view.splash.SplashActivity
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
@@ -127,7 +128,7 @@ class MainActivity : AbstractBaseActivity() {
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
 
-                R.id.quizDetailFragment -> {
+                R.id.quizDetailTabsFragment -> {
                     toolbar.setTitle(R.string.quiz)
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
@@ -232,7 +233,7 @@ class MainActivity : AbstractBaseActivity() {
                 is UserQuizScreen -> {
                     val bundle = Bundle().apply {
                         putString(
-                            QuizDetailFragment.BUNDLE_QUIZ_ID,
+                            QuizDetailTabsFragment.BUNDLE_QUIZ_ID,
                             navigation.quiz._id
                         )
                     }

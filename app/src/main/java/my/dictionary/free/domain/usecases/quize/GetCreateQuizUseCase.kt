@@ -11,9 +11,15 @@ import my.dictionary.free.data.models.quiz.QuizTable
 import my.dictionary.free.data.models.quiz.QuizWordResultTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.quiz.Quiz
+import my.dictionary.free.domain.models.quiz.QuizResult
 import my.dictionary.free.domain.models.quiz.QuizWordResult
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
+import my.dictionary.free.domain.utils.hasOreo
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.util.Date
 import javax.inject.Inject
 
 class GetCreateQuizUseCase @Inject constructor(
@@ -97,6 +103,35 @@ class GetCreateQuizUseCase @Inject constructor(
                         timeInSeconds = quiz.timeInSeconds,
                     )
                 }
+        }
+    }
+
+    suspend fun getHistoriesOfQuiz(quiz: Quiz): List<QuizResult> {
+        Log.d(TAG, "getQuiz ${quiz._id}")
+        val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
+        if (userId.isNullOrEmpty()) {
+            return arrayListOf()
+        } else {
+            return databaseRepository.getHistoriesOfQuiz(userId, quiz._id ?: "").firstOrNull()
+                ?.map {
+                        val dateTime = if(hasOreo()) {
+                            DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(it.unixDateTimeStamp))
+                        } else {
+                            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                            val date = Date(it.unixDateTimeStamp)
+                            sdf.format(date)
+                        }
+                    val langPair = "${quiz.dictionary?.dictionaryFrom?.langFull} - ${quiz.dictionary?.dictionaryTo?.langFull}"
+                    return@map QuizResult(
+                        _id = it._id,
+                        quizId = it.quizId,
+                        wordsCount = it.wordsCount,
+                        rightAnswers = it.rightAnswers,
+                        dateTime = dateTime,
+                        langPair = langPair,
+                        quizName = quiz.name
+                    )
+                } ?: arrayListOf()
         }
     }
 
