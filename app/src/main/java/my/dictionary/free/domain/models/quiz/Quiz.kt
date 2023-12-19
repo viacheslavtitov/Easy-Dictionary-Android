@@ -12,7 +12,8 @@ data class Quiz(
     var dictionary: Dictionary? = null,
     val name: String,
     val timeInSeconds: Int,
-    val words: MutableList<Word> = mutableListOf()
+    val words: MutableList<Word> = mutableListOf(),
+    val histories: MutableList<QuizResult> = mutableListOf()
 ) : Parcelable {
     companion object {
         const val DEFAULT_QUIZE_TIME = 60
@@ -27,6 +28,6 @@ data class Quiz(
     }
 
     override fun toString(): String {
-        return "id = $_id | userId = $userId | dictionary = ${dictionary?.dictionaryFrom} - ${dictionary?.dictionaryTo} | name = $name | timeInSeconds = $timeInSeconds | words = ${words.size}"
+        return "id = $_id | userId = $userId | dictionary = ${dictionary?.dictionaryFrom} - ${dictionary?.dictionaryTo} | name = $name | timeInSeconds = $timeInSeconds | words = ${words.size}| histories = ${histories.size}"
     }
 }

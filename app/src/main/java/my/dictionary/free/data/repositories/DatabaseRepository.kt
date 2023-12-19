@@ -849,4 +849,45 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                 }
         }
     }
+
+    suspend fun getHistoriesOfQuiz(
+        userId: String,
+        quizId: String,
+    ): Flow<List<QuizResultTable>> {
+        Log.d(TAG, "getHistoryOfQuiz")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(QuizTable._NAME).child(quizId)
+                .child(QuizResultTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val result = arrayListOf<QuizResultTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val quiz = QuizResultTable(
+                            _id = map[QuizResultTable._ID] as String?,
+                            quizId = map[QuizResultTable.QUIZ_ID] as String,
+                            wordsCount = (map[QuizResultTable.WORDS_COUNT] as Long).toInt(),
+                            rightAnswers = (map[QuizResultTable.RIGHT_ANSWERS] as Long).toInt(),
+                            unixDateTimeStamp = map[QuizResultTable.UNIX_DATE_TIME_STAMP] as Long
+                        )
+                        result.add(quiz)
+                    }
+                    trySend(result)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
 }

@@ -93,7 +93,7 @@
             app:destination="@id/addQuizFragment" />
         <action
             android:id="@+id/action_userQuizzesFragment_to_quizDetailFragment"
-            app:destination="@id/quizDetailFragment" />
+            app:destination="@id/quizDetailTabsFragment" />
     </fragment>
     <fragment
         android:id="@+id/dictionaryChooseDialogFragment"
@@ -123,12 +123,12 @@
             app:argType="string" />
     </fragment>
     <fragment
-        android:id="@+id/quizDetailFragment"
-        android:name="my.dictionary.free.view.quiz.detail.QuizDetailFragment"
-        android:label="QuizDetailFragment"
-        tools:layout="@layout/fragment_quiz_detail">
+        android:id="@+id/quizDetailTabsFragment"
+        android:name="my.dictionary.free.view.quiz.detail.QuizDetailTabsFragment"
+        android:label="QuizDetailTabsFragment"
+        tools:layout="@layout/fragment_quiz_detail_tabs">
         <argument
-            android:name="my.dictionary.free.view.quiz.detail.QuizDetailFragment.BUNDLE_QUIZ_ID"
+            android:name="my.dictionary.free.view.quiz.detail.QuizDetailTabsFragment.BUNDLE_QUIZ_ID"
             android:defaultValue="null"
             app:argType="string" />
         <action
