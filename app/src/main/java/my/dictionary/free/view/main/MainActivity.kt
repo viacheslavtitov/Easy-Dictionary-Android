@@ -35,6 +35,7 @@ import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
+import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.models.navigation.EditQuizScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
@@ -48,6 +49,7 @@ import my.dictionary.free.view.quiz.detail.QuizDetailFragment
 import my.dictionary.free.view.quiz.detail.QuizDetailTabsFragment
 import my.dictionary.free.view.quiz.run.RunQuizFragment
 import my.dictionary.free.view.splash.SplashActivity
+import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
@@ -193,6 +195,19 @@ class MainActivity : AbstractBaseActivity() {
                     navController.navigate(R.id.action_userDictionaryFragment_to_addUserDictionaryFragment)
                 }
 
+                is EditDictionaryScreen -> {
+                    val bundle = Bundle().apply {
+                        putParcelable(
+                            AddUserDictionaryFragment.BUNDLE_DICTIONARY,
+                            navigation.dictionary
+                        )
+                    }
+                    navController.navigate(
+                        R.id.action_userDictionaryFragment_to_addUserDictionaryFragment,
+                        bundle
+                    )
+                }
+
                 is DictionaryWordsScreen -> {
                     val bundle = Bundle().apply {
                         putString(
@@ -239,7 +254,10 @@ class MainActivity : AbstractBaseActivity() {
                             navigation.quiz._id
                         )
                     }
-                    navController.navigate(R.id.action_userQuizzesFragment_to_quizDetailFragment, bundle)
+                    navController.navigate(
+                        R.id.action_userQuizzesFragment_to_quizDetailFragment,
+                        bundle
+                    )
                 }
 
                 is RunQuizScreen -> {
@@ -249,7 +267,10 @@ class MainActivity : AbstractBaseActivity() {
                             navigation.quiz
                         )
                     }
-                    navController.navigate(R.id.action_quizDetailFragment_to_runQuizFragment, bundle)
+                    navController.navigate(
+                        R.id.action_quizDetailFragment_to_runQuizFragment,
+                        bundle
+                    )
                 }
 
                 is EditQuizScreen -> {
@@ -259,7 +280,10 @@ class MainActivity : AbstractBaseActivity() {
                             navigation.quiz
                         )
                     }
-                    navController.navigate(R.id.action_quizDetailTabsFragment_to_addQuizFragment, bundle)
+                    navController.navigate(
+                        R.id.action_quizDetailTabsFragment_to_addQuizFragment,
+                        bundle
+                    )
                 }
 
                 is AddUserQuizScreen -> {
@@ -272,7 +296,10 @@ class MainActivity : AbstractBaseActivity() {
                             WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID,
                             navigation.dictionaryId
                         )
-                        putParcelableArrayList(WordsMultiChooseFragment.BUNDLE_WORDS, navigation.words)
+                        putParcelableArrayList(
+                            WordsMultiChooseFragment.BUNDLE_WORDS,
+                            navigation.words
+                        )
                     }
                     navController.navigate(
                         R.id.action_addQuizFragment_to_wordsMultiChooseFragment,

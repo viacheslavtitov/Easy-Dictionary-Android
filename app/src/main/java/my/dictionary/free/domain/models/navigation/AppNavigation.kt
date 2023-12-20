@@ -10,6 +10,7 @@ sealed class AppNavigation()
 class LanguagesScreen(val langType: LangType) : AppNavigation()
 
 class AddUserDictionaryScreen() : AppNavigation()
+class EditDictionaryScreen(val dictionary: Dictionary) : AppNavigation()
 class AddUserQuizScreen() : AppNavigation()
 
 class EditQuizScreen(val quiz: Quiz) : AppNavigation()

@@ -35,6 +35,7 @@ import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
+import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import my.dictionary.free.view.AbstractBaseFragment
@@ -299,6 +300,10 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
             return when (item?.itemId) {
                 R.id.menu_edit -> {
+                    dictionariesAdapter?.getSelectedDictionaries()?.firstOrNull()?.let {
+                        actionMode?.finish()
+                        sharedViewModel.navigateTo(EditDictionaryScreen(it))
+                    }
                     true
                 }
 
