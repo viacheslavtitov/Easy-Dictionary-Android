@@ -96,6 +96,8 @@ class QuizDetailTabsViewModel @Inject constructor(
                     }
                 }
             quiz.histories.addAll(getCreateQuizUseCase.getHistoriesOfQuiz(quiz))
+            val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "").firstOrNull() ?: emptyList()
+            quiz.quizWords.addAll((quizWords))
             Log.d(TAG, "emit quiz ${quiz.name}")
             quizModel = quiz
             quizUIState.tryEmit(quiz)

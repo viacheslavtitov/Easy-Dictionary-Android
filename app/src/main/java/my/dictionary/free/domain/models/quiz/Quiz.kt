@@ -13,6 +13,7 @@ data class Quiz(
     val name: String,
     val timeInSeconds: Int,
     val words: MutableList<Word> = mutableListOf(),
+    val quizWords: MutableList<QuizWords> = mutableListOf(),
     val histories: MutableList<QuizResult> = mutableListOf()
 ) : Parcelable {
     companion object {

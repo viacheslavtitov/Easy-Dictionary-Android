@@ -379,6 +379,22 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun updateQuiz(userId: String,
+                           quiz: QuizTable): Boolean {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+
+            val userChild = reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).child(quiz._id!!)
+
+            userChild.child(QuizTable._ID).setValue(quiz._id).isComplete
+            userChild.child(QuizTable.USER_ID).setValue(quiz.userId).isComplete
+            userChild.child(QuizTable.DICTIONARY_ID).setValue(quiz.dictionaryId).isComplete
+            userChild.child(QuizTable.NAME).setValue(quiz.name).isComplete
+            userChild.child(QuizTable.TIME_IN_SECONDS).setValue(quiz.timeInSeconds).isComplete
+            cont.resume(true)
+        }
+    }
+
     suspend fun addWordToQuiz(
         userId: String,
         quizId: String, wordId: String
@@ -409,6 +425,27 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun deleteWordFromQuiz(
+        userId: String,
+        quizId: String, wordIds: List<String>
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            wordIds.forEach {
+                Log.d(TAG, "delete word by id = $it from quiz id $quizId")
+                childRemoves["/${QuizWordsTable._NAME}/$it"] = null
+            }
+            database.reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).child(quizId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
     suspend fun getQuizWords(
         userId: String,
         quizId: String,
@@ -423,12 +460,12 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     val quizWords = mutableListOf<QuizWordsTable>()
                     snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
-                        val quizeWord = QuizWordsTable(
+                        val quizWord = QuizWordsTable(
                             _id = map[QuizWordsTable._ID] as String?,
                             quizId = map[QuizWordsTable.QUIZ_ID] as String,
                             wordId = map[QuizWordsTable.WORD_ID] as String
                         )
-                        quizWords.add(quizeWord)
+                        quizWords.add(quizWord)
                     }
                     trySend(quizWords)
                     close()

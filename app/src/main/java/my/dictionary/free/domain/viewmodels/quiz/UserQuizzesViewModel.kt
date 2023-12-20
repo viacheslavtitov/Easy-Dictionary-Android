@@ -103,6 +103,8 @@ class UserQuizzesViewModel @Inject constructor(
                             }
                     }
                 }
+            val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "").firstOrNull() ?: emptyList()
+            quiz.quizWords.addAll((quizWords))
             Log.d(TAG, "emit quiz ${quiz.name}")
             quizzesUIState.tryEmit(quiz)
         }

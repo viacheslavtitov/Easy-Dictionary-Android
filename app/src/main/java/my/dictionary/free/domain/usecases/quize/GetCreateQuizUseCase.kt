@@ -13,6 +13,8 @@ import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.quiz.QuizResult
 import my.dictionary.free.domain.models.quiz.QuizWordResult
+import my.dictionary.free.domain.models.quiz.QuizWords
+import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
 import my.dictionary.free.domain.utils.hasOreo
@@ -42,6 +44,21 @@ class GetCreateQuizUseCase @Inject constructor(
         return databaseRepository.createQuiz(
             userId, QuizTable(
                 _id = null,
+                userId = userId,
+                dictionaryId = dictionaryId,
+                name = quiz.name,
+                timeInSeconds = quiz.timeInSeconds
+            )
+        )
+    }
+
+    suspend fun updateQuiz(quiz: Quiz): Boolean {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return false
+        val dictionaryId = quiz.dictionary?._id ?: return false
+        return databaseRepository.updateQuiz(
+            userId, QuizTable(
+                _id = quiz._id,
                 userId = userId,
                 dictionaryId = dictionaryId,
                 name = quiz.name,
@@ -114,14 +131,15 @@ class GetCreateQuizUseCase @Inject constructor(
         } else {
             return databaseRepository.getHistoriesOfQuiz(userId, quiz._id ?: "").firstOrNull()
                 ?.map {
-                        val dateTime = if(hasOreo()) {
-                            DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(it.unixDateTimeStamp))
-                        } else {
-                            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-                            val date = Date(it.unixDateTimeStamp)
-                            sdf.format(date)
-                        }
-                    val langPair = "${quiz.dictionary?.dictionaryFrom?.langFull} - ${quiz.dictionary?.dictionaryTo?.langFull}"
+                    val dateTime = if (hasOreo()) {
+                        DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(it.unixDateTimeStamp))
+                    } else {
+                        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                        val date = Date(it.unixDateTimeStamp)
+                        sdf.format(date)
+                    }
+                    val langPair =
+                        "${quiz.dictionary?.dictionaryFrom?.langFull} - ${quiz.dictionary?.dictionaryTo?.langFull}"
                     return@map QuizResult(
                         _id = it._id,
                         quizId = it.quizId,
@@ -148,6 +166,23 @@ class GetCreateQuizUseCase @Inject constructor(
         }
     }
 
+    suspend fun getWordsInQuiz(quizId: String): Flow<List<QuizWords>> {
+        val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
+        if (userId.isNullOrEmpty()) {
+            return emptyFlow()
+        } else {
+            return databaseRepository.getQuizWords(userId, quizId).map { quizWord ->
+                return@map quizWord.map {
+                    QuizWords(
+                        _id = it._id,
+                        quizId = it.quizId,
+                        wordId = it.wordId,
+                    )
+                }
+            }
+        }
+    }
+
     suspend fun addWordToQuiz(quizId: String, wordId: String): Pair<Boolean, String?> {
         val userId =
             preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
@@ -164,6 +199,12 @@ class GetCreateQuizUseCase @Inject constructor(
 
     suspend fun deleteQuiz(quiz: Quiz): Pair<Boolean, String?> {
         return deleteQuizzes(listOf(quiz))
+    }
+
+    suspend fun deleteWordsFromQuiz(quizId: String, requestDeleteWordsIds: List<String>): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.deleteWordFromQuiz(userId, quizId, requestDeleteWordsIds)
     }
 
     suspend fun saveQuizResult(
