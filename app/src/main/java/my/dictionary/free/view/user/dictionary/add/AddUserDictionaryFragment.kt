@@ -9,12 +9,17 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.language.LangType
 import my.dictionary.free.domain.models.language.Language
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
@@ -33,6 +38,8 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
             "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY"
         const val BUNDLE_DICTIONARY_CREATED_RESULT =
             "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT"
+        const val BUNDLE_DICTIONARY =
+            "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY"
     }
 
     private lateinit var textInputLayoutLangFrom: TextInputLayout
@@ -69,22 +76,39 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        lifecycleScope.launchWhenStarted {
-            if (viewModel.successCreateDictionaryFlow.subscriptionCount.value < 1) {
-                viewModel.successCreateDictionaryFlow.collect { success ->
-                    if (success) {
-                        val bundle = Bundle().apply {
-                            putBoolean(BUNDLE_DICTIONARY_CREATED_KEY, true)
-                        }
-                        setFragmentResult(BUNDLE_DICTIONARY_CREATED_RESULT, bundle)
-                        findNavController().popBackStack()
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
+                        val aboveView = getView() ?: return@collect
+                        displayError(errorMessage, aboveView)
                     }
                 }
-            }
-            if (viewModel.displayErrorFlow.subscriptionCount.value < 1) {
-                viewModel.displayErrorFlow.collect { errorMessage ->
-                    val aboveView = getView() ?: return@collect
-                    displayError(errorMessage, aboveView)
+                launch {
+                    viewModel.successCreateDictionaryUIState.collect { success ->
+                        if (success) {
+                            val bundle = Bundle().apply {
+                                putBoolean(BUNDLE_DICTIONARY_CREATED_KEY, true)
+                            }
+                            setFragmentResult(BUNDLE_DICTIONARY_CREATED_RESULT, bundle)
+                            findNavController().popBackStack()
+                        }
+                    }
+                }
+                launch {
+                    viewModel.langFromUIState.collect { value ->
+                        langFromBtn.text = value
+                    }
+                }
+                launch {
+                    viewModel.langToUIState.collect { value ->
+                        langToBtn.text = value
+                    }
+                }
+                launch {
+                    viewModel.dialectUIState.drop(1).collect { value ->
+                        textInputEditTextDialect.setText(value)
+                    }
                 }
             }
         }
@@ -94,9 +118,16 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                     createDictionary()
                     return@addMenuProvider true
                 }
+
                 else -> false
             }
         })
+
+        val dictionary = if (hasTiramisu()) arguments?.getParcelable(
+            BUNDLE_DICTIONARY,
+            Dictionary::class.java
+        ) else arguments?.getParcelable(BUNDLE_DICTIONARY) as? Dictionary
+        viewModel.setDictionary(context, dictionary)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,6 +146,7 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                     langFromBtn.text = language?.value
                     viewModel.languageFrom = language
                 }
+
                 LangType.TO -> {
                     langToBtn.text = language?.value
                     viewModel.languageTo = language

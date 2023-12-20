@@ -168,6 +168,23 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun updateDictionary(userId: String, dictionary: DictionaryTable): Boolean {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+
+            val userChild =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(dictionary._id!!)
+
+            userChild.child(DictionaryTable._ID).setValue(dictionary._id).isComplete
+            userChild.child(DictionaryTable.USER_UUID).setValue(dictionary.userUUID).isComplete
+            userChild.child(DictionaryTable.LANG_FROM).setValue(dictionary.langFrom).isComplete
+            userChild.child(DictionaryTable.LANG_TO).setValue(dictionary.langTo).isComplete
+            userChild.child(DictionaryTable.DIALECT).setValue(dictionary.dialect).isComplete
+            cont.resume(true)
+        }
+    }
+
     suspend fun createCategory(
         userId: String,
         category: TranslationCategoryTable
@@ -379,12 +396,15 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
-    suspend fun updateQuiz(userId: String,
-                           quiz: QuizTable): Boolean {
+    suspend fun updateQuiz(
+        userId: String,
+        quiz: QuizTable
+    ): Boolean {
         return suspendCoroutine { cont ->
             val reference = database.reference
 
-            val userChild = reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).child(quiz._id!!)
+            val userChild = reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME)
+                .child(quiz._id!!)
 
             userChild.child(QuizTable._ID).setValue(quiz._id).isComplete
             userChild.child(QuizTable.USER_ID).setValue(quiz.userId).isComplete
@@ -435,7 +455,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                 Log.d(TAG, "delete word by id = $it from quiz id $quizId")
                 childRemoves["/${QuizWordsTable._NAME}/$it"] = null
             }
-            database.reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).child(quizId).updateChildren(childRemoves)
+            database.reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME)
+                .child(quizId).updateChildren(childRemoves)
                 .addOnSuccessListener {
                     cont.resume(Pair(true, null))
                 }.addOnFailureListener {

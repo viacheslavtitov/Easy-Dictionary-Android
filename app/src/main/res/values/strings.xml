@@ -69,6 +69,7 @@
     <string name="select_language_to">Select language to</string>
     <string name="error_delete_dictionary">Something was wrong to delete dictionary</string>
     <string name="error_create_dictionary">Something was wrong to create dictionary</string>
+    <string name="error_update_dictionary">Something was wrong to update dictionary</string>
     <!-- Language -->
     <string name="add_language">Add language</string>
     <string name="search_hint">English</string>

@@ -40,4 +40,8 @@ class GetDictionaryLanguagesUseCase @Inject constructor() {
         return getLanguages(context).filter { it.value.contains(query, true) }
     }
 
+    suspend fun findLanguageByKey(context: Context, langKey: String): Language? {
+        return getLanguages(context).find { it.key == langKey }
+    }
+
 }
