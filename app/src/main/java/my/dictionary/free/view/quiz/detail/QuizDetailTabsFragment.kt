@@ -18,6 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.navigation.EditQuizScreen
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.detail.QuizDetailTabsViewModel
@@ -95,7 +96,9 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
         }, {
             when (it) {
                 R.id.edit -> {
-
+                    viewModel.getQuiz()?.let {
+                        sharedViewModel.navigateTo(EditQuizScreen(it))
+                    }
                     return@addMenuProvider true
                 }
 

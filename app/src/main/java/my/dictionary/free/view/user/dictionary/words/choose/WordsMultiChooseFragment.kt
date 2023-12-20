@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
@@ -37,6 +38,8 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
         private val TAG = WordsMultiChooseFragment::class.simpleName
         const val BUNDLE_DICTIONARY_ID =
             "my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID"
+        const val BUNDLE_WORDS =
+            "my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment.BUNDLE_WORDS"
         const val BUNDLE_WORDS_RESULT =
             "my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment.BUNDLE_WORDS_RESULT"
         const val BUNDLE_WORDS_KEY =
@@ -49,6 +52,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
     private lateinit var wordsRecyclerView: RecyclerView
     private var wordsAdapter: DictionaryWordsAdapter? = null
     private var dictionaryId: String? = null
+    private var editWords: ArrayList<Word>? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -90,6 +94,10 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                         if (clear) {
                             Log.d(TAG, "clear words")
                             wordsAdapter?.clearData()
+                        } else {
+                            editWords?.forEach {
+                                wordsAdapter?.selectWord(it)
+                            }
                         }
                     }
                 }
@@ -128,6 +136,9 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
             }
         })
         dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
+        editWords = if (hasTiramisu())
+            arguments?.getParcelableArrayList(BUNDLE_WORDS, Word::class.java)
+        else arguments?.getParcelableArrayList(BUNDLE_WORDS)
         refreshWords()
     }
 

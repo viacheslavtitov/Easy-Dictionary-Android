@@ -17,6 +17,7 @@ import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.usecases.quize.GetCreateQuizUseCase
 import javax.inject.Inject
+
 @HiltViewModel
 class AddQuizViewModel @Inject constructor(
     private val getCreateQuizUseCase: GetCreateQuizUseCase
@@ -41,6 +42,28 @@ class AddQuizViewModel @Inject constructor(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
+
+    //edit flows
+    private val _nameUIState: MutableStateFlow<String> =
+        MutableStateFlow("")
+    val nameUIState: StateFlow<String> = _nameUIState.asStateFlow()
+
+    val durationUIState: MutableSharedFlow<Int> = MutableSharedFlow(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_LATEST,
+    )
+
+    val dictionaryUIState: MutableSharedFlow<Dictionary> = MutableSharedFlow(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_LATEST,
+    )
+
+    val wordUIState: MutableSharedFlow<List<Word>> = MutableSharedFlow(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_LATEST,
+    )
+
+    private var editQuiz: Quiz? = null
 
     fun validate(
         context: Context?,
@@ -79,48 +102,115 @@ class AddQuizViewModel @Inject constructor(
         words: List<Word>
     ) {
         if (context == null) return
-        Log.d(TAG, "create quiz($name)")
+        if (isEditMode()) {
+            Log.d(TAG, "create quiz($name)")
+        } else {
+            Log.d(TAG, "update quiz($name)")
+        }
         viewModelScope.launch {
             _loadingUIState.value = true
             _successCreateQuizUIState.value = false
-            val quizResult = getCreateQuizUseCase.createQuiz(
-                Quiz(
-                    _id = null,
-                    userId = "",
-                    dictionary = dictionary,
-                    name = name ?: "",
-                    timeInSeconds = duration ?: 0,
-                    words = words.toMutableList()
+            if (isEditMode()) {
+                var successUpdateQuiz = false
+                val updatedQuiz = getCreateQuizUseCase.updateQuiz(
+                    Quiz(
+                        _id = editQuiz!!._id,
+                        userId = editQuiz!!.userId,
+                        dictionary = dictionary,
+                        name = name ?: "",
+                        timeInSeconds = duration ?: 0,
+                        words = words.toMutableList()
+                    )
                 )
-            )
-            _loadingUIState.value = false
-            if (!quizResult.first) {
-                val error = quizResult.second ?: context.getString(R.string.error_create_quiz)
-                _displayErrorUIState.value = error
-            } else {
-                var quizCreatedSuccess = true
-                val quizId = quizResult.third ?: ""
-                for (word in words) {
-                    val wordResult = getCreateQuizUseCase.addWordToQuiz(quizId, word._id ?: "")
-                    if (!wordResult.first) {
-                        val error =
-                            wordResult.second ?: context.getString(R.string.error_create_word)
-                        _displayErrorUIState.value = error
-                        getCreateQuizUseCase.deleteQuiz(Quiz(
-                            _id = quizId,
-                            userId = "",
-                            dictionary = dictionary,
-                            name = name ?: "",
-                            timeInSeconds = duration ?: 0,
-                            words = words.toMutableList()
-                        ))
-                        quizCreatedSuccess = false
-                        break
+                if (updatedQuiz) {
+                    val shouldDeleteWordsIds = arrayListOf<String>()
+                    editQuiz?.quizWords?.forEach { word ->
+                        if(words.find { it._id == word.wordId } == null) {
+                            shouldDeleteWordsIds.add(word._id!!)
+                        }
                     }
+                    val resultDeleteWords = getCreateQuizUseCase.deleteWordsFromQuiz(editQuiz!!._id!!, shouldDeleteWordsIds)
+                    if (!resultDeleteWords.first) {
+                        val error = resultDeleteWords.second ?: context.getString(R.string.error_create_quiz)
+                        _displayErrorUIState.value = error
+                    } else {
+                        val resultToAddWords = addWordsToQuiz(editQuiz!!._id!!, name, duration, dictionary, words)
+                        if(!resultToAddWords) {
+                            val error = context.getString(R.string.error_create_word)
+                            _displayErrorUIState.value = error
+                        } else {
+                            successUpdateQuiz = true
+                        }
+                    }
+                } else {
+                    _displayErrorUIState.value = context.getString(R.string.error_update_quiz)
                 }
                 _loadingUIState.value = false
-                _successCreateQuizUIState.value = quizCreatedSuccess
+                _successCreateQuizUIState.value = successUpdateQuiz
+            } else {
+                val quizResult = getCreateQuizUseCase.createQuiz(
+                    Quiz(
+                        _id = null,
+                        userId = "",
+                        dictionary = dictionary,
+                        name = name ?: "",
+                        timeInSeconds = duration ?: 0,
+                        words = words.toMutableList()
+                    )
+                )
+                _loadingUIState.value = false
+                if (!quizResult.first) {
+                    val error = quizResult.second ?: context.getString(R.string.error_create_quiz)
+                    _displayErrorUIState.value = error
+                } else {
+                    val quizId = quizResult.third ?: ""
+                    val resultToAddWords = addWordsToQuiz(quizId, name, duration, dictionary, words, true)
+                    if(!resultToAddWords) {
+                        val error = context.getString(R.string.error_create_word)
+                        _displayErrorUIState.value = error
+                    }
+                    _loadingUIState.value = false
+                    _successCreateQuizUIState.value = resultToAddWords
+                }
             }
+        }
+    }
+
+    private suspend fun addWordsToQuiz(quizId: String, name: String?,
+                                       duration: Int?,
+                                       dictionary: Dictionary?, words: List<Word>, shouldDeleteWordIfNotSuccess : Boolean = false): Boolean {
+        var quizCreatedSuccess = true
+        for (word in words) {
+            val wordResult = getCreateQuizUseCase.addWordToQuiz(quizId, word._id ?: "")
+            if (!wordResult.first && shouldDeleteWordIfNotSuccess) {
+                getCreateQuizUseCase.deleteQuiz(
+                    Quiz(
+                        _id = quizId,
+                        userId = "",
+                        dictionary = dictionary,
+                        name = name ?: "",
+                        timeInSeconds = duration ?: 0,
+                        words = words.toMutableList()
+                    )
+                )
+                quizCreatedSuccess = false
+                break
+            }
+        }
+        return quizCreatedSuccess
+    }
+
+    fun isEditMode() = editQuiz != null
+
+    fun setQuiz(quiz: Quiz?) {
+        editQuiz = quiz
+        if (quiz != null) {
+            _nameUIState.value = quiz.name
+            quiz.dictionary?.let { dict ->
+                dictionaryUIState.tryEmit(dict)
+            }
+            durationUIState.tryEmit(quiz.timeInSeconds)
+            wordUIState.tryEmit(quiz.words)
         }
     }
 }

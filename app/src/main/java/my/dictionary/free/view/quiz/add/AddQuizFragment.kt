@@ -25,6 +25,7 @@ import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.WordsMultiChooseScreen
+import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
@@ -49,6 +50,7 @@ class AddQuizFragment : AbstractBaseFragment() {
         private val TAG = AddQuizFragment::class.simpleName
         private const val DURATION_MIN = 1
         private const val DURATION_MAX = 60
+        const val BUNDLE_QUIZ = "my.dictionary.free.view.quiz.add.AddQuizFragment.BUNDLE_QUIZ"
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -92,7 +94,7 @@ class AddQuizFragment : AbstractBaseFragment() {
         }
         view.findViewById<View>(R.id.add_words).setOnClickListener {
             if (selectedDictionary != null && selectedDictionary!!._id != null) {
-                sharedViewModel.navigateTo(WordsMultiChooseScreen(selectedDictionary!!._id!!))
+                sharedViewModel.navigateTo(WordsMultiChooseScreen(selectedDictionary!!._id!!, wordsAdapter?.getWords()?.toList() as? ArrayList<Word>))
             } else {
                 displayError(getString(R.string.error_set_dictionary_first), wordsRecyclerView)
             }
@@ -143,6 +145,30 @@ class AddQuizFragment : AbstractBaseFragment() {
                         nameTextInputLayout?.error = error
                     }
                 }
+                launch {
+                    viewModel.dictionaryUIState.collect { dictionary ->
+                        selectedDictionary = dictionary
+                        fillDictionary()
+                    }
+                }
+                launch {
+                    viewModel.durationUIState.collect { seconds ->
+                        duration = seconds
+                        fillDuration()
+                    }
+                }
+                launch {
+                    viewModel.wordUIState.collect { words ->
+                        if(wordsAdapter?.getWords()?.isEmpty() == true) {
+                            fillWords(words)
+                        }
+                    }
+                }
+                launch {
+                    viewModel.nameUIState.collect { name ->
+                        nameTextInputEditText?.setText(name)
+                    }
+                }
             }
         }
         addMenuProvider(R.menu.menu_add_quiz, { menu, mi ->
@@ -173,6 +199,15 @@ class AddQuizFragment : AbstractBaseFragment() {
                 else -> false
             }
         })
+
+        val quiz = if (hasTiramisu()) arguments?.getParcelable(
+            BUNDLE_QUIZ,
+            Quiz::class.java
+        ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
+        Log.d(TAG, quiz?.toString() ?: "quiz is null")
+        viewModel.setQuiz(quiz)
+        val title = if(viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
+        sharedViewModel.setTitle(title)
     }
 
     @Suppress("DEPRECATION")
@@ -184,14 +219,13 @@ class AddQuizFragment : AbstractBaseFragment() {
                 Dictionary::class.java
             ) else bundle.getParcelable(DictionaryChooseFragment.BUNDLE_DICTIONARY_KEY) as? Dictionary
             fillDictionary()
+            wordsAdapter?.clearData()
         }
         setFragmentResultListener(WordsMultiChooseFragment.BUNDLE_WORDS_RESULT) { requestKey, bundle ->
             val words: ArrayList<Word> =
                 bundle.getParcelableArrayList(WordsMultiChooseFragment.BUNDLE_WORDS_KEY)
                     ?: ArrayList()
-            words.forEach {
-                wordsAdapter?.add(it)
-            }
+            fillWords(words)
         }
     }
 
@@ -216,6 +250,13 @@ class AddQuizFragment : AbstractBaseFragment() {
         durationValueTextView?.visible(duration != null, View.GONE)
         duration?.let { value ->
             durationValueTextView?.text = getString(R.string.seconds_value, value)
+        }
+    }
+
+    private fun fillWords(words: List<Word>) {
+        wordsAdapter?.clearData()
+        words.forEach {
+            wordsAdapter?.add(it)
         }
     }
 

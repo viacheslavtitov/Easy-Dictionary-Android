@@ -50,6 +50,7 @@
     <string name="error_empty_dictionary">Please select dictionary</string>
     <string name="error_empty_words">Please choose at least one word for quiz</string>
     <string name="error_create_quiz">Something was wrong to create quiz</string>
+    <string name="error_update_quiz">Something was wrong to update quiz</string>
     <string name="error_save_result_quiz">Something was wrong to save quiz result</string>
     <string name="translation">Translation</string>
     <string name="error_validation">Answer is not mismatch</string>
@@ -58,6 +59,8 @@
     <string name="quiz_title">Quiz: %d/%d</string>
     <string name="total_words">Total words: %d</string>
     <string name="right_answers">Right answers: %d</string>
+    <string name="add_quiz">Add quiz</string>
+    <string name="edit_quiz">Edit quiz</string>
     <!-- Dictionary -->
     <string name="dictionary">Dictionary</string>
     <string name="add_dictionary">Add dictionary</string>

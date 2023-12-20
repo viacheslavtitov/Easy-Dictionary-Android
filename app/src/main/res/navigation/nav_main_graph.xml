@@ -134,6 +134,9 @@
         <action
             android:id="@+id/action_quizDetailFragment_to_runQuizFragment"
             app:destination="@id/runQuizFragment" />
+        <action
+            android:id="@+id/action_quizDetailTabsFragment_to_addQuizFragment"
+            app:destination="@id/addQuizFragment" />
     </fragment>
     <fragment
         android:id="@+id/runQuizFragment"
