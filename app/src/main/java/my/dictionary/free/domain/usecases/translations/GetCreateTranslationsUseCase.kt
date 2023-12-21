@@ -14,7 +14,10 @@ class GetCreateTranslationsUseCase @Inject constructor(
         private val TAG = GetCreateTranslationsUseCase::class.simpleName
     }
 
-    suspend fun createTranslation(translation: TranslationVariant, dictionaryId: String): Pair<Boolean, String?> {
+    suspend fun createTranslation(
+        translation: TranslationVariant,
+        dictionaryId: String
+    ): Pair<Boolean, String?> {
         val userId =
             preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
         return databaseRepository.createTranslation(
@@ -27,6 +30,21 @@ class GetCreateTranslationsUseCase @Inject constructor(
                 categoryId = translation.categoryId,
                 description = translation.example
             )
+        )
+    }
+
+    suspend fun deleteTranslationsFromWord(
+        translationIds: List<String>,
+        dictionaryId: String,
+        wordId: String
+    ): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.deleteTranslationsFromWord(
+            userId = userId,
+            dictionaryId = dictionaryId,
+            wordId = wordId,
+            translationIds = translationIds
         )
     }
 }

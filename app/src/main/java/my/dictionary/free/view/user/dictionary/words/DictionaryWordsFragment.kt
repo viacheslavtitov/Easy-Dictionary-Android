@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
+import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
@@ -253,6 +254,10 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
             return when (item?.itemId) {
                 R.id.menu_edit -> {
+                    wordsAdapter?.getSelectedWords()?.firstOrNull()?.let {
+                        actionMode?.finish()
+                        sharedViewModel.navigateTo(EditDictionaryWordScreen(it))
+                    }
                     true
                 }
 

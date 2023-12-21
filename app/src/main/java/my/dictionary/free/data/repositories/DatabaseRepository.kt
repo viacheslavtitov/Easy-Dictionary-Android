@@ -540,6 +540,40 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }.flowOn(ioScope)
     }
 
+    suspend fun getCategoryById(
+        userId: String,
+        categoryId: String,
+    ): Flow<TranslationCategoryTable> {
+        Log.d(TAG, "getCategories")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(TranslationCategoryTable._NAME).child(categoryId)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val map = snapshot.value as HashMap<*, *>
+                    val category = TranslationCategoryTable(
+                        _id = map[TranslationCategoryTable._ID] as String?,
+                        userUUID = map[TranslationCategoryTable.USER_UUID] as String,
+                        categoryName = map[TranslationCategoryTable.CATEGORY_NAME] as String
+                    )
+                    trySend(category)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
     suspend fun getDictionaryById(
         userId: String,
         dictionaryId: String,
@@ -701,6 +735,27 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun updateWord(
+        userId: String,
+        word: WordTable
+    ): Boolean {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+
+            val userChild =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(word.dictionaryId)
+                    .child(WordTable._NAME)
+                    .child(word._id!!)
+
+            userChild.child(WordTable._ID).setValue(word._id).isComplete
+            userChild.child(WordTable.DICTIONARY_ID).setValue(word.dictionaryId).isComplete
+            userChild.child(WordTable.ORIGINAL).setValue(word.original).isComplete
+            userChild.child(WordTable.PHONETIC).setValue(word.phonetic).isComplete
+            cont.resume(true)
+        }
+    }
+
     suspend fun getTranslationVariantByWordId(
         userId: String,
         dictionaryId: String,
@@ -741,6 +796,30 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                 reference.removeEventListener(valueEventListener)
             }
         }.flowOn(ioScope)
+    }
+
+    suspend fun deleteTranslationsFromWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String, translationIds: List<String>
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            translationIds.forEach {
+                Log.d(TAG, "delete translation by id = $it from word id $wordId")
+                childRemoves["/${TranslationVariantTable._NAME}/$it"] = null
+            }
+            database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
+                .child(wordId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
     }
 
     suspend fun getWordsByDictionaryId(

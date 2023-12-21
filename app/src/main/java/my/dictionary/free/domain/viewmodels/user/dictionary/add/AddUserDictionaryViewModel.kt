@@ -40,7 +40,8 @@ class AddUserDictionaryViewModel @Inject constructor(
 
     private val _successCreateDictionaryUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
-    val successCreateDictionaryUIState: StateFlow<Boolean> = _successCreateDictionaryUIState.asStateFlow()
+    val successCreateDictionaryUIState: StateFlow<Boolean> =
+        _successCreateDictionaryUIState.asStateFlow()
 
     private val _langFromUIState: MutableStateFlow<String> =
         MutableStateFlow("")
@@ -59,7 +60,7 @@ class AddUserDictionaryViewModel @Inject constructor(
         val userUUID = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_UUID) ?: return
         viewModelScope.launch {
             _successCreateDictionaryUIState.value = false
-            if(isEditMode()) {
+            if (isEditMode()) {
                 val result = dictionaryUseCase.updateDictionary(
                     Dictionary(
                         _id = editDictionary?._id,
@@ -105,7 +106,7 @@ class AddUserDictionaryViewModel @Inject constructor(
     fun isEditMode() = editDictionary != null
 
     fun setDictionary(context: Context?, dictionary: Dictionary?) {
-        if(context == null) return
+        if (context == null) return
         editDictionary = dictionary
         dictionary?.let { dict ->
             viewModelScope.launch {
@@ -117,7 +118,7 @@ class AddUserDictionaryViewModel @Inject constructor(
                 languageTo?.value?.let {
                     _langToUIState.value = it
                 }
-                if(dict.dialect?.isNullOrEmpty() == false) {
+                if (dict.dialect?.isNullOrEmpty() == false) {
                     dialect = dict.dialect
                     _dialectUIState.value = dict.dialect
                 }

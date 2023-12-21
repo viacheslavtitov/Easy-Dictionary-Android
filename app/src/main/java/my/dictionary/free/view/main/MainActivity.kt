@@ -36,6 +36,7 @@ import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
+import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.EditQuizScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
@@ -45,7 +46,6 @@ import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.quiz.add.AddQuizFragment
-import my.dictionary.free.view.quiz.detail.QuizDetailFragment
 import my.dictionary.free.view.quiz.detail.QuizDetailTabsFragment
 import my.dictionary.free.view.quiz.run.RunQuizFragment
 import my.dictionary.free.view.splash.SplashActivity
@@ -226,6 +226,23 @@ class MainActivity : AbstractBaseActivity() {
                         putString(
                             AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID,
                             navigation.dictionaryId
+                        )
+                    }
+                    navController.navigate(
+                        R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment,
+                        bundle
+                    )
+                }
+
+                is EditDictionaryWordScreen -> {
+                    val bundle = Bundle().apply {
+                        putString(
+                            AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID,
+                            navigation.word.dictionaryId
+                        )
+                        putParcelable(
+                            AddDictionaryWordFragment.BUNDLE_WORD,
+                            navigation.word
                         )
                     }
                     navController.navigate(
