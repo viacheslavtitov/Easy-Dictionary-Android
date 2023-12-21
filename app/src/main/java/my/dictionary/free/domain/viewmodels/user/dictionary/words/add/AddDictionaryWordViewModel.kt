@@ -221,6 +221,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                     }
                     var translationUpdatedSuccess = true
                     for (tr in translations) {
+                        if (tr._id?.isNullOrEmpty() == false) continue
                         val translationResult = getCreateTranslationsUseCase.createTranslation(
                             tr.copyWithNewWordId(editWord!!._id!!), dictionary!!._id!!
                         )

@@ -89,6 +89,7 @@
     <string name="error_empty_translations">You have to add at least one translation variant</string>
     <string name="error_create_word">Something was wrong to add word</string>
     <string name="error_update_word">Something was wrong to update word</string>
+    <string name="error_update_translation">Something was wrong to update translation</string>
     <string name="error_delete_word">Something was wrong to delete word</string>
 
     <string name="menu_drawer_open">DrawerOpen</string>

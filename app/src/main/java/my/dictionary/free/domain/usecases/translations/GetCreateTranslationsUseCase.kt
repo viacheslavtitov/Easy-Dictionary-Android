@@ -33,6 +33,26 @@ class GetCreateTranslationsUseCase @Inject constructor(
         )
     }
 
+    suspend fun updateTranslation(
+        translation: TranslationVariant,
+        dictionaryId: String
+    ): Boolean {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return false
+        return databaseRepository.updateTranslation(
+            userId = userId,
+            dictionaryId = dictionaryId,
+            wordId = translation.wordId,
+            translation = TranslationVariantTable(
+                _id = translation._id,
+                wordId = translation.wordId,
+                translate = translation.translation,
+                categoryId = translation.categoryId,
+                description = translation.example
+            )
+        )
+    }
+
     suspend fun deleteTranslationsFromWord(
         translationIds: List<String>,
         dictionaryId: String,

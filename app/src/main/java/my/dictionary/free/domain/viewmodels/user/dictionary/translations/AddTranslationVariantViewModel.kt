@@ -18,11 +18,13 @@ import my.dictionary.free.R
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
+import my.dictionary.free.domain.usecases.translations.GetCreateTranslationsUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class AddTranslationVariantViewModel @Inject constructor(
     private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase,
+    private val getCreateTranslationsUseCase: GetCreateTranslationsUseCase
 ) : ViewModel() {
 
     companion object {
@@ -57,10 +59,30 @@ class AddTranslationVariantViewModel @Inject constructor(
         MutableStateFlow("")
     val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
 
+    //edit flows
+    private val _updateUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val updateUIState: StateFlow<Boolean> = _updateUIState.asStateFlow()
+
+    private val _exampleUIState: MutableStateFlow<String> =
+        MutableStateFlow("")
+    val exampleUIState: StateFlow<String> = _exampleUIState.asStateFlow()
+
+    private val _translationUIState: MutableStateFlow<String> =
+        MutableStateFlow("")
+    val translationUIState: StateFlow<String> = _translationUIState.asStateFlow()
+
+    private val _categoryUIState: MutableStateFlow<TranslationCategory> =
+        MutableStateFlow(TranslationCategory.empty())
+    val categoryUIState: StateFlow<TranslationCategory> = _categoryUIState.asStateFlow()
+
+    private var editModel: TranslationVariant? = null
+
     fun loadCategories(context: Context?) {
         if (context == null) return
         Log.d(TAG, "loadCategories()")
         viewModelScope.launch {
+            val categories = arrayListOf<TranslationCategory>()
             getCreateTranslationCategoriesUseCase.getCategories()
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
@@ -74,6 +96,14 @@ class AddTranslationVariantViewModel @Inject constructor(
                 }
                 .onCompletion {
                     Log.d(TAG, "onCompletion")
+                    editModel?.categoryId.let { id ->
+                        val existCategory = categories.find { it._id == id }
+                        existCategory?.let { category ->
+                            editModel?.category = category
+                            Log.d(TAG, "found category $category")
+                            _categoryUIState.value = category
+                        }
+                    }
                     _loadingUIState.value = false
                     _shouldClearCategoriesUIState.value = false
                 }
@@ -82,8 +112,22 @@ class AddTranslationVariantViewModel @Inject constructor(
                         TAG,
                         "category loaded = ${it.categoryName}"
                     )
+                    categories.add(it)
                     categoriesUIState.tryEmit(it)
                 }
+        }
+    }
+
+    fun setEditModel(translationVariant: TranslationVariant?) {
+        editModel = translationVariant
+        translationVariant?.let { translation ->
+            viewModelScope.launch {
+                Log.d(TAG, "load exist model $translation")
+                _translationUIState.value = translation.translation
+                translation.example?.let {
+                    _exampleUIState.value = it
+                }
+            }
         }
     }
 
@@ -125,5 +169,37 @@ class AddTranslationVariantViewModel @Inject constructor(
             example = example
         )
     }
+
+    fun updateTranslation(
+        context: Context?,
+        translation: String,
+        example: String?,
+        category: TranslationCategory?
+    ) {
+        if (context == null) return
+        Log.d(TAG, "updateTranslation($translation)")
+        viewModelScope.launch {
+            _loadingUIState.value = true
+            _updateUIState.value = false
+            val result = getCreateTranslationsUseCase.updateTranslation(
+                translation = TranslationVariant(
+                    _id = editModel!!._id,
+                    wordId = editModel!!.wordId,
+                    categoryId = category?._id,
+                    translation = translation.trim(),
+                    example = example
+                ),
+                dictionaryId = editModel!!.dictionaryId ?: ""
+            )
+            _loadingUIState.value = false
+            if (!result) {
+                _displayErrorUIState.value = context.getString(R.string.error_update_translation)
+            } else {
+                _updateUIState.value = true
+            }
+        }
+    }
+
+    fun isEditMode() = editModel != null
 
 }

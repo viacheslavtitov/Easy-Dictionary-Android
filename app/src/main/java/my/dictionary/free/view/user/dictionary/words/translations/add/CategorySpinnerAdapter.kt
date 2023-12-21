@@ -9,9 +9,16 @@ import androidx.appcompat.widget.AppCompatTextView
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
 
-class CategorySpinnerAdapter(context: Context, private val data: MutableList<TranslationCategory> = mutableListOf(TranslationCategory.empty())): BaseAdapter() {
+class CategorySpinnerAdapter(
+    context: Context,
+    private val data: MutableList<TranslationCategory> = mutableListOf(
+        TranslationCategory.empty()
+    )
+) : BaseAdapter() {
 
-    private val inflater: LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+    private val inflater: LayoutInflater =
+        context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
     override fun getCount(): Int = data.size
 
     override fun getItem(position: Int): TranslationCategory = data[position]
@@ -36,4 +43,15 @@ class CategorySpinnerAdapter(context: Context, private val data: MutableList<Tra
     }
 
     fun getItemByPosition(position: Int) = data[position]
+
+    fun findPositionItem(translation: TranslationCategory): Int {
+        var resultPosition = 0
+        for ((index, value) in data.withIndex()) {
+            if (value._id == translation._id) {
+                resultPosition = index
+                break
+            }
+        }
+        return resultPosition
+    }
 }

@@ -4,6 +4,7 @@ import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.language.LangType
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.variants.TranslationVariant
 
 sealed class AppNavigation()
 
@@ -22,3 +23,4 @@ class EditDictionaryWordScreen(val word: Word) : AppNavigation()
 class WordsMultiChooseScreen(val dictionaryId: String, val words: ArrayList<Word>?) : AppNavigation()
 class DictionaryChooseScreen() : AppNavigation()
 class AddTranslationVariantsScreen(val word: String?) : AppNavigation()
+class EditTranslationVariantsScreen(val word: String?, val dictionaryId: String, val translation: TranslationVariant) : AppNavigation()

@@ -15,6 +15,8 @@ data class TranslationVariant(
 
     @IgnoredOnParcel
     var category: TranslationCategory? = null
+    @IgnoredOnParcel
+    var dictionaryId: String? = null
 
     companion object {
         fun empty(): TranslationVariant = TranslationVariant(
