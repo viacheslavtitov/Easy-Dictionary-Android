@@ -20,6 +20,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.words.variants.TranslationVariant
+import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
 import my.dictionary.free.view.AbstractBaseFragment
@@ -35,6 +37,10 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
         private val TAG = AddTranslationVariantFragment::class.simpleName
         const val BUNDLE_TRANSLATE_WORD =
             "my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD"
+        const val BUNDLE_TRANSLATION =
+            "my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment.BUNDLE_TRANSLATION"
+        const val BUNDLE_DICTIONARY_ID =
+            "my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment.BUNDLE_DICTIONARY_ID"
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -50,6 +56,7 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
     private var categoryAdapter: CategorySpinnerAdapter? = null
 
     private var translationWord: String? = null
+    private var editTranslationVariant: TranslationVariant? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -131,22 +138,72 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
                         categoryAdapter?.add(category)
                     }
                 }
+                launch {
+                    viewModel.exampleUIState.collect { value ->
+                        Log.d(TAG, "example loaded $value")
+                        textInputEditTextExample.setText(value)
+                    }
+                }
+                launch {
+                    viewModel.translationUIState.collect { value ->
+                        Log.d(TAG, "translation loaded $value")
+                        textInputEditTextTranslation.setText(value)
+                    }
+                }
+                launch {
+                    viewModel.categoryUIState.drop(1).collect { category ->
+                        val categoryPosition = categoryAdapter?.findPositionItem(category) ?: 0
+                        Log.d(TAG, "category loaded by position $categoryPosition")
+                        chooseCategorySpinner.setSelection(categoryPosition)
+                    }
+                }
+                launch {
+                    viewModel.updateUIState.collect { success ->
+                        if (success) {
+                            Log.d(TAG, "translation was updated")
+                            findNavController().popBackStack()
+                        }
+                    }
+                }
             }
         }
         addMenuProvider(R.menu.menu_add_translation_variant, { menu, mi -> }, {
             when (it) {
                 R.id.nav_save_translation_variant -> {
                     val translation = textInputEditTextTranslation.text?.toString()
-                    if(viewModel.validateTranslation(context, translation)) {
-                        val categoryTemp = categoryAdapter?.getItemByPosition(chooseCategorySpinner.selectedItemPosition)
-                        val category = if(categoryTemp?._id == null) null else categoryTemp
-                        val result = viewModel.generateTranslation(translation!!, textInputEditTextExample.text?.toString(), category)
-                        val bundle = Bundle().apply {
-                            putParcelable(AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT, result)
-                            putParcelable(AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_CATEGORY, category)
+                    if (viewModel.validateTranslation(context, translation)) {
+                        val categoryTemp =
+                            categoryAdapter?.getItemByPosition(chooseCategorySpinner.selectedItemPosition)
+                        val category = if (categoryTemp?._id == null) null else categoryTemp
+                        if (viewModel.isEditMode()) {
+                            viewModel.updateTranslation(
+                                context,
+                                translation!!,
+                                textInputEditTextExample.text?.toString(),
+                                category
+                            )
+                        } else {
+                            val result = viewModel.generateTranslation(
+                                translation!!,
+                                textInputEditTextExample.text?.toString(),
+                                category
+                            )
+                            val bundle = Bundle().apply {
+                                putParcelable(
+                                    AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT,
+                                    result
+                                )
+                                putParcelable(
+                                    AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_CATEGORY,
+                                    category
+                                )
+                            }
+                            setFragmentResult(
+                                AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_RESULT,
+                                bundle
+                            )
+                            findNavController().popBackStack()
                         }
-                        setFragmentResult(AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_RESULT, bundle)
-                        findNavController().popBackStack()
                     }
                     return@addMenuProvider true
                 }
@@ -155,7 +212,14 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
             }
         })
         translationWord = arguments?.getString(BUNDLE_TRANSLATE_WORD, null)
+        val dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
         translateWordTextView.text = translationWord
+        editTranslationVariant = if (hasTiramisu()) arguments?.getParcelable(
+            BUNDLE_TRANSLATION,
+            TranslationVariant::class.java
+        ) else arguments?.getParcelable(BUNDLE_TRANSLATION) as? TranslationVariant
+        editTranslationVariant?.dictionaryId = dictionaryId
+        viewModel.setEditModel(editTranslationVariant)
         viewModel.loadCategories(context)
     }
 }

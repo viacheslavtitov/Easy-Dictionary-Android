@@ -26,8 +26,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
-import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
+import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
@@ -37,7 +37,6 @@ import my.dictionary.free.domain.viewmodels.user.dictionary.words.add.AddDiction
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.hideKeyboard
-import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
 import my.dictionary.free.view.widget.phonetic.OnPhoneticClickListener
 import my.dictionary.free.view.widget.phonetic.PhoneticsView
 
@@ -71,10 +70,8 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
     private lateinit var phoneticsView: PhoneticsView
     private lateinit var rootView: ViewGroup
 
-    private var word: Word? = null
     private var dictionaryId: String? = null
     private var phonetics: List<String>? = null
-    private val translationVariantsAdapter = TranslationVariantsAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -151,7 +148,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.successCreateWordUIState.collect { success ->
-                        if(success) {
+                        if (success) {
                             findNavController().popBackStack()
                         }
                     }
@@ -164,7 +161,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.nameUIState.drop(1).collectLatest { value ->
-                       textInputEditTextWord.setText(value)
+                        textInputEditTextWord.setText(value)
                     }
                 }
                 launch {
@@ -184,7 +181,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 R.id.nav_save_word -> {
                     val word = textInputEditTextWord.text?.toString()
                     val translations = translationVariantsAdapter.getData()
-                    if(viewModel.validate(context, word, translations)) {
+                    if (viewModel.validate(context, word, translations)) {
                         val phonetic = textInputEditTextPhonetic.text?.toString()
                         viewModel.save(context, word, translations, phonetic)
                     }
@@ -265,4 +262,19 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
             textInputEditTextPhonetic.setSelection(cursorPosition + 1)
         }
     }
+
+    private val onTranslationVariantEditListener = object : OnTranslationVariantEditListener {
+        override fun onEdit(entity: TranslationVariant) {
+            sharedViewModel.navigateTo(
+                EditTranslationVariantsScreen(
+                    textInputEditTextWord.text?.toString(),
+                    dictionaryId ?: "",
+                    entity
+                )
+            )
+        }
+    }
+
+    private val translationVariantsAdapter =
+        TranslationVariantsAdapter(listener = onTranslationVariantEditListener)
 }

@@ -248,6 +248,31 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
+    suspend fun updateTranslation(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+        translation: TranslationVariantTable
+    ): Boolean {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+
+            val userChild =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(dictionaryId)
+                    .child(WordTable._NAME).child(wordId).child(TranslationVariantTable._NAME)
+                    .child(translation._id!!)
+
+            userChild.child(TranslationVariantTable.CATEGORY_ID)
+                .setValue(translation.categoryId).isComplete
+            userChild.child(TranslationVariantTable.TRANSLATE)
+                .setValue(translation.translate).isComplete
+            userChild.child(TranslationVariantTable.DESCRIPTION)
+                .setValue(translation.description).isComplete
+            cont.resume(true)
+        }
+    }
+
     suspend fun getDictionariesByUserUUID(
         userId: String,
     ): Flow<DictionaryTable> {

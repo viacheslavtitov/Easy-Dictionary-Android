@@ -38,6 +38,7 @@ import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.EditQuizScreen
+import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
 import my.dictionary.free.domain.models.navigation.UserQuizScreen
@@ -256,6 +257,27 @@ class MainActivity : AbstractBaseActivity() {
                         putString(
                             AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
                             navigation.word
+                        )
+                    }
+                    navController.navigate(
+                        R.id.action_addDictionaryWordFragment_to_addTranslationVariant,
+                        bundle
+                    )
+                }
+
+                is EditTranslationVariantsScreen -> {
+                    val bundle = Bundle().apply {
+                        putString(
+                            AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
+                            navigation.word
+                        )
+                        putString(
+                            AddTranslationVariantFragment.BUNDLE_DICTIONARY_ID,
+                            navigation.dictionaryId
+                        )
+                        putParcelable(
+                            AddTranslationVariantFragment.BUNDLE_TRANSLATION,
+                            navigation.translation
                         )
                     }
                     navController.navigate(
