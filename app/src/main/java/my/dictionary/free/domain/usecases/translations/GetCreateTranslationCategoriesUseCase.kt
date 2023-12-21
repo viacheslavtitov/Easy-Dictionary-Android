@@ -44,4 +44,20 @@ class GetCreateTranslationCategoriesUseCase @Inject constructor(
                 }
         }
     }
+
+    suspend fun getCategoryById(categoryId: String): Flow<TranslationCategory> {
+        val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
+        if (userId.isNullOrEmpty()) {
+            return emptyFlow()
+        } else {
+            return databaseRepository.getCategoryById(userId, categoryId)
+                .map { cat ->
+                    return@map TranslationCategory(
+                        _id = cat._id,
+                        userUUID = cat.userUUID,
+                        categoryName = cat.categoryName,
+                    )
+                }
+        }
+    }
 }

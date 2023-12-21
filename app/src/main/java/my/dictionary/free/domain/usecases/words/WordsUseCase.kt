@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import my.dictionary.free.data.models.words.WordTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.words.Word
@@ -39,6 +40,19 @@ class WordsUseCase @Inject constructor(
                 null
             )
         return databaseRepository.createWord(userId, word)
+    }
+
+    suspend fun updateWord(word: Word): Boolean {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return false
+        return databaseRepository.updateWord(
+            userId, WordTable(
+                _id = word._id,
+                dictionaryId = word.dictionaryId,
+                original = word.original,
+                phonetic = word.phonetic
+            )
+        )
     }
 
     suspend fun deleteWord(word: Word): Pair<Boolean, String?> {

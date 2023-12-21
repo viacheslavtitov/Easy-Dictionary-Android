@@ -26,7 +26,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
+import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.utils.hasTiramisu
@@ -35,6 +37,7 @@ import my.dictionary.free.domain.viewmodels.user.dictionary.words.add.AddDiction
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.hideKeyboard
+import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
 import my.dictionary.free.view.widget.phonetic.OnPhoneticClickListener
 import my.dictionary.free.view.widget.phonetic.PhoneticsView
 
@@ -52,6 +55,8 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
             "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_CATEGORY"
         const val BUNDLE_TRANSLATION_VARIANT_RESULT =
             "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_RESULT"
+        const val BUNDLE_WORD =
+            "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_WORD"
         private const val PHONETICS_ANIMATION_TIME: Long = 400
     }
 
@@ -66,6 +71,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
     private lateinit var phoneticsView: PhoneticsView
     private lateinit var rootView: ViewGroup
 
+    private var word: Word? = null
     private var dictionaryId: String? = null
     private var phonetics: List<String>? = null
     private val translationVariantsAdapter = TranslationVariantsAdapter()
@@ -156,6 +162,21 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                         phonetics = phoneticList
                     }
                 }
+                launch {
+                    viewModel.nameUIState.drop(1).collectLatest { value ->
+                       textInputEditTextWord.setText(value)
+                    }
+                }
+                launch {
+                    viewModel.phoneticUIState.drop(1).collectLatest { value ->
+                        textInputEditTextPhonetic.setText(value)
+                    }
+                }
+                launch {
+                    viewModel.translationVariantsUIState.collectLatest { value ->
+                        translationVariantsAdapter.add(value)
+                    }
+                }
             }
         }
         addMenuProvider(R.menu.menu_add_dictionary_word, { menu, mi -> }, {
@@ -174,9 +195,13 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
             }
         })
         dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
+        val word = if (hasTiramisu()) arguments?.getParcelable(
+            BUNDLE_WORD,
+            Word::class.java
+        ) else arguments?.getParcelable(BUNDLE_WORD) as? Word
         translationsRecyclerView.layoutManager = LinearLayoutManager(context)
         translationsRecyclerView.adapter = translationVariantsAdapter
-        viewModel.loadData(context, dictionaryId)
+        viewModel.loadData(context, dictionaryId, word)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
