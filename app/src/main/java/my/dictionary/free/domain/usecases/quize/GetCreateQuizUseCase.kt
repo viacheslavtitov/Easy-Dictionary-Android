@@ -47,6 +47,7 @@ class GetCreateQuizUseCase @Inject constructor(
                 userId = userId,
                 dictionaryId = dictionaryId,
                 name = quiz.name,
+                reversed = quiz.reversed,
                 timeInSeconds = quiz.timeInSeconds
             )
         )
@@ -62,6 +63,7 @@ class GetCreateQuizUseCase @Inject constructor(
                 userId = userId,
                 dictionaryId = dictionaryId,
                 name = quiz.name,
+                reversed = quiz.reversed,
                 timeInSeconds = quiz.timeInSeconds
             )
         )
@@ -89,6 +91,7 @@ class GetCreateQuizUseCase @Inject constructor(
                         userId = quiz.userId,
                         dictionary = dictionary,
                         name = quiz.name,
+                        reversed = quiz.reversed,
                         timeInSeconds = quiz.timeInSeconds,
                     )
                 }
@@ -117,6 +120,7 @@ class GetCreateQuizUseCase @Inject constructor(
                         userId = quiz.userId,
                         dictionary = dictionary,
                         name = quiz.name,
+                        reversed = quiz.reversed,
                         timeInSeconds = quiz.timeInSeconds,
                     )
                 }

@@ -30,6 +30,7 @@ import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.run.RunQuizViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.hideKeyboard
+import my.dictionary.free.view.ext.visible
 
 @AndroidEntryPoint
 class RunQuizFragment : AbstractBaseFragment() {
@@ -109,9 +110,11 @@ class RunQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.nextWordUIState.collect { word ->
+                    viewModel.nextWordUIState.collect { pair ->
+                        val word = pair.first
+                        val reversed = pair.second
                         Log.d(TAG, "quiz new word: $word")
-                        fillQuiz(word)
+                        fillQuiz(word, reversed)
                     }
                 }
                 launch {
@@ -191,12 +194,13 @@ class RunQuizFragment : AbstractBaseFragment() {
         viewModel.setQuiz(quiz)
     }
 
-    private fun fillQuiz(word: Word) {
+    private fun fillQuiz(word: Word, reversed: Boolean) {
         answerInputLayout?.error = ""
         answerEditText?.setText("")
         timeTextView?.text = ""
-        wordTextView?.text = word.original
+        wordTextView?.text = if(!reversed) word.original else word.translates?.first()?.translation
         phoneticTextView?.text = if (word.phonetic != null) "[${word.phonetic}]" else ""
+        phoneticTextView?.visible(visible = !reversed, invisibleStrategy = View.GONE)
         quizTimer?.start()
         answerEditText?.requestFocus()
         btnNext?.isActivated = false

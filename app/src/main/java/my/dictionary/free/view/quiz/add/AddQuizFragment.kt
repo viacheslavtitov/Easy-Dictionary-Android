@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
@@ -61,6 +62,7 @@ class AddQuizFragment : AbstractBaseFragment() {
     private var nameTextInputEditText: TextInputEditText? = null
     private var dictionaryNameTextView: AppCompatTextView? = null
     private var durationValueTextView: AppCompatTextView? = null
+    private var reverseDictionary: AppCompatCheckBox? = null
     private var addDictionaryContainer: View? = null
     private var addDurationContainer: View? = null
 
@@ -80,6 +82,10 @@ class AddQuizFragment : AbstractBaseFragment() {
         addDictionaryContainer = view.findViewById(R.id.add_dictionary)
         addDurationContainer = view.findViewById(R.id.add_duration)
         durationValueTextView = view.findViewById(R.id.duration_value)
+        reverseDictionary = view.findViewById(R.id.reverse_dictionary)
+        reverseDictionary?.setOnCheckedChangeListener { compoundButton, checked ->
+            fillDictionary()
+        }
         addDictionaryContainer?.setOnClickListener {
             sharedViewModel.navigateTo(DictionaryChooseScreen())
         }
@@ -94,7 +100,12 @@ class AddQuizFragment : AbstractBaseFragment() {
         }
         view.findViewById<View>(R.id.add_words).setOnClickListener {
             if (selectedDictionary != null && selectedDictionary!!._id != null) {
-                sharedViewModel.navigateTo(WordsMultiChooseScreen(selectedDictionary!!._id!!, wordsAdapter?.getWords()?.toList() as? ArrayList<Word>))
+                sharedViewModel.navigateTo(
+                    WordsMultiChooseScreen(
+                        selectedDictionary!!._id!!,
+                        wordsAdapter?.getWords()?.toList() as? ArrayList<Word>
+                    )
+                )
             } else {
                 displayError(getString(R.string.error_set_dictionary_first), wordsRecyclerView)
             }
@@ -135,7 +146,7 @@ class AddQuizFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.successCreateQuizUIState.collect { success ->
-                        if(success) {
+                        if (success) {
                             findNavController().popBackStack()
                         }
                     }
@@ -159,7 +170,7 @@ class AddQuizFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.wordUIState.collect { words ->
-                        if(wordsAdapter?.getWords()?.isEmpty() == true) {
+                        if (wordsAdapter?.getWords()?.isEmpty() == true) {
                             fillWords(words)
                         }
                     }
@@ -167,6 +178,11 @@ class AddQuizFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.nameUIState.collect { name ->
                         nameTextInputEditText?.setText(name)
+                    }
+                }
+                launch {
+                    viewModel.reversedUIState.collect { value ->
+                        reverseDictionary?.isChecked = value
                     }
                 }
             }
@@ -190,6 +206,7 @@ class AddQuizFragment : AbstractBaseFragment() {
                             name = name,
                             duration = duration,
                             dictionary = selectedDictionary,
+                            reversed = reverseDictionary?.isChecked ?: false,
                             words = words
                         )
                     }
@@ -206,7 +223,8 @@ class AddQuizFragment : AbstractBaseFragment() {
         ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
         Log.d(TAG, quiz?.toString() ?: "quiz is null")
         viewModel.setQuiz(quiz)
-        val title = if(viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
+        val title =
+            if (viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
         sharedViewModel.setTitle(title)
     }
 
@@ -239,9 +257,15 @@ class AddQuizFragment : AbstractBaseFragment() {
         addDictionaryContainer?.visible(selectedDictionary == null, View.GONE)
         dictionaryNameTextView?.visible(selectedDictionary != null, View.GONE)
         selectedDictionary?.let { dict ->
-            val text =
-                if (dict.dialect?.isNullOrEmpty() == true) "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}" else "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull} (${dict.dialect})"
-            dictionaryNameTextView?.text = text
+            val reversed = reverseDictionary?.isChecked ?: false
+            if (reversed) {
+                val text = "${dict.dictionaryTo.langFull} - ${dict.dictionaryFrom.langFull}"
+                dictionaryNameTextView?.text = text
+            } else {
+                val text =
+                    if (dict.dialect?.isNullOrEmpty() == true) "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}" else "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull} (${dict.dialect})"
+                dictionaryNameTextView?.text = text
+            }
         }
     }
 

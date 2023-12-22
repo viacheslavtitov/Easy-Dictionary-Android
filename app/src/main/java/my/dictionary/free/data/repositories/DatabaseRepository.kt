@@ -327,6 +327,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             userId = map[QuizTable.USER_ID] as String,
                             dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
                             name = map[QuizTable.NAME] as String,
+                            reversed = map[QuizTable.REVERSED] as? Boolean ?: false,
                             timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
                         )
                         trySend(quiz)
@@ -365,6 +366,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             userId = map[QuizTable.USER_ID] as String,
                             dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
                             name = map[QuizTable.NAME] as String,
+                            reversed = map[QuizTable.REVERSED] as? Boolean ?: false,
                             timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
                         )
                         trySend(quiz)
@@ -405,6 +407,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     userId = userId,
                     dictionaryId = quiz.dictionaryId,
                     name = quiz.name,
+                    reversed = quiz.reversed,
                     timeInSeconds = quiz.timeInSeconds
                 )
                 val childUpdates = hashMapOf<String, Any>(
