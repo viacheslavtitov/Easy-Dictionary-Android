@@ -148,6 +148,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.loadingUIState.collect { visible ->
                         swipeRefreshLayout?.isRefreshing = visible
+                        sharedViewModel.loading(visible)
                     }
                 }
                 launch {

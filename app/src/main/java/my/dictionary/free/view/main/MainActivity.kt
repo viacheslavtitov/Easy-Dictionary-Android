@@ -25,6 +25,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.firebase.ui.auth.AuthUI
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -45,6 +46,7 @@ import my.dictionary.free.domain.models.navigation.UserQuizScreen
 import my.dictionary.free.domain.models.navigation.WordsMultiChooseScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.view.AbstractBaseActivity
+import my.dictionary.free.view.ext.visible
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.quiz.add.AddQuizFragment
 import my.dictionary.free.view.quiz.detail.QuizDetailTabsFragment
@@ -67,6 +69,7 @@ class MainActivity : AbstractBaseActivity() {
     private lateinit var navView: NavigationView
     private lateinit var userLogo: AppCompatImageView
     private lateinit var userEmail: AppCompatTextView
+    private lateinit var progressBar: LinearProgressIndicator
 
     private val navController: NavController by lazy {
         (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
@@ -88,6 +91,7 @@ class MainActivity : AbstractBaseActivity() {
         navView = findViewById(R.id.nav_view)
         userLogo = navView.getHeaderView(0).findViewById(R.id.user_logo)
         userEmail = navView.getHeaderView(0).findViewById(R.id.user_email)
+        progressBar = findViewById(R.id.progress_bar)
         findViewById<View>(R.id.nav_log_out).setOnClickListener {
             logOut()
         }
@@ -175,6 +179,15 @@ class MainActivity : AbstractBaseActivity() {
             }
             navDrawerLayout.closeDrawer(GravityCompat.START)
             true
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    sharedViewModel.loadingUIState.collect { visible ->
+                        progressBar.visible(visible, View.GONE)
+                    }
+                }
+            }
         }
         navController.navigate(R.id.simpleFragment)
         sharedViewModel.navigation.observe(this) { navigation ->

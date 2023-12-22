@@ -28,6 +28,17 @@
                 app:layout_collapseMode="pin"
                 tools:navigationIcon="@drawable/ic_baseline_menu_24"
                 tools:title="Test" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progress_bar"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:trackColor="@color/secondary_light"
+                app:indicatorColor="@color/main_dark"
+                app:showAnimationBehavior="inward"
+                app:hideAnimationBehavior="outward"
+                android:indeterminate="true" />
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.fragment.app.FragmentContainerView

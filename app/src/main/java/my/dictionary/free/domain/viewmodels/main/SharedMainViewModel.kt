@@ -21,13 +21,10 @@ import my.dictionary.free.domain.utils.PreferenceUtils
 import javax.inject.Inject
 
 @HiltViewModel
-class SharedMainViewModel @Inject constructor() : ViewModel() {
-
-    @Inject
-    lateinit var getUpdateUsersUseCase: GetUpdateUsersUseCase
-
-    @Inject
-    lateinit var preferenceUtils: PreferenceUtils
+class SharedMainViewModel @Inject constructor(
+    private val getUpdateUsersUseCase: GetUpdateUsersUseCase,
+    private val preferenceUtils: PreferenceUtils
+) : ViewModel() {
 
     val userEmailValue = MutableLiveData<String>()
     val userAvatarUri = MutableLiveData<Uri>()
@@ -37,6 +34,10 @@ class SharedMainViewModel @Inject constructor() : ViewModel() {
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
+
+    private val _loadingUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
     private fun updateUserData(user: FirebaseUser) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -71,6 +72,10 @@ class SharedMainViewModel @Inject constructor() : ViewModel() {
 
     fun setTitle(title: String) {
         toolbarTitleUIState.tryEmit(title)
+    }
+
+    fun loading(loading: Boolean) {
+        _loadingUIState.value = loading
     }
 
 }

@@ -72,6 +72,7 @@ class DictionaryChooseFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.loadingUIState.collect { visible ->
+                        sharedViewModel.loading(visible)
                     }
                 }
                 launch {

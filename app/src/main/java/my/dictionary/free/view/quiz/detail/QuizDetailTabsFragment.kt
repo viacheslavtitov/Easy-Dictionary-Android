@@ -68,7 +68,7 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.loadingUIState.collect { visible ->
-
+                        sharedViewModel.loading(visible)
                     }
                 }
                 launch {

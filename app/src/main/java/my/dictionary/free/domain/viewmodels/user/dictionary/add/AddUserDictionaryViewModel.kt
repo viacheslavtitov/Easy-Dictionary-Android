@@ -55,10 +55,15 @@ class AddUserDictionaryViewModel @Inject constructor(
         MutableStateFlow("")
     val dialectUIState: StateFlow<String> = _dialectUIState.asStateFlow()
 
+    private val _loadingUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
+
     fun createDictionary(context: Context?, dialectValue: String? = null) {
         if (languageFrom == null || languageTo == null || context == null) return
         val userUUID = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_UUID) ?: return
         viewModelScope.launch {
+            _loadingUIState.value = true
             _successCreateDictionaryUIState.value = false
             if (isEditMode()) {
                 val result = dictionaryUseCase.updateDictionary(
@@ -100,6 +105,7 @@ class AddUserDictionaryViewModel @Inject constructor(
                     _successCreateDictionaryUIState.value = true
                 }
             }
+            _loadingUIState.value = false
         }
     }
 
