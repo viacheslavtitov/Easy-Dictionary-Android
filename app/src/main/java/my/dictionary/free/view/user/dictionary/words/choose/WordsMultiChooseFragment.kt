@@ -70,7 +70,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                 onWordsClickListener
             )
         )
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf())
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }

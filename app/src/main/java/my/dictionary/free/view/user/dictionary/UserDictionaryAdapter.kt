@@ -3,6 +3,8 @@ package my.dictionary.free.view.user.dictionary
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Filter
+import android.widget.Filterable
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
@@ -12,9 +14,10 @@ import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.view.ext.getColorInt
 
 class UserDictionaryAdapter(
-    private val data: MutableList<Dictionary>
+    private val data: MutableList<Dictionary>,
+    private val filteredData: MutableList<Dictionary>
 ) :
-    RecyclerView.Adapter<UserDictionaryAdapter.ViewHolder>() {
+    RecyclerView.Adapter<UserDictionaryAdapter.ViewHolder>(), Filterable {
 
     private var tempRemoveItem: Dictionary? = null
     private var tempRemoveItemPosition: Int? = null
@@ -72,10 +75,10 @@ class UserDictionaryAdapter(
         )
     }
 
-    override fun getItemCount() = data.size
+    override fun getItemCount() = filteredData.size
 
     fun temporaryRemoveItem(position: Int, needToUpdate: Boolean = true) {
-        if (position < data.size && position > -1) {
+        if (position < filteredData.size && position > -1) {
             tempRemoveItem = data.removeAt(position)
             tempRemoveItemPosition = position
             if (needToUpdate) {
@@ -101,11 +104,11 @@ class UserDictionaryAdapter(
     }
 
     fun getItemByPosition(position: Int): Dictionary? {
-        return if (position < data.size && position > -1) data[position] else null
+        return if (position < filteredData.size && position > -1) filteredData[position] else null
     }
 
     fun selectDictionary(dictionary: Dictionary) {
-        val position = data.indexOfFirst { it._id == dictionary._id }
+        val position = filteredData.indexOfFirst { it._id == dictionary._id }
         if (selectedDictionaries.firstOrNull { it._id == dictionary._id } == null) {
             selectedDictionaries.add(dictionary)
             if (position > -1) {
@@ -113,7 +116,7 @@ class UserDictionaryAdapter(
             }
         } else {
             val selectedPosition = selectedDictionaries.indexOfFirst { it._id == dictionary._id }
-            if(selectedPosition > -1) {
+            if (selectedPosition > -1) {
                 selectedDictionaries.removeAt(selectedPosition)
             }
             if (position > -1) {
@@ -130,8 +133,10 @@ class UserDictionaryAdapter(
         selectedDictionaries.clear()
         this.notifyDataSetChanged()
     }
+
     fun clearData() {
         data.clear()
+        filteredData.clear()
         selectedDictionaries.clear()
         tempRemoveItemPosition = null
         tempRemoveItem = null
@@ -140,7 +145,34 @@ class UserDictionaryAdapter(
 
     fun add(dict: Dictionary) {
         data.add(dict)
+        filteredData.add(dict)
         this.notifyDataSetChanged()
+    }
+
+    override fun getFilter(): Filter {
+        return filter
+    }
+
+    private val filter = object : Filter() {
+        override fun performFiltering(query: CharSequence?): FilterResults {
+            val filtered = data.filter {
+                it.dictionaryFrom.langFull?.contains(
+                    query ?: "",
+                    true
+                ) ?: false || it.dictionaryTo.langFull?.contains(query ?: "", true) ?: false
+            }
+            return FilterResults().apply {
+                count = filtered.size
+                values = filtered
+            }
+        }
+
+        override fun publishResults(query: CharSequence?, fr: FilterResults?) {
+            filteredData.clear()
+            filteredData.addAll(fr?.values as? MutableList<Dictionary> ?: emptyList())
+            notifyDataSetChanged()
+        }
+
     }
 
 }

@@ -57,7 +57,7 @@ class QuizDetailFragment : AbstractBaseFragment() {
         wordsRecyclerView = view.findViewById(R.id.words_recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(context)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf())
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }

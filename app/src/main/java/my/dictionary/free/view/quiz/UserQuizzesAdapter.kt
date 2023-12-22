@@ -3,6 +3,8 @@ package my.dictionary.free.view.quiz
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Filter
+import android.widget.Filterable
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
@@ -10,9 +12,10 @@ import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.view.ext.getColorInt
 
 class UserQuizzesAdapter(
-    private val data: MutableList<Quiz>
+    private val data: MutableList<Quiz>,
+    private val filteredData: MutableList<Quiz>
 ) :
-    RecyclerView.Adapter<UserQuizzesAdapter.ViewHolder>() {
+    RecyclerView.Adapter<UserQuizzesAdapter.ViewHolder>(), Filterable {
 
     private var tempRemoveItem: Quiz? = null
     private var tempRemoveItemPosition: Int? = null
@@ -36,7 +39,7 @@ class UserQuizzesAdapter(
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        val quiz = data[position]
+        val quiz = filteredData[position]
         val context = viewHolder.itemView.context
         viewHolder.nameTextView.text = quiz.name
         quiz.dictionary?.let { dictionary ->
@@ -52,10 +55,10 @@ class UserQuizzesAdapter(
         )
     }
 
-    override fun getItemCount() = data.size
+    override fun getItemCount() = filteredData.size
 
     fun temporaryRemoveItem(position: Int, needToUpdate: Boolean = true) {
-        if (position < data.size && position > -1) {
+        if (position < filteredData.size && position > -1) {
             tempRemoveItem = data.removeAt(position)
             tempRemoveItemPosition = position
             if (needToUpdate) {
@@ -73,7 +76,7 @@ class UserQuizzesAdapter(
 
     fun undoRemovedItem() {
         if (tempRemoveItemPosition != null && tempRemoveItem != null) {
-            data.add(tempRemoveItemPosition!!, tempRemoveItem!!)
+            filteredData.add(tempRemoveItemPosition!!, tempRemoveItem!!)
             this.notifyItemInserted(tempRemoveItemPosition!!)
             tempRemoveItemPosition = null
             tempRemoveItem = null
@@ -81,11 +84,11 @@ class UserQuizzesAdapter(
     }
 
     fun getItemByPosition(position: Int): Quiz? {
-        return if (position < data.size && position > -1) data[position] else null
+        return if (position < filteredData.size && position > -1) filteredData[position] else null
     }
 
-    fun selectQuize(quiz: Quiz) {
-        val position = data.indexOfFirst { it._id == quiz._id }
+    fun selectQuiz(quiz: Quiz) {
+        val position = filteredData.indexOfFirst { it._id == quiz._id }
         if (selectedQuizzes.firstOrNull { it._id == quiz._id } == null) {
             selectedQuizzes.add(quiz)
             if (position > -1) {
@@ -114,6 +117,7 @@ class UserQuizzesAdapter(
     fun clearData() {
         data.clear()
         selectedQuizzes.clear()
+        filteredData.clear()
         tempRemoveItemPosition = null
         tempRemoveItem = null
         this.notifyDataSetChanged()
@@ -121,7 +125,29 @@ class UserQuizzesAdapter(
 
     fun add(quiz: Quiz) {
         data.add(quiz)
+        filteredData.add(quiz)
         this.notifyDataSetChanged()
+    }
+
+    override fun getFilter(): Filter {
+        return filter
+    }
+
+    private val filter = object : Filter() {
+        override fun performFiltering(query: CharSequence?): FilterResults {
+            val filtered = data.filter { it.name.contains(query ?: "", true) }
+            return FilterResults().apply {
+                count = filtered.size
+                values = filtered
+            }
+        }
+
+        override fun publishResults(query: CharSequence?, fr: FilterResults?) {
+            filteredData.clear()
+            filteredData.addAll(fr?.values as? MutableList<Quiz> ?: emptyList())
+            notifyDataSetChanged()
+        }
+
     }
 
 }

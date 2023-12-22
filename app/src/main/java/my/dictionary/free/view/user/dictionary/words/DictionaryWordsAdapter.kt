@@ -3,6 +3,8 @@ package my.dictionary.free.view.user.dictionary.words
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Filter
+import android.widget.Filterable
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
@@ -10,9 +12,10 @@ import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.view.ext.getColorInt
 
 class DictionaryWordsAdapter(
-    private val data: MutableList<Word>
+    private val data: MutableList<Word>,
+    private val filteredData: MutableList<Word>
 ) :
-    RecyclerView.Adapter<DictionaryWordsAdapter.ViewHolder>() {
+    RecyclerView.Adapter<DictionaryWordsAdapter.ViewHolder>(), Filterable {
 
     private var tempRemoveItem: Word? = null
     private var tempRemoveItemPosition: Int? = null
@@ -38,11 +41,12 @@ class DictionaryWordsAdapter(
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        val word = data[position]
+        val word = filteredData[position]
         val context = viewHolder.itemView.context
         viewHolder.originalTextView.text = word.original
         val firstTranslatedWord = word.translates.firstOrNull()?.translation ?: ""
-        val translatedText = if(word.translates.size <= 1) "- $firstTranslatedWord" else "- $firstTranslatedWord..."
+        val translatedText =
+            if (word.translates.size <= 1) "- $firstTranslatedWord" else "- $firstTranslatedWord..."
         viewHolder.translatedTextView.text = translatedText
         viewHolder.swipePosition = position
         val selected = selectedWords.firstOrNull { it._id == word._id } != null
@@ -53,10 +57,10 @@ class DictionaryWordsAdapter(
         )
     }
 
-    override fun getItemCount() = data.size
+    override fun getItemCount() = filteredData.size
 
     fun temporaryRemoveItem(position: Int, needToUpdate: Boolean = true) {
-        if (position < data.size && position > -1) {
+        if (position < filteredData.size && position > -1) {
             tempRemoveItem = data.removeAt(position)
             tempRemoveItemPosition = position
             if (needToUpdate) {
@@ -82,11 +86,11 @@ class DictionaryWordsAdapter(
     }
 
     fun getItemByPosition(position: Int): Word? {
-        return if (position < data.size && position > -1) data[position] else null
+        return if (position < filteredData.size && position > -1) filteredData[position] else null
     }
 
     fun selectWord(word: Word) {
-        val position = data.indexOfFirst { it._id == word._id }
+        val position = filteredData.indexOfFirst { it._id == word._id }
         if (selectedWords.firstOrNull { it._id == word._id } == null) {
             selectedWords.add(word)
             if (position > -1) {
@@ -94,7 +98,7 @@ class DictionaryWordsAdapter(
             }
         } else {
             val selectedPosition = selectedWords.indexOfFirst { it._id == word._id }
-            if(selectedPosition > -1) {
+            if (selectedPosition > -1) {
                 selectedWords.removeAt(selectedPosition)
             }
             if (position > -1) {
@@ -107,14 +111,16 @@ class DictionaryWordsAdapter(
 
     fun getSelectedWords() = selectedWords
 
-    fun getWords() = data
+    fun getWords() = filteredData
 
     fun clearSelectedWords() {
         selectedWords.clear()
         this.notifyDataSetChanged()
     }
+
     fun clearData() {
         data.clear()
+        filteredData.clear()
         selectedWords.clear()
         tempRemoveItemPosition = null
         tempRemoveItem = null
@@ -123,7 +129,35 @@ class DictionaryWordsAdapter(
 
     fun add(dict: Word) {
         data.add(dict)
+        filteredData.add(dict)
         this.notifyDataSetChanged()
+    }
+
+    override fun getFilter(): Filter {
+        return filter
+    }
+
+    private val filter = object : Filter() {
+        override fun performFiltering(query: CharSequence?): FilterResults {
+            val filtered = data.filter {
+                it.original.contains(
+                    query ?: "",
+                    true
+                ) || it.translates.filter { it.translation.contains(query ?: "", true) }
+                    .isNotEmpty()
+            }
+            return FilterResults().apply {
+                count = filtered.size
+                values = filtered
+            }
+        }
+
+        override fun publishResults(query: CharSequence?, fr: FilterResults?) {
+            filteredData.clear()
+            filteredData.addAll(fr?.values as? MutableList<Word> ?: emptyList())
+            notifyDataSetChanged()
+        }
+
     }
 
 }
