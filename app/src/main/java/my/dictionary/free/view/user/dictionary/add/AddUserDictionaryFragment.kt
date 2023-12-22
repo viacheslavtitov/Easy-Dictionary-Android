@@ -101,6 +101,11 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
+                    viewModel.loadingUIState.collect { visible ->
+                        sharedViewModel.loading(visible)
+                    }
+                }
+                launch {
                     viewModel.langToUIState.collect { value ->
                         langToBtn.text = value
                     }
