@@ -132,6 +132,16 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                     findNavController().popBackStack()
                     return@addMenuProvider true
                 }
+                R.id.nav_select_all -> {
+                    wordsAdapter?.let {
+                        if(it.isAllSelected()) {
+                            it.clearSelectedWords()
+                        } else {
+                           it.selectAll()
+                        }
+                    }
+                    return@addMenuProvider true
+                }
 
                 else -> false
             }

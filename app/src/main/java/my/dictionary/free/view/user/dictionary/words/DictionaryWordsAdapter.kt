@@ -118,6 +118,16 @@ class DictionaryWordsAdapter(
         this.notifyDataSetChanged()
     }
 
+    fun selectAll() {
+        selectedWords.clear()
+        data.forEach {
+            selectedWords.add(it)
+        }
+        this.notifyDataSetChanged()
+    }
+
+    fun isAllSelected() = selectedWords.size == data.size
+
     fun clearData() {
         data.clear()
         filteredData.clear()
