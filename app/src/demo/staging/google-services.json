@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "project_number": "478180234468",
+    "firebase_url": "https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "easy-dictionary-b003d",
+    "storage_bucket": "easy-dictionary-b003d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:478180234468:android:87c24ed4be0aea1b0e08f1",
+        "android_client_info": {
+          "package_name": "my.dictionary.free"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "478180234468-0n31oren90ke3tdatts3f90rl7u9n9hu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "my.dictionary.free",
+            "certificate_hash": "ffc049ca09ccef6e43bde24d2198c18c6aa09579"
+          }
+        },
+        {
+          "client_id": "478180234468-01vnikrgq0opp6g8qm30vfrskhfpmlkv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOjyUVdsl_q8J2BWq-9GbPyshf0srHX2A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "478180234468-01vnikrgq0opp6g8qm30vfrskhfpmlkv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:478180234468:android:153f60016b42e9920e08f1",
+        "android_client_info": {
+          "package_name": "my.dictionary.free.qa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "478180234468-24bo3ut24o8q6lpdlrctmu8kog65ik95.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "my.dictionary.free.qa",
+            "certificate_hash": "923310ccea3a417f17329d289d833071364178ad"
+          }
+        },
+        {
+          "client_id": "478180234468-01vnikrgq0opp6g8qm30vfrskhfpmlkv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOjyUVdsl_q8J2BWq-9GbPyshf0srHX2A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "478180234468-01vnikrgq0opp6g8qm30vfrskhfpmlkv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

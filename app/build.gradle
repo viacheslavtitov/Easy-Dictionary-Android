@@ -8,6 +8,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        qa {
+            storeFile file('/Users/mac/Android/Projects/EasyDictionary/app/qa_key.jks')
+            storePassword 'C0cs17pKpxIeNbGBYGZG5'
+            keyPassword 'C0cs17pKpxIeNbGBYGZG5'
+            keyAlias 'test'
+        }
+    }
     namespace 'my.dictionary.free'
     compileSdk 34
 
@@ -16,19 +24,32 @@ android {
         minSdk 24
         targetSdk 34
         versionCode 1
-        versionName "1.0"
+        versionName "0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.debug
     }
 
     buildTypes {
         debug {
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
         }
+        staging {
+            signingConfig signingConfigs.qa
+            buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
+        }
         release {
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    flavorDimensions += "version"
+    productFlavors {
+        demo {
+            dimension = "version"
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
         }
     }
     compileOptions {
