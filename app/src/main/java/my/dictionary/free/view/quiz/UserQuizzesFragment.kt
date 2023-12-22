@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
+import my.dictionary.free.domain.models.navigation.EditQuizScreenFromDetail
+import my.dictionary.free.domain.models.navigation.EditQuizScreenFromQuizList
 import my.dictionary.free.domain.models.navigation.UserQuizScreen
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
@@ -120,7 +122,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                     R.color.main_dark
                 )
             }
-        quizzesAdapter = UserQuizzesAdapter(mutableListOf())
+        quizzesAdapter = UserQuizzesAdapter(mutableListOf(), mutableListOf())
         quizzesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         quizzesRecyclerView.adapter = quizzesAdapter
         return view
@@ -203,11 +205,12 @@ class UserQuizzesFragment : AbstractBaseFragment() {
 
     private val onQuizzesQueryListener = object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String): Boolean {
-            return true
+            return false
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            return true
+            quizzesAdapter?.filter?.filter(newText)
+            return false
         }
 
     }
@@ -243,7 +246,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
     }
 
     private fun selectQuiz(quiz: Quiz) {
-        quizzesAdapter?.selectQuize(quiz)
+        quizzesAdapter?.selectQuiz(quiz)
         val selectedQuizCount = quizzesAdapter?.getSelectedQuizzesCount() ?: 0
         actionMode?.title =
             "$selectedQuizCount ${getString(R.string.selected).uppercase()}"
@@ -288,6 +291,10 @@ class UserQuizzesFragment : AbstractBaseFragment() {
         override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
             return when (item?.itemId) {
                 R.id.menu_edit -> {
+                    quizzesAdapter?.getSelectedQuizzes()?.firstOrNull()?.let { quiz ->
+                        actionMode?.finish()
+                        sharedViewModel.navigateTo(EditQuizScreenFromQuizList(quiz))
+                    }
                     true
                 }
 

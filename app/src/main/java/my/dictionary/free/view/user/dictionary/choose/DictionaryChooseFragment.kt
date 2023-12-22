@@ -55,7 +55,7 @@ class DictionaryChooseFragment : AbstractBaseFragment() {
                 onDictionaryClickListener
             )
         )
-        dictionariesAdapter = UserDictionaryAdapter(mutableListOf())
+        dictionariesAdapter = UserDictionaryAdapter(mutableListOf(), mutableListOf())
         dictionariesRecyclerView.adapter = dictionariesAdapter
         return view
     }

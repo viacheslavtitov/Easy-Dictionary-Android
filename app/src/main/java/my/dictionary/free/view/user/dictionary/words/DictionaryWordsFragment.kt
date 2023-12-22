@@ -27,7 +27,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
@@ -125,7 +124,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     R.color.main_dark
                 )
             }
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf())
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }
@@ -213,11 +212,12 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
 
     private val onWordsQueryListener = object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String): Boolean {
-            return true
+            return false
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            return true
+            wordsAdapter?.filter?.filter(newText)
+            return false
         }
 
     }

@@ -122,7 +122,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                     R.color.main_dark
                 )
             }
-        dictionariesAdapter = UserDictionaryAdapter(mutableListOf())
+        dictionariesAdapter = UserDictionaryAdapter(mutableListOf(), mutableListOf())
         dictionariesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         dictionariesRecyclerView.adapter = dictionariesAdapter
         return view
@@ -216,11 +216,12 @@ class UserDictionaryFragment : AbstractBaseFragment() {
 
     private val onDictionariesQueryListener = object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String): Boolean {
-            return true
+            return false
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            return true
+            dictionariesAdapter?.filter?.filter(newText)
+            return false
         }
 
     }

@@ -38,7 +38,8 @@ import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
-import my.dictionary.free.domain.models.navigation.EditQuizScreen
+import my.dictionary.free.domain.models.navigation.EditQuizScreenFromDetail
+import my.dictionary.free.domain.models.navigation.EditQuizScreenFromQuizList
 import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
@@ -325,7 +326,7 @@ class MainActivity : AbstractBaseActivity() {
                     )
                 }
 
-                is EditQuizScreen -> {
+                is EditQuizScreenFromDetail -> {
                     val bundle = Bundle().apply {
                         putParcelable(
                             AddQuizFragment.BUNDLE_QUIZ,
@@ -334,6 +335,19 @@ class MainActivity : AbstractBaseActivity() {
                     }
                     navController.navigate(
                         R.id.action_quizDetailTabsFragment_to_addQuizFragment,
+                        bundle
+                    )
+                }
+
+                is EditQuizScreenFromQuizList -> {
+                    val bundle = Bundle().apply {
+                        putParcelable(
+                            AddQuizFragment.BUNDLE_QUIZ,
+                            navigation.quiz
+                        )
+                    }
+                    navController.navigate(
+                        R.id.action_userQuizzesFragment_to_addQuizFragment,
                         bundle
                     )
                 }

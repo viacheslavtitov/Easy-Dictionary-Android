@@ -10,7 +10,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -18,14 +17,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
-import my.dictionary.free.domain.models.navigation.EditQuizScreen
+import my.dictionary.free.domain.models.navigation.EditQuizScreenFromDetail
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.detail.QuizDetailTabsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
-import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
-import my.dictionary.free.view.widget.ListItemDecoration
 
 @AndroidEntryPoint
 class QuizDetailTabsFragment : AbstractBaseFragment() {
@@ -97,7 +94,7 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
             when (it) {
                 R.id.edit -> {
                     viewModel.getQuiz()?.let {
-                        sharedViewModel.navigateTo(EditQuizScreen(it))
+                        sharedViewModel.navigateTo(EditQuizScreenFromDetail(it))
                     }
                     return@addMenuProvider true
                 }
