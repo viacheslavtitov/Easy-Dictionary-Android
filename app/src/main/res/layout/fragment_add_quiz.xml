@@ -109,6 +109,16 @@
                 android:textStyle="bold"
                 tools:text="English - Ukrainian" />
 
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:textSize="16dp"
+                android:textColor="@color/main_text"
+                style="@style/Widget.App.CheckBox"
+                android:id="@+id/reverse_dictionary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="9dp"
+                android:text="@string/reverse_dictionary"/>
+
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/add_words"
                 android:layout_width="match_parent"

@@ -56,8 +56,13 @@ class QuizDetailViewModel @Inject constructor() : ViewModel() {
         _nameUIState.value = quiz.name
         _durationUIState.value = context.getString(R.string.seconds_value, quiz.timeInSeconds)
         quiz.dictionary?.let { dict ->
-            _dictionaryUIState.value =
-                "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}"
+            if(quiz.reversed) {
+                _dictionaryUIState.value =
+                    "${dict.dictionaryTo.langFull} - ${dict.dictionaryFrom.langFull}"
+            } else {
+                _dictionaryUIState.value =
+                    "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}"
+            }
         }
         wordUIState.tryEmit(quiz.words)
     }

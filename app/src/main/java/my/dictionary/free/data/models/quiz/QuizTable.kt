@@ -7,6 +7,7 @@ class QuizTable(
     val userId: String,
     val dictionaryId: String,
     val name: String,
+    val reversed: Boolean,
     val timeInSeconds: Int,
 ) {
     companion object {
@@ -16,6 +17,7 @@ class QuizTable(
         const val DICTIONARY_ID = "dictionaryId"
         const val NAME = "name"
         const val TIME_IN_SECONDS = "timeInSeconds"
+        const val REVERSED = "reversed"
     }
 
     @Exclude
@@ -25,11 +27,12 @@ class QuizTable(
             USER_ID to userId,
             DICTIONARY_ID to dictionaryId,
             NAME to name,
+            REVERSED to reversed,
             TIME_IN_SECONDS to timeInSeconds,
         )
     }
 
     override fun equals(other: Any?): Boolean {
-        return other != null && other is QuizTable && _id == other._id && dictionaryId == other.dictionaryId && name == other.name && timeInSeconds == other.timeInSeconds && userId == other.userId
+        return other != null && other is QuizTable && _id == other._id && dictionaryId == other.dictionaryId && name == other.name && timeInSeconds == other.timeInSeconds && userId == other.userId && reversed == other.reversed
     }
 }

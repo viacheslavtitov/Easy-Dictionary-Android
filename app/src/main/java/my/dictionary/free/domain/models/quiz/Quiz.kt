@@ -12,6 +12,7 @@ data class Quiz(
     var dictionary: Dictionary? = null,
     val name: String,
     val timeInSeconds: Int,
+    val reversed: Boolean = false,
     val words: MutableList<Word> = mutableListOf(),
     val quizWords: MutableList<QuizWords> = mutableListOf(),
     val histories: MutableList<QuizResult> = mutableListOf()

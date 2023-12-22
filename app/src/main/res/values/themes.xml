@@ -33,6 +33,8 @@
         <!-- Spinner -->
         <item name="spinnerStyle">@style/Widget.App.Spinner</item>
         <item name="buttonStyle">@style/Widget.App.Button</item>
+        <!-- CheckBox -->
+        <item name="checkboxStyle">@style/Widget.App.CheckBox</item>
     </style>
 
     <style name="SplashTheme" parent="@style/Theme.AppCompat.NoActionBar">
@@ -109,5 +111,13 @@
         <item name="android:background">@drawable/button_selector</item>
         <item name="android:textColor">@color/white</item>
         <item name="android:textSize">18dp</item>
+    </style>
+
+    <style name="Widget.App.CheckBox" parent="Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="android:background">@drawable/background_checkbox</item>
+        <item name="buttonTint">@color/checkbox_tint</item>
+        <item name="buttonIconTint">@color/checkbox_icon_tint</item>
+
+        <item name="buttonIcon">@null</item>
     </style>
 </resources>

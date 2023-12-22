@@ -44,6 +44,10 @@ class AddQuizViewModel @Inject constructor(
     )
 
     //edit flows
+    private val _reversedUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val reversedUIState: StateFlow<Boolean> = _reversedUIState.asStateFlow()
+
     private val _nameUIState: MutableStateFlow<String> =
         MutableStateFlow("")
     val nameUIState: StateFlow<String> = _nameUIState.asStateFlow()
@@ -99,6 +103,7 @@ class AddQuizViewModel @Inject constructor(
         name: String?,
         duration: Int?,
         dictionary: Dictionary?,
+        reversed: Boolean,
         words: List<Word>
     ) {
         if (context == null) return
@@ -118,6 +123,7 @@ class AddQuizViewModel @Inject constructor(
                         userId = editQuiz!!.userId,
                         dictionary = dictionary,
                         name = name ?: "",
+                        reversed = reversed,
                         timeInSeconds = duration ?: 0,
                         words = words.toMutableList()
                     )
@@ -134,7 +140,7 @@ class AddQuizViewModel @Inject constructor(
                         val error = resultDeleteWords.second ?: context.getString(R.string.error_create_quiz)
                         _displayErrorUIState.value = error
                     } else {
-                        val resultToAddWords = addWordsToQuiz(editQuiz!!._id!!, name, duration, dictionary, words)
+                        val resultToAddWords = addWordsToQuiz(editQuiz!!._id!!, name, duration, reversed, dictionary, words)
                         if(!resultToAddWords) {
                             val error = context.getString(R.string.error_create_word)
                             _displayErrorUIState.value = error
@@ -154,6 +160,7 @@ class AddQuizViewModel @Inject constructor(
                         userId = "",
                         dictionary = dictionary,
                         name = name ?: "",
+                        reversed = reversed,
                         timeInSeconds = duration ?: 0,
                         words = words.toMutableList()
                     )
@@ -164,7 +171,7 @@ class AddQuizViewModel @Inject constructor(
                     _displayErrorUIState.value = error
                 } else {
                     val quizId = quizResult.third ?: ""
-                    val resultToAddWords = addWordsToQuiz(quizId, name, duration, dictionary, words, true)
+                    val resultToAddWords = addWordsToQuiz(quizId, name, duration, reversed, dictionary, words, true)
                     if(!resultToAddWords) {
                         val error = context.getString(R.string.error_create_word)
                         _displayErrorUIState.value = error
@@ -178,6 +185,7 @@ class AddQuizViewModel @Inject constructor(
 
     private suspend fun addWordsToQuiz(quizId: String, name: String?,
                                        duration: Int?,
+                                       reversed: Boolean,
                                        dictionary: Dictionary?, words: List<Word>, shouldDeleteWordIfNotSuccess : Boolean = false): Boolean {
         var quizCreatedSuccess = true
         for (word in words) {
@@ -189,6 +197,7 @@ class AddQuizViewModel @Inject constructor(
                         userId = "",
                         dictionary = dictionary,
                         name = name ?: "",
+                        reversed = reversed,
                         timeInSeconds = duration ?: 0,
                         words = words.toMutableList()
                     )
@@ -211,6 +220,7 @@ class AddQuizViewModel @Inject constructor(
             }
             durationUIState.tryEmit(quiz.timeInSeconds)
             wordUIState.tryEmit(quiz.words)
+            _reversedUIState.value = quiz.reversed
         }
     }
 }

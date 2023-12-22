@@ -15,6 +15,7 @@ import my.dictionary.free.R
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.quiz.QuizWordResult
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.usecases.quize.GetCreateQuizUseCase
 import javax.inject.Inject
 
@@ -34,7 +35,7 @@ class RunQuizViewModel @Inject constructor(
         MutableStateFlow("")
     val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
 
-    val nextWordUIState: MutableSharedFlow<Word> = MutableSharedFlow(
+    val nextWordUIState: MutableSharedFlow<Pair<Word, Boolean>> = MutableSharedFlow(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
@@ -61,12 +62,14 @@ class RunQuizViewModel @Inject constructor(
     val successSaveQuizUIState: StateFlow<Boolean> = _successSaveQuizUIState.asStateFlow()
 
     private var quiz: Quiz? = null
+    private var reversed: Boolean = false
     private var currentStep: Int = -1
     private var currentWord: Word? = null
     private var result: ArrayList<QuizWordResult> = arrayListOf()
 
     fun setQuiz(quiz: Quiz?) {
         this.quiz = quiz
+        reversed = quiz?.reversed ?: false
         this.quiz?.words?.shuffle()
         result = arrayListOf()
         currentStep = -1
@@ -79,7 +82,8 @@ class RunQuizViewModel @Inject constructor(
         quiz?.words?.let {
             if (currentStep >= 0 && currentStep < it.size) {
                 currentWord = it[currentStep]
-                nextWordUIState.tryEmit(currentWord!!)
+                val pair = Pair(currentWord!!, reversed)
+                nextWordUIState.tryEmit(pair)
                 _titleQuizUIState.value = Pair(currentStep + 1, it.size)
             } else {
                 val countWords = result.size
@@ -98,9 +102,9 @@ class RunQuizViewModel @Inject constructor(
             validationErrorUIState.tryEmit(context.getString(R.string.error_validation))
             return
         }
-        val result = currentWord?.translates?.find {
+        val result = if(!reversed) currentWord?.translates?.find {
             it.translation == answer
-        }
+        } else if(currentWord?.original == answer) TranslationVariant.empty() else null
         if (result == null) {
             validationErrorUIState.tryEmit(context.getString(R.string.error_validation))
             return
@@ -115,7 +119,7 @@ class RunQuizViewModel @Inject constructor(
                 QuizWordResult(
                     quizId = quiz!!._id!!,
                     wordId = it._id!!,
-                    originalWord = it.original
+                    originalWord = if(reversed) it.translates.first().translation else it.original
                 )
             )
         }
@@ -128,7 +132,7 @@ class RunQuizViewModel @Inject constructor(
                 QuizWordResult(
                     quizId = quiz!!._id!!,
                     wordId = it._id!!,
-                    originalWord = it.original,
+                    originalWord = if(reversed) it.translates.first().translation else it.original,
                     answer = answer
                 )
             )

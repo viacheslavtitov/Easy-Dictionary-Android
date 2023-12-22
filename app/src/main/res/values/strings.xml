@@ -61,6 +61,7 @@
     <string name="right_answers">Right answers: %d</string>
     <string name="add_quiz">Add quiz</string>
     <string name="edit_quiz">Edit quiz</string>
+    <string name="reverse_dictionary">Reverse dictionary</string>
     <!-- Dictionary -->
     <string name="dictionary">Dictionary</string>
     <string name="add_dictionary">Add dictionary</string>
