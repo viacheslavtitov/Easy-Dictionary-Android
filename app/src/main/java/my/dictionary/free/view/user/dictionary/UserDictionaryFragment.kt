@@ -28,7 +28,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
@@ -96,6 +95,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d(TAG, "onCreateView")
         val view = inflater.inflate(R.layout.fragment_user_dictionary, null)
         dictionariesRecyclerView = view.findViewById(R.id.recycler_view)
         dictionariesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -200,6 +200,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate")
         setFragmentResultListener(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT) { requestKey, bundle ->
             val needUpdate =
                 bundle.getBoolean(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY, false)
@@ -327,8 +328,13 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart")
+    }
+
     override fun onStop() {
-        Log.d(TAG, "onStop()")
+        Log.d(TAG, "onStop")
         undoRemoveDictionarySnackbar?.dismiss()
         super.onStop()
     }
