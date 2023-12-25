@@ -32,7 +32,7 @@ jobs:
       env:
         STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
       run: |
-        example-command "$STAGING_PASSWORD"
+        echo "password is '$STAGING_PASSWORD'"
     - name: Build with Gradle
       run: ./gradlew app:bundleDemoStaging
       env:
