@@ -1,18 +1,14 @@
 package my.dictionary.free.domain.viewmodels.user.dictionary.add
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.dictionary.DictionaryItem
@@ -28,6 +24,10 @@ class AddUserDictionaryViewModel @Inject constructor(
     private val languagesUseCase: GetDictionaryLanguagesUseCase,
     private val preferenceUtils: PreferenceUtils
 ) : ViewModel() {
+
+    companion object {
+        private val TAG = AddUserDictionaryViewModel::class.simpleName
+    }
 
     var languageFrom: Language? = null
     var languageTo: Language? = null
@@ -113,6 +113,7 @@ class AddUserDictionaryViewModel @Inject constructor(
 
     fun setDictionary(context: Context?, dictionary: Dictionary?) {
         if (context == null) return
+        Log.d(TAG, "load passed dictionary $dictionary")
         editDictionary = dictionary
         dictionary?.let { dict ->
             viewModelScope.launch {
@@ -120,13 +121,16 @@ class AddUserDictionaryViewModel @Inject constructor(
                 languageTo = languagesUseCase.findLanguageByKey(context, dict.dictionaryTo.lang)
                 languageFrom?.value?.let {
                     _langFromUIState.value = it
+                    Log.d(TAG, "emit lang from $it")
                 }
                 languageTo?.value?.let {
                     _langToUIState.value = it
+                    Log.d(TAG, "emit lang to $it")
                 }
                 if (dict.dialect?.isNullOrEmpty() == false) {
                     dialect = dict.dialect
                     _dialectUIState.value = dict.dialect
+                    Log.d(TAG, "emit dialect ${dict.dialect}")
                 }
             }
         }

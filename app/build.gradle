@@ -46,6 +46,10 @@ android {
     }
     flavorDimensions += "version"
     productFlavors {
+        local {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         demo {
             dimension = "version"
             applicationIdSuffix = ".qa"
