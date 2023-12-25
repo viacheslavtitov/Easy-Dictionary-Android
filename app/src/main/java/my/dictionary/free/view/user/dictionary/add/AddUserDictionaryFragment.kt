@@ -97,7 +97,9 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.langFromUIState.collect { value ->
-                        langFromBtn.text = value
+                        if(value.isNotEmpty()) {
+                            langFromBtn.text = value
+                        }
                     }
                 }
                 launch {
@@ -107,12 +109,16 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.langToUIState.collect { value ->
-                        langToBtn.text = value
+                        if(value.isNotEmpty()) {
+                            langToBtn.text = value
+                        }
                     }
                 }
                 launch {
-                    viewModel.dialectUIState.drop(1).collect { value ->
-                        textInputEditTextDialect.setText(value)
+                    viewModel.dialectUIState.collect { value ->
+                        if(value.isNotEmpty()) {
+                            textInputEditTextDialect.setText(value)
+                        }
                     }
                 }
             }
