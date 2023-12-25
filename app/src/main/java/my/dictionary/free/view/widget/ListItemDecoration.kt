@@ -16,7 +16,7 @@ class ListItemDecoration(
     private val context: Context,
     private val dividerHeight: Int = 1.dp,
     private val skipLastPosition: Boolean = true,
-    @ColorRes private val colorRes: Int = R.color.yellow_500
+    @ColorRes private val colorRes: Int = R.color.light_blue_200
 ) : RecyclerView.ItemDecoration() {
 
     private val backgroundPaint by lazy {
