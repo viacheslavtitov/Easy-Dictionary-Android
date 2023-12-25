@@ -66,6 +66,7 @@ class UserQuizzesViewModel @Inject constructor(
                     Log.d(TAG, "loadQuizzes onStart")
                     _shouldClearQuizzesUIState.value = true
                     _loadingUIState.value = true
+                    quizzesUIState.resetReplayCache()
                 }
                 .onCompletion {
                     Log.d(TAG, "loadQuizzes onCompletion")
