@@ -29,8 +29,10 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Check secret variable
+      env:
+        STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
       run: |
-        echo "STAGING_PASSWORD is: '${{ secrets.STAGING_PASSWORD  }}'" # Output works
+        example-command "$STAGING_PASSWORD"
     - name: Build with Gradle
       run: ./gradlew app:bundleDemoStaging
       env:
