@@ -30,7 +30,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew assembleDemoStaging
+      run: ./gradlew app:bundleDemoStaging
       env:
           STAGING_ALIAS: ${{ secrets.STAGING_ALIAS }}
           STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
@@ -38,19 +38,26 @@ jobs:
       id: file_check
       run: |
         pwd
-        if find . -type f -name "*.apk"; then
+        if find . -type f -name "*.aab"; then
         echo "check_result=true" >> $GITHUB_OUTPUT
         else
         echo "check_result=false" >> $GITHUB_OUTPUT
         fi
+    - name: Decode credential file
+      id: decode_credentials
+      uses: timheuer/base64-to-file@v1.2
+      if: steps.file_check.outputs.check_result == 'true'
+      with:
+        fileName: 'credentials.json'
+        fileDir: './app/'
+        encodedString: ${{ secrets.STAGING_CREDENTIAL_FILE_CONTENT }}
     - name: upload to Firebase App Distribution
       id: distrib_outputs
       uses: wzieba/Firebase-Distribution-Github-Action@v1.7.0
-      if: steps.file_check.outputs.check_result == 'true'
       with:
-        appId: my.dictionary.free.qa
-        serviceCredentialsFileContent: ${{secrets.STAGING_CREDENTIAL_FILE_CONTENT}}
-        file: ./app/build/outputs/apk/demo/staging/app-demo-staging.apk
+        appId: ${{secrets.STAGING_APP_ID}}
+        serviceCredentialsFile: ./app/credentials.json
+        file: ./app/build/outputs/bundle/demoStaging/app-demo-staging.aab
         debug: true
     - name: Assert outputs of previous step are not empty
       run: |
