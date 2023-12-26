@@ -30,7 +30,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew app:bundleDemoStaging
+      run: ./gradlew assembleDemoStaging
       env:
           STAGING_ALIAS: ${{ secrets.STAGING_ALIAS }}
           STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
@@ -38,16 +38,34 @@ jobs:
       id: file_check
       run: |
         pwd
-        if find . -type f -name "*.aab"; then
+        if find . -type f -name "*.aok"; then
         echo "check_result=true" >> $GITHUB_OUTPUT
         else
         echo "check_result=false" >> $GITHUB_OUTPUT
         fi
     - name: upload to Firebase App Distribution
+      id: distrib_outputs
       uses: wzieba/Firebase-Distribution-Github-Action@v1.7.0
       if: steps.file_check.outputs.check_result == 'true'
       with:
         appId: my.dictionary.free.qa
         serviceCredentialsFileContent: ${{secrets.STAGING_CREDENTIAL_FILE_CONTENT}}
-        file: ./app/build/outputs/bundle/demoStaging/app-demo-staging.aab
+        file: ./app/build/outputs/bundle/demoStaging/app-demo-staging.apk
         debug: true
+    - name: Assert outputs of previous step are not empty
+      run: |
+        echo "${{ steps.distrib_outputs.outputs.FIREBASE_CONSOLE_URI }}"
+        if [[ -z "${{ steps.distrib_outputs.outputs.FIREBASE_CONSOLE_URI }}" ]]; then
+          echo "Console URI is empty" >&2
+          exit 1
+        fi
+        echo "${{ steps.distrib_outputs.outputs.TESTING_URI }}"
+        if [[ -z "${{ steps.distrib_outputs.outputs.TESTING_URI }}" ]]; then
+          echo "Testing URI is empty" >&2
+          exit 1
+        fi
+        echo "${{ steps.distrib_outputs.outputs.BINARY_DOWNLOAD_URI }}"
+        if [[ -z "${{ steps.distrib_outputs.outputs.BINARY_DOWNLOAD_URI }}" ]]; then
+          echo "Binary download URI is empty" >&2
+          exit 1
+        fi
