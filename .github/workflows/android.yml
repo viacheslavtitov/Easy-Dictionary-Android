@@ -38,6 +38,7 @@ jobs:
       id: file_check
       run: |
         pwd
+        git config --global --add safe.directory
         if find . -type f -name "*.aab"; then
         echo "check_result=true" >> $GITHUB_OUTPUT
         else
