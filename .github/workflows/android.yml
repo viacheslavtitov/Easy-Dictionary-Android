@@ -30,7 +30,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew app:bundleDemoStaging
+      run: ./gradlew assembleDemoStaging
       env:
           STAGING_ALIAS: ${{ secrets.STAGING_ALIAS }}
           STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
@@ -38,7 +38,7 @@ jobs:
       id: file_check
       run: |
         pwd
-        if find . -type f -name "*.aab"; then
+        if find . -type f -name "*.apk"; then
         echo "check_result=true" >> $GITHUB_OUTPUT
         else
         echo "check_result=false" >> $GITHUB_OUTPUT
@@ -50,7 +50,7 @@ jobs:
       with:
         appId: my.dictionary.free.qa
         serviceCredentialsFileContent: ${{secrets.STAGING_CREDENTIAL_FILE_CONTENT}}
-        file: ./app/build/outputs/bundle/demoStaging/app-demo-staging.aab
+        file: ./app/build/outputs/apk/demo/staging/app-demo-staging.apk
         debug: true
     - name: Assert outputs of previous step are not empty
       run: |
