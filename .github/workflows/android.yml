@@ -41,3 +41,4 @@ jobs:
         serviceCredentialsFileContent: ${{ secrets.STAGING_CREDENTIAL_FILE_CONTENT }}
         groups: Testers
         file: app/build/outputs/bundle/demoStaging/app-demo-staging.aab
+        debug: true
