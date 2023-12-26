@@ -1,4 +1,4 @@
-name: Android CI
+name: Android Stage Build & Deploy
 
 on:
   push:
@@ -29,13 +29,15 @@ jobs:
         encodedString: ${{ secrets.STAGING_ENCRYPTED_KEY_STORE }}
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Check secret variable
-      env:
-        STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
-      run: |
-        echo "password is '$STAGING_PASSWORD'"
     - name: Build with Gradle
       run: ./gradlew app:bundleDemoStaging
       env:
           STAGING_ALIAS: ${{ secrets.STAGING_ALIAS }}
           STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
+    - name: upload to Firebase App Distribution
+      uses: wzieba/Firebase-Distribution-Github-Action@v1
+      with:
+        appId: ${{secrets.STAGING_APP_ID}}
+        serviceCredentialsFileContent: ${{ secrets.STAGING_CREDENTIAL_FILE_CONTENT }}
+        groups: Testers
+        file: app/build/outputs/bundle/demoStaging/app-demo-staging.aab
