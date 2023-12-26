@@ -44,7 +44,7 @@ jobs:
         echo "check_result=false" >> $GITHUB_OUTPUT
         fi
     - name: upload to Firebase App Distribution
-      uses: wzieba/Firebase-Distribution-Github-Action@v1
+      uses: wzieba/Firebase-Distribution-Github-Action@v1.7.0
       if: steps.file_check.outputs.check_result == 'true'
       with:
         appId: ${{secrets.STAGING_APP_ID}}
