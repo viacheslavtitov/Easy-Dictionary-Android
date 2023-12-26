@@ -50,7 +50,7 @@ jobs:
       with:
         appId: my.dictionary.free.qa
         serviceCredentialsFileContent: ${{secrets.STAGING_CREDENTIAL_FILE_CONTENT}}
-        file: ./app/build/outputs/bundle/demoStaging/app-demo-staging.apk
+        file: ./app/build/outputs/apk/demoStaging/app-demo-staging.apk
         debug: true
     - name: Assert outputs of previous step are not empty
       run: |
