@@ -47,8 +47,8 @@ jobs:
       uses: wzieba/Firebase-Distribution-Github-Action@v1.7.0
       if: steps.file_check.outputs.check_result == 'true'
       with:
-        appId: ${{secrets.STAGING_APP_ID}}
-        serviceCredentialsFileContent: ${{ secrets.STAGING_CREDENTIAL_FILE_CONTENT }}
+        appId: my.dictionary.free.qa
+        serviceCredentialsFileContent: ${{secrets.STAGING_CREDENTIAL_FILE_CONTENT}}
         groups: Testers
         file: app/build/outputs/bundle/demoStaging/app-demo-staging.aab
         debug: true
