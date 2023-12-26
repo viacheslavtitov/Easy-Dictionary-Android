@@ -30,7 +30,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew assembleDemoStaging
+      run: ./gradlew app:bundlebleDemoStaging
       env:
           STAGING_ALIAS: ${{ secrets.STAGING_ALIAS }}
           STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
@@ -38,41 +38,16 @@ jobs:
       id: file_check
       run: |
         pwd
-        if find . -type f -name "*.apk"; then
+        if find . -type f -name "*.aab"; then
         echo "check_result=true" >> $GITHUB_OUTPUT
         else
         echo "check_result=false" >> $GITHUB_OUTPUT
         fi
-    - name: Decode credential file
-      id: decode_credentials
-      uses: timheuer/base64-to-file@v1.2
-      if: steps.file_check.outputs.check_result == 'true'
-      with:
-        fileName: 'credentials.json'
-        fileDir: './app/'
-        encodedString: ${{ secrets.STAGING_CREDENTIAL_FILE_CONTENT }}
     - name: upload to Firebase App Distribution
       id: distrib_outputs
-      uses: wzieba/Firebase-Distribution-Github-Action@v1.7.0
+      uses: hasretsariyer/firebase-app-distribution-github-action@v1.0
       with:
-        appId: ${{secrets.STAGING_APP_ID}}
-        serviceCredentialsFile: ./app/credentials.json
-        file: ./app/build/outputs/apk/demo/staging/app-demo-staging.apk
-        debug: true
-    - name: Assert outputs of previous step are not empty
-      run: |
-        echo "${{ steps.distrib_outputs.outputs.FIREBASE_CONSOLE_URI }}"
-        if [[ -z "${{ steps.distrib_outputs.outputs.FIREBASE_CONSOLE_URI }}" ]]; then
-          echo "Console URI is empty" >&2
-          exit 1
-        fi
-        echo "${{ steps.distrib_outputs.outputs.TESTING_URI }}"
-        if [[ -z "${{ steps.distrib_outputs.outputs.TESTING_URI }}" ]]; then
-          echo "Testing URI is empty" >&2
-          exit 1
-        fi
-        echo "${{ steps.distrib_outputs.outputs.BINARY_DOWNLOAD_URI }}"
-        if [[ -z "${{ steps.distrib_outputs.outputs.BINARY_DOWNLOAD_URI }}" ]]; then
-          echo "Binary download URI is empty" >&2
-          exit 1
-        fi
+        app_id: ${{secrets.STAGING_APP_ID}}
+        firebase_token: 1//031HGEDcnfYf5CgYIARAAGAMSNwF-L9IrLW8mPiEF74X5oSSd2kLwctssqf-J2jybcoQ1TNw5axyDBYreZXjirTjtMs-oqk1sVas
+        app_file: ./app/build/outputs/bundle/demoStaging/app-demo-staging.aab
+        tester_groups: testers
