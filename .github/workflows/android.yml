@@ -50,5 +50,5 @@ jobs:
         appId: ${{secrets.STAGING_APP_ID}}
         serviceCredentialsFileContent: ${{ secrets.STAGING_CREDENTIAL_FILE_CONTENT }}
         groups: Testers
-        releaseNotes: First release
         file: app/build/outputs/bundle/demoStaging/app-demo-staging.aab
+        debug: true
