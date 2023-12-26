@@ -38,12 +38,14 @@ jobs:
       id: file_check
       run: |
         pwd
-        git config --global --add safe.directory /github/workspace
         if find . -type f -name "*.aab"; then
         echo "check_result=true" >> $GITHUB_OUTPUT
         else
         echo "check_result=false" >> $GITHUB_OUTPUT
         fi
+    - name: Mark github workspace as safe
+      run: |
+        git config --global --add safe.directory /github/workspace
     - name: upload to Firebase App Distribution
       id: distrib_outputs
       uses: hasretsariyer/firebase-app-distribution-github-action@v1.0
