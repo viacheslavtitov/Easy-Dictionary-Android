@@ -38,7 +38,7 @@ jobs:
       id: file_check
       run: |
         pwd
-        if git status -s | grep -x "** [app-demo-staging.aab]"; then
+        if find . -type f -name "*.aab"; then
         echo "check_result=true" >> $GITHUB_OUTPUT
         else
         echo "check_result=false" >> $GITHUB_OUTPUT
