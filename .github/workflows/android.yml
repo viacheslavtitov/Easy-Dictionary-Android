@@ -30,7 +30,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./gradlew app:bundlebleDemoStaging
+      run: ./gradlew app:bundleDemoStaging
       env:
           STAGING_ALIAS: ${{ secrets.STAGING_ALIAS }}
           STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
