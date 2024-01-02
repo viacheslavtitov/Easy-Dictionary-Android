@@ -45,6 +45,43 @@
     },
     {
       "client_info": {
+        "mobilesdk_app_id": "1:478180234468:android:47aca5c4d397e0860e08f1",
+        "android_client_info": {
+          "package_name": "my.dictionary.free.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "478180234468-kguk8h5mqohqlpsabluntrodu9f51kaa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "my.dictionary.free.debug",
+            "certificate_hash": "ffc049ca09ccef6e43bde24d2198c18c6aa09579"
+          }
+        },
+        {
+          "client_id": "478180234468-01vnikrgq0opp6g8qm30vfrskhfpmlkv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOjyUVdsl_q8J2BWq-9GbPyshf0srHX2A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "478180234468-01vnikrgq0opp6g8qm30vfrskhfpmlkv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:478180234468:android:153f60016b42e9920e08f1",
         "android_client_info": {
           "package_name": "my.dictionary.free.qa"
@@ -57,6 +94,14 @@
           "android_info": {
             "package_name": "my.dictionary.free.qa",
             "certificate_hash": "923310ccea3a417f17329d289d833071364178ad"
+          }
+        },
+        {
+          "client_id": "478180234468-t4dtl1evt47tjng8bgiv3h3a9bv4e675.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "my.dictionary.free.qa",
+            "certificate_hash": "cec19027ad786dbaed7d5f253371e56edf1841fa"
           }
         },
         {
