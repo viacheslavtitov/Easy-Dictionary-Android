@@ -12,9 +12,9 @@ android {
     signingConfigs {
         qa {
             storeFile file('qa_key.jks')
-            storePassword "C0cs17pKpxIeNbGBYGZG5"
-            keyPassword "C0cs17pKpxIeNbGBYGZG5"
-            keyAlias "test"
+            storePassword System.getenv("STAGING_PASSWORD")
+            keyPassword System.getenv("STAGING_PASSWORD")
+            keyAlias System.getenv("STAGING_ALIAS")
         }
     }
     namespace 'my.dictionary.free'
@@ -39,7 +39,8 @@ android {
             signingConfig signingConfigs.qa
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
             firebaseAppDistribution {
-                appId="1:478180234468:android:153f60016b42e9920e08f1"
+                appId=System.getenv("STAGING_APP_ID")
+                serviceCredentialsFile="easy-dictionary-staging-credentials.json"
                 artifactType="AAB"
 //                artifactPath="/build/outputs/bundle/demoStaging/app-demo-staging.aab"
                 groups="testers"
