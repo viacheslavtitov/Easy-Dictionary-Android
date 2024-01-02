@@ -2,7 +2,7 @@ package my.dictionary.free.view.splash
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import android.util.Log
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.view.WindowInsetsCompat
 import com.firebase.ui.auth.AuthUI
@@ -10,11 +10,14 @@ import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import my.dictionary.free.R
 import my.dictionary.free.view.AbstractBaseActivity
 import my.dictionary.free.view.dialogs.DialogBuilders
-import my.dictionary.free.view.dialogs.SimpleInfoDialogListener
 import my.dictionary.free.view.dialogs.TwoButtonsDialogListener
 import my.dictionary.free.view.ext.visibleSystemBars
 import my.dictionary.free.view.main.MainActivity
@@ -23,6 +26,7 @@ import my.dictionary.free.view.main.MainActivity
 class SplashActivity : AbstractBaseActivity() {
 
     companion object {
+        private val TAG = SplashActivity::class.simpleName
         private const val SIGN_IN_DIALOG_ERROR = "SIGN_IN_DIALOG_ERROR"
     }
 
@@ -34,7 +38,7 @@ class SplashActivity : AbstractBaseActivity() {
         visibleSystemBars(visible = false, type = WindowInsetsCompat.Type.statusBars())
         visibleSystemBars(visible = false, type = WindowInsetsCompat.Type.systemBars())
         motionLayout = findViewById(R.id.motionLayout)
-        runAnimation()
+        signOrToMain()
     }
 
     private fun runAnimation() {
@@ -70,11 +74,12 @@ class SplashActivity : AbstractBaseActivity() {
     private fun signIn() {
         val providers = arrayListOf(
             AuthUI.IdpConfig.GoogleBuilder().build(),
-            AuthUI.IdpConfig.FacebookBuilder().build()
+//            AuthUI.IdpConfig.FacebookBuilder().build()
         )
         val signInIntent = AuthUI.getInstance()
             .createSignInIntentBuilder()
             .setAvailableProviders(providers)
+            .setTheme(R.style.Theme_FirebaseAuth)
             .build()
         signInLauncher.launch(signInIntent)
     }
@@ -94,6 +99,7 @@ class SplashActivity : AbstractBaseActivity() {
             // Successfully signed in
             launchMainActivity()
         } else {
+            Log.e(TAG, response?.error?.stackTraceToString() ?: response?.error?.message ?: "")
             when (response?.error?.errorCode) {
                 ErrorCodes.NO_NETWORK -> {
                     //Sign in failed due to lack of network connection
@@ -138,7 +144,7 @@ class SplashActivity : AbstractBaseActivity() {
                     //An unknown error has occurred.
                 }
             }
-            val errorMessage = response?.error?.localizedMessage ?: getString(R.string.unknown_error)
+            val errorMessage = "${response?.error?.localizedMessage}\n${response?.credentialForLinking?.toString()}" //?: getString(R.string.unknown_error)
             displayAlert(dialogBuilder = DialogBuilders.TwoButtonDialogBuilder
                 .cancelButtonTitle(getString(R.string.cancel))
                 .title(getString(R.string.error))
