@@ -47,7 +47,7 @@ jobs:
       run: |
         git config --global --add safe.directory /github/workspace
     - name: Decode service account credentials file
-      id: decode_keystore
+      id: decode_google_credentials
       uses: timheuer/base64-to-file@v1.2
       with:
         fileName: 'easy-dictionary-staging-credentials.json'
