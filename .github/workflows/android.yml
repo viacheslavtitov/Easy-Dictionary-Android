@@ -48,11 +48,10 @@ jobs:
         git config --global --add safe.directory /github/workspace
     - name: Decode service account credentials file
       id: decode_google_credentials
-      uses: timheuer/base64-to-file@v1.2
+      uses: jsdaniell/create-json@v1.2.2
       with:
-        fileName: 'easy-dictionary-staging-credentials.json'
-        fileDir: './'
-        encodedString: ${{ secrets.STAGING_GOOGLE_CREDENTIALS }}
+          name: "easy-dictionary-staging-credentials.json"
+          json: ${{ secrets.STAGING_GOOGLE_CREDENTIALS }}
     - name: Check for credentials file
       id: credentials_file_check
       run: |
