@@ -46,7 +46,22 @@ jobs:
     - name: Mark github workspace as safe
       run: |
         git config --global --add safe.directory /github/workspace
-    - name: Export Firebase token
-      run: export FIREBASE_TOKEN=${{secrets.STAGING_FIREBASE_TOKEN}}
+    - name: Decode service account credentials file
+      id: decode_google_credentials
+      uses: jsdaniell/create-json@v1.2.2
+      with:
+          name: "easy-dictionary-staging-credentials.json"
+          json: ${{ secrets.STAGING_GOOGLE_CREDENTIALS }}
+    - name: Check for credentials file
+      id: credentials_file_check
+      run: |
+        pwd
+        if find . -type f -name "easy-dictionary-staging-credentials.json"; then
+        echo "check_result=true" >> $GITHUB_OUTPUT
+        else
+        echo "check_result=false" >> $GITHUB_OUTPUT
+        fi
     - name: upload to Firebase App Distribution
       run: ./gradlew appDistributionUploadDemoStaging
+      env:
+        FIREBASE_TOKEN: ${{secrets.STAGING_FIREBASE_TOKEN}}

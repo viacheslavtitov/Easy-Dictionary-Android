@@ -5,6 +5,7 @@ plugins {
     id 'kotlin-kapt'
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
+    id 'com.google.firebase.appdistribution'
 }
 
 android {
@@ -23,7 +24,7 @@ android {
         applicationId "my.dictionary.free"
         minSdk 24
         targetSdk 34
-        versionCode 1
+        versionCode 3
         versionName "0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -37,6 +38,15 @@ android {
         staging {
             signingConfig signingConfigs.qa
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
+            firebaseAppDistribution {
+                appId=System.getenv("STAGING_APP_ID")
+                serviceCredentialsFile="easy-dictionary-staging-credentials.json"
+                artifactType="AAB"
+//                artifactPath="/build/outputs/bundle/demoStaging/app-demo-staging.aab"
+                groups="testers"
+//                releaseNotesFile="/path/to/releasenotes.txt"
+//                testers="ali@example.com, bri@example.com, cal@example.com"
+            }
         }
         release {
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
@@ -63,6 +73,9 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    packagingOptions {
+        resources.excludes.add("META-INF/*")
+    }
 }
 
 dependencies {
@@ -80,10 +93,11 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.7.5'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.7.5'
     //firebase
-    implementation platform('com.google.firebase:firebase-bom:31.2.2')
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
     implementation 'com.google.firebase:firebase-analytics-ktx'
     implementation 'com.google.firebase:firebase-database-ktx'
     implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
+    implementation 'com.google.firebase:firebase-appdistribution-gradle:4.0.1'
     //facebook
     implementation 'com.facebook.android:facebook-android-sdk:16.0.0'
     //ui

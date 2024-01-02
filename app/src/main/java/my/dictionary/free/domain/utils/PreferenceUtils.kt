@@ -3,6 +3,7 @@ package my.dictionary.free.domain.utils
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import androidx.security.crypto.MasterKeys
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,9 +24,11 @@ class PreferenceUtils @Inject constructor(
      * it returns [EncryptedSharedPreferences] otherwise SharedPreferences with private mode
      */
     private val sharedPreferences: SharedPreferences = if(hasMarshmallow()) EncryptedSharedPreferences.create(
-        SECRET_SHARED_PREFERENCES,
-        MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
         context,
+        SECRET_SHARED_PREFERENCES,
+        MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build(),
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     ) else context.getSharedPreferences(NOT_SECRET_SHARED_PREFERENCES, Context.MODE_PRIVATE)

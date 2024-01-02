@@ -42,6 +42,14 @@
         <item name="android:windowBackground">@color/main_light</item>
     </style>
 
+    <style name="Theme.FirebaseAuth" parent="FirebaseUI">
+        <item name="colorPrimary">@color/main</item>
+        <item name="colorPrimaryVariant">@color/main_dark</item>
+        <item name="colorAccent">@color/secondary</item>
+        <item name="android:colorBackground">@color/gray_200</item>
+        <item name="colorPrimaryDark">@color/gray_500</item>
+    </style>
+
     <style name="Toolbar.Style" parent="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="titleTextAppearance">@style/Toolbar.Title.TextAppearance</item>
         <item name="titleTextColor">@color/white</item>
