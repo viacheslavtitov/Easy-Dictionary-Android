@@ -53,6 +53,15 @@ jobs:
         fileName: 'easy-dictionary-staging-credentials.json'
         fileDir: './app/'
         encodedString: ${{ secrets.STAGING_GOOGLE_CREDENTIALS }}
+    - name: Check for credentials file
+      id: credentials_file_check
+      run: |
+        pwd
+        if find . -type f -name "easy-dictionary-staging-credentials.json"; then
+        echo "check_result=true" >> $GITHUB_OUTPUT
+        else
+        echo "check_result=false" >> $GITHUB_OUTPUT
+        fi
     - name: upload to Firebase App Distribution
       run: ./gradlew appDistributionUploadDemoStaging
       env:
