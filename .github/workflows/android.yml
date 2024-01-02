@@ -51,7 +51,7 @@ jobs:
       uses: timheuer/base64-to-file@v1.2
       with:
         fileName: 'easy-dictionary-staging-credentials.json'
-        fileDir: './app/'
+        fileDir: './'
         encodedString: ${{ secrets.STAGING_GOOGLE_CREDENTIALS }}
     - name: Check for credentials file
       id: credentials_file_check
