@@ -46,11 +46,7 @@ jobs:
     - name: Mark github workspace as safe
       run: |
         git config --global --add safe.directory /github/workspace
+    - name: Export Firebase token
+      run: export FIREBASE_TOKEN=${{secrets.STAGING_FIREBASE_TOKEN}}
     - name: upload to Firebase App Distribution
-      id: distrib_outputs
-      uses: hasretsariyer/firebase-app-distribution-github-action@v1.0
-      with:
-        app_id: ${{secrets.STAGING_APP_ID}}
-        firebase_token: 1//031HGEDcnfYf5CgYIARAAGAMSNwF-L9IrLW8mPiEF74X5oSSd2kLwctssqf-J2jybcoQ1TNw5axyDBYreZXjirTjtMs-oqk1sVas
-        app_file: ./app/build/outputs/bundle/demoStaging/app-demo-staging.aab
-        tester_groups: testers
+      run: ./gradlew appDistributionUploadDemoStaging
