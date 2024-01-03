@@ -53,11 +53,12 @@ android {
             signingConfig signingConfigs.qa
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
             firebaseAppDistribution {
-                appId=System.getenv("STAGING_APP_ID")
-                serviceCredentialsFile="easy-dictionary-staging-credentials.json"
-                artifactType="AAB"
+                appId = System.getenv("STAGING_APP_ID")
+                serviceCredentialsFile = "easy-dictionary-staging-credentials.json"
+                releaseNotes = getCurrentGitBranch()
+                artifactType = "AAB"
 //                artifactPath="/build/outputs/bundle/demoStaging/app-demo-staging.aab"
-                groups="testers"
+                groups = "testers"
 //                releaseNotesFile="/path/to/releasenotes.txt"
 //                testers="ali@example.com, bri@example.com, cal@example.com"
             }
@@ -77,7 +78,7 @@ android {
         demo {
             dimension = "version"
             applicationIdSuffix = ".qa"
-            versionNameSuffix = "-qa-" + getCurrentGitBranch()
+            versionNameSuffix = "-qa"
         }
     }
     compileOptions {
