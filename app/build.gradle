@@ -26,9 +26,9 @@ android {
     signingConfigs {
         qa {
             storeFile file('qa_key.jks')
-            storePassword "C0cs17pKpxIeNbGBYGZG5"
-            keyPassword "C0cs17pKpxIeNbGBYGZG5"
-            keyAlias "test"
+            storePassword System.getenv("STAGING_PASSWORD")
+            keyPassword System.getenv("STAGING_PASSWORD")
+            keyAlias System.getenv("STAGING_ALIAS")
         }
     }
     namespace 'my.dictionary.free'
