@@ -97,6 +97,14 @@
           }
         },
         {
+          "client_id": "478180234468-djdd5ah1tf9b2rkdoluq2q7lun47mt87.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "my.dictionary.free.qa",
+            "certificate_hash": "f98760c1e44b679d4ddcac1a885f2e3aeffc1a48"
+          }
+        },
+        {
           "client_id": "478180234468-t4dtl1evt47tjng8bgiv3h3a9bv4e675.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
