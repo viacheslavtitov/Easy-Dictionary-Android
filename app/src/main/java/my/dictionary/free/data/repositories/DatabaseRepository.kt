@@ -254,14 +254,17 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         wordId: String,
         translation: TranslationVariantTable
     ): Boolean {
-        return suspendCoroutine { cont ->
+        if(translation._id.isNullOrEmpty()) {
+            return false
+        } else return suspendCoroutine { cont ->
+
             val reference = database.reference
 
             val userChild =
                 reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
                     .child(dictionaryId)
                     .child(WordTable._NAME).child(wordId).child(TranslationVariantTable._NAME)
-                    .child(translation._id!!)
+                    .child(translation._id)
 
             userChild.child(TranslationVariantTable.CATEGORY_ID)
                 .setValue(translation.categoryId).isComplete
