@@ -1,3 +1,5 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
@@ -55,7 +57,7 @@ android {
             firebaseAppDistribution {
                 appId = System.getenv("STAGING_APP_ID")
                 serviceCredentialsFile = "easy-dictionary-staging-credentials.json"
-                releaseNotes = getCurrentGitBranch()
+                releaseNotes = "branch: " + getCurrentGitBranch() + "\n" + LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
                 artifactType = "AAB"
 //                artifactPath="/build/outputs/bundle/demoStaging/app-demo-staging.aab"
                 groups = "testers"
