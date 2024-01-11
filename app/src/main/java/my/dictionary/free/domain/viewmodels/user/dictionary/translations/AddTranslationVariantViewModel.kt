@@ -2,6 +2,7 @@ package my.dictionary.free.domain.viewmodels.user.dictionary.translations
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,12 +25,20 @@ import javax.inject.Inject
 @HiltViewModel
 class AddTranslationVariantViewModel @Inject constructor(
     private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase,
-    private val getCreateTranslationsUseCase: GetCreateTranslationsUseCase
+    private val getCreateTranslationsUseCase: GetCreateTranslationsUseCase,
+    private val uiStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     companion object {
         private val TAG = AddTranslationVariantViewModel::class.simpleName
+        private const val KEY_STATE_TRANSLATION = "translation"
+        private const val KEY_STATE_EXAMPLE = "example"
+        private const val KEY_STATE_CATEGORY = "category"
     }
+
+    val translationSavedUIState: StateFlow<String> = uiStateHandle.getStateFlow(KEY_STATE_TRANSLATION, "")
+    val exampleSavedUIState: StateFlow<String> = uiStateHandle.getStateFlow(KEY_STATE_EXAMPLE, "")
+    val categorySavedUIState: StateFlow<Int> = uiStateHandle.getStateFlow(KEY_STATE_CATEGORY, -1)
 
     val categoriesUIState: MutableSharedFlow<TranslationCategory> = MutableSharedFlow(
         replay = 1,
@@ -201,5 +210,17 @@ class AddTranslationVariantViewModel @Inject constructor(
     }
 
     fun isEditMode() = editModel != null
+
+    fun saveTranslation(value: String?) {
+        uiStateHandle[KEY_STATE_TRANSLATION] = value
+    }
+
+    fun saveExample(value: String?) {
+        uiStateHandle[KEY_STATE_EXAMPLE] = value
+    }
+
+    fun saveCategory(value: Int?) {
+        uiStateHandle[KEY_STATE_CATEGORY] = value
+    }
 
 }

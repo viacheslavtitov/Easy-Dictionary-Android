@@ -165,6 +165,30 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
                         }
                     }
                 }
+                launch {
+                    viewModel.translationSavedUIState.collect { value ->
+                        Log.d(TAG, "translation loaded from state $value")
+                        if(value.isNotEmpty()) {
+                            textInputEditTextTranslation.setText(value)
+                        }
+                    }
+                }
+                launch {
+                    viewModel.exampleSavedUIState.collect { value ->
+                        Log.d(TAG, "example loaded from state $value")
+                        if(value.isNotEmpty()) {
+                            textInputEditTextExample.setText(value)
+                        }
+                    }
+                }
+                launch {
+                    viewModel.categorySavedUIState.collect { position ->
+                        Log.d(TAG, "category loaded from state $position")
+                        if(position >= 0) {
+                            chooseCategorySpinner.setSelection(position)
+                        }
+                    }
+                }
             }
         }
         addMenuProvider(R.menu.menu_add_translation_variant, { menu, mi -> }, {
@@ -221,5 +245,15 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
         editTranslationVariant?.dictionaryId = dictionaryId
         viewModel.setEditModel(editTranslationVariant)
         viewModel.loadCategories(context)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        val translation = textInputEditTextTranslation.text?.toString()
+        val example = textInputEditTextExample.text?.toString()
+        val categoryPosition = chooseCategorySpinner.selectedItemPosition
+        viewModel.saveTranslation(translation)
+        viewModel.saveExample(example)
+        viewModel.saveCategory(categoryPosition)
+        super.onSaveInstanceState(outState)
     }
 }

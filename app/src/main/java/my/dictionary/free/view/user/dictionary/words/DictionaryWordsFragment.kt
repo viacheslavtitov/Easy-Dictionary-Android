@@ -286,7 +286,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 wordsRecyclerView.getChildAdapterPosition(childView)
             )?.let { word ->
                 if (actionMode == null) {
-                    //navigate to word detail screen
+                    sharedViewModel.navigateTo(EditDictionaryWordScreen(word))
                 } else {
                     selectWord(word)
                 }
