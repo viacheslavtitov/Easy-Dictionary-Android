@@ -187,6 +187,18 @@ class AddTranslationVariantViewModel @Inject constructor(
     ) {
         if (context == null) return
         Log.d(TAG, "updateTranslation($translation)")
+        _updateUIState.value = false
+        if(isEditMode() && editModel!!._id == null) {
+            editModel = TranslationVariant(
+                _id = editModel!!._id,
+                wordId = editModel!!.wordId,
+                categoryId = category?._id,
+                translation = translation.trim(),
+                example = example
+            )
+            _updateUIState.value = true
+            return
+        }
         viewModelScope.launch {
             _loadingUIState.value = true
             _updateUIState.value = false
@@ -210,6 +222,8 @@ class AddTranslationVariantViewModel @Inject constructor(
     }
 
     fun isEditMode() = editModel != null
+
+    fun getEditModel() = editModel
 
     fun saveTranslation(value: String?) {
         uiStateHandle[KEY_STATE_TRANSLATION] = value

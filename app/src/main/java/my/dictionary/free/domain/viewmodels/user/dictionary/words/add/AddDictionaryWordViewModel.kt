@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -44,6 +46,10 @@ class AddDictionaryWordViewModel @Inject constructor(
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
+    private val _clearTranslationsUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val clearTranslationsUIState: StateFlow<Boolean> = _clearTranslationsUIState.asStateFlow()
+
     private val _displayErrorUIState: MutableStateFlow<String> =
         MutableStateFlow("")
     val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
@@ -67,13 +73,13 @@ class AddDictionaryWordViewModel @Inject constructor(
         MutableStateFlow("")
     val phoneticUIState: StateFlow<String> = _phoneticUIState.asStateFlow()
 
-    val translationVariantsUIState: MutableSharedFlow<TranslationVariant> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _translationVariantsUIState = Channel<TranslationVariant>()
+    val translationVariantsUIState = _translationVariantsUIState.receiveAsFlow()
 
     private var dictionary: Dictionary? = null
     private var editWord: Word? = null
+    private var notSavingTranslations = mutableListOf<TranslationVariant>()
+    private var tempDeletedTranslations = mutableListOf<TranslationVariant>()
 
     fun loadData(context: Context?, dictionaryId: String?, word: Word?) {
         if (context == null) return
@@ -126,11 +132,13 @@ class AddDictionaryWordViewModel @Inject constructor(
         editWord?.let { word ->
             viewModelScope.launch {
                 _loadingUIState.value = true
+                _clearTranslationsUIState.value = true
                 _nameUIState.value = word.original
                 word.phonetic?.let {
                     _phoneticUIState.value = it
                 }
-                word.translates.forEach { translate ->
+                for (translate in word.translates) {
+                    if (isTranslationExistInTempDeletedList(translate)) continue
                     if (translate.categoryId != null) {
                         getCreateTranslationCategoriesUseCase.getCategoryById(
                             translate.categoryId
@@ -146,15 +154,23 @@ class AddDictionaryWordViewModel @Inject constructor(
                             }
                             .collect {
                                 translate.category = it
-                                translationVariantsUIState.tryEmit(translate)
+                                _translationVariantsUIState.send(translate)
                             }
                     } else {
-                        translationVariantsUIState.tryEmit(translate)
+                        _translationVariantsUIState.send(translate)
                     }
                 }
+                notSavingTranslations.forEach {
+                    _translationVariantsUIState.send(it)
+                }
+                _clearTranslationsUIState.value = false
                 _loadingUIState.value = false
             }
         }
+    }
+
+    private fun isTranslationExistInTempDeletedList(translationVariant: TranslationVariant): Boolean {
+        return tempDeletedTranslations.find { translationVariant._id == it._id } != null
     }
 
     fun validate(
@@ -274,5 +290,29 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     fun isEditMode() = editWord != null
+
+    fun addTranslation(translationVariant: TranslationVariant) {
+        val existIndex = notSavingTranslations.indexOfFirst {
+            it.translation == translationVariant.translation
+        }
+        if (existIndex >= 0) {
+            notSavingTranslations[existIndex] = translationVariant
+        } else {
+            notSavingTranslations.add(translationVariant)
+        }
+    }
+
+    fun deleteTranslation(translationVariant: TranslationVariant) {
+        if (translationVariant._id != null) {
+            tempDeletedTranslations.add(translationVariant)
+        } else {
+            val existIndex = notSavingTranslations.indexOfFirst {
+                it.translation == translationVariant.translation
+            }
+            if (existIndex >= 0) {
+                notSavingTranslations.removeAt(existIndex)
+            }
+        }
+    }
 
 }

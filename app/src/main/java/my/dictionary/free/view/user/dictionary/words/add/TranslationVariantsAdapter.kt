@@ -56,6 +56,7 @@ class TranslationVariantsAdapter(
         }
         viewHolder.deleteView.setOnClickListener {
             delete(position)
+            listener.onDelete(variant)
         }
     }
 
@@ -81,4 +82,5 @@ class TranslationVariantsAdapter(
 
 interface OnTranslationVariantEditListener {
     fun onEdit(entity: TranslationVariant)
+    fun onDelete(entity: TranslationVariant)
 }
