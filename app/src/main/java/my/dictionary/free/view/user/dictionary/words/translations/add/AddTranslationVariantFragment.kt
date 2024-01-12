@@ -161,7 +161,9 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
                     viewModel.updateUIState.collect { success ->
                         if (success) {
                             Log.d(TAG, "translation was updated")
-                            findNavController().popBackStack()
+                            if(viewModel.isEditMode()) {
+                                fillResultAndPopFragment(viewModel.getEditModel())
+                            }
                         }
                     }
                 }
@@ -188,21 +190,7 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
                                 textInputEditTextExample.text?.toString(),
                                 category
                             )
-                            val bundle = Bundle().apply {
-                                putParcelable(
-                                    AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT,
-                                    result
-                                )
-                                putParcelable(
-                                    AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_CATEGORY,
-                                    category
-                                )
-                            }
-                            setFragmentResult(
-                                AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_RESULT,
-                                bundle
-                            )
-                            findNavController().popBackStack()
+                            fillResultAndPopFragment(result)
                         }
                     }
                     return@addMenuProvider true
@@ -221,5 +209,26 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
         editTranslationVariant?.dictionaryId = dictionaryId
         viewModel.setEditModel(editTranslationVariant)
         viewModel.loadCategories(context)
+    }
+
+    fun fillResultAndPopFragment(translationVariant: TranslationVariant?) {
+        val categoryTemp =
+            categoryAdapter?.getItemByPosition(chooseCategorySpinner.selectedItemPosition)
+        val category = if (categoryTemp?._id == null) null else categoryTemp
+        val bundle = Bundle().apply {
+            putParcelable(
+                AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT,
+                translationVariant
+            )
+            putParcelable(
+                AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_CATEGORY,
+                category
+            )
+        }
+        setFragmentResult(
+            AddDictionaryWordFragment.BUNDLE_TRANSLATION_VARIANT_RESULT,
+            bundle
+        )
+        findNavController().popBackStack()
     }
 }

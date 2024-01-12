@@ -142,6 +142,13 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
+                    viewModel.clearTranslationsUIState.collect { clear ->
+                        if(clear) {
+                            translationVariantsAdapter.clear()
+                        }
+                    }
+                }
+                launch {
                     viewModel.validateWord.collect { error ->
                         textInputLayoutWord.error = error
                     }
@@ -170,7 +177,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.translationVariantsUIState.collectLatest { value ->
+                    viewModel.translationVariantsUIState.collect { value ->
                         translationVariantsAdapter.add(value)
                     }
                 }
@@ -217,6 +224,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
             translation?.let {
                 it.category = category
                 translationVariantsAdapter.add(it)
+                viewModel.addTranslation(it)
             }
         }
     }
@@ -265,6 +273,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     private val onTranslationVariantEditListener = object : OnTranslationVariantEditListener {
         override fun onEdit(entity: TranslationVariant) {
+            viewModel.deleteTranslation(entity)
             sharedViewModel.navigateTo(
                 EditTranslationVariantsScreen(
                     textInputEditTextWord.text?.toString(),
@@ -272,6 +281,10 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     entity
                 )
             )
+        }
+
+        override fun onDelete(entity: TranslationVariant) {
+            viewModel.deleteTranslation(entity)
         }
     }
 
