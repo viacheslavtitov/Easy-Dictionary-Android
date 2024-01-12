@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="word_types">
+        <item>іменники</item>
+        <item>дієслова</item>
+        <item>прислівники</item>
+        <item>прикметники</item>
+        <item>прийменники</item>
+        <item>сполучники</item>
+        <item>займенники</item>
+        <item>артиклі</item>
+        <item>вигуки</item>
+    </string-array>
+</resources>

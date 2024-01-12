@@ -69,6 +69,10 @@ class AddDictionaryWordViewModel @Inject constructor(
         MutableStateFlow("")
     val nameUIState: StateFlow<String> = _nameUIState.asStateFlow()
 
+    private val _typeUIState: MutableStateFlow<Int> =
+        MutableStateFlow(0)
+    val typeUIState: StateFlow<Int> = _typeUIState.asStateFlow()
+
     private val _phoneticUIState: MutableStateFlow<String> =
         MutableStateFlow("")
     val phoneticUIState: StateFlow<String> = _phoneticUIState.asStateFlow()
@@ -134,6 +138,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                 _loadingUIState.value = true
                 _clearTranslationsUIState.value = true
                 _nameUIState.value = word.original
+                _typeUIState.value = word.type
                 word.phonetic?.let {
                     _phoneticUIState.value = it
                 }
@@ -193,6 +198,7 @@ class AddDictionaryWordViewModel @Inject constructor(
     fun save(
         context: Context?,
         wordName: String?,
+        typePosition: Int,
         translations: List<TranslationVariant>,
         phonetic: String?
     ) {
@@ -207,6 +213,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                     _id = editWord!!._id!!,
                     dictionaryId = dictionary?._id!!,
                     original = wordName.trim(),
+                    type = typePosition,
                     phonetic = phonetic,
                     translates = translations
                 )
@@ -258,6 +265,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                 val entity = Word(
                     dictionaryId = dictionaryId,
                     original = wordName.trim(),
+                    type = typePosition,
                     phonetic = phonetic,
                     translates = translations
                 )

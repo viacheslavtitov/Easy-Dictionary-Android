@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="word_types">
+        <item>существительные</item>
+        <item>глаголы</item>
+        <item>наречия</item>
+        <item>прилагательные</item>
+        <item>предлоги</item>
+        <item>союзы</item>
+        <item>местоимения</item>
+        <item>определители</item>
+        <item>междометия</item>
+    </string-array>
+</resources>

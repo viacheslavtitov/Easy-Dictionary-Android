@@ -50,6 +50,7 @@ class WordsUseCase @Inject constructor(
                 _id = word._id,
                 dictionaryId = word.dictionaryId,
                 original = word.original,
+                type = word.type,
                 phonetic = word.phonetic
             )
         )
@@ -80,6 +81,7 @@ class WordsUseCase @Inject constructor(
                         _id = table._id,
                         dictionaryId = table.dictionaryId,
                         original = table.original,
+                        type = table.type,
                         phonetic = table.phonetic,
                         translates = emptyList()
                     )
@@ -118,6 +120,7 @@ class WordsUseCase @Inject constructor(
                         dictionaryId = table.dictionaryId,
                         original = table.original,
                         phonetic = table.phonetic,
+                        type = table.type,
                         translates = emptyList()
                     )
                 }

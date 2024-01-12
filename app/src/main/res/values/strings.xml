@@ -82,6 +82,7 @@
     <string name="tap_to_add_phonetics">Tap to add phonetics</string>
     <string name="tap_your_translation">Tap to add your translation here</string>
     <string name="tap_to_add_example">Tap to add example</string>
+    <string name="word_type">Type (optional)</string>
     <string name="translation_variants">Translation variants</string>
     <string name="add_translation_variants">Add translation variants</string>
     <string name="choose_category">Choose or add category (optional)</string>

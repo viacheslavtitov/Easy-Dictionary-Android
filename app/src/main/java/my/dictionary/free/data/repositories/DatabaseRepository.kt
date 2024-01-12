@@ -254,7 +254,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         wordId: String,
         translation: TranslationVariantTable
     ): Boolean {
-        if(translation._id.isNullOrEmpty()) {
+        if (translation._id.isNullOrEmpty()) {
             return false
         } else return suspendCoroutine { cont ->
 
@@ -750,6 +750,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     _id = key,
                     dictionaryId = word.dictionaryId,
                     original = word.original,
+                    type = word.type,
                     phonetic = word.phonetic
                 )
                 val childUpdates = hashMapOf<String, Any>(
@@ -781,6 +782,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
 
             userChild.child(WordTable._ID).setValue(word._id).isComplete
             userChild.child(WordTable.DICTIONARY_ID).setValue(word.dictionaryId).isComplete
+            userChild.child(WordTable.TYPE).setValue(word.type).isComplete
             userChild.child(WordTable.ORIGINAL).setValue(word.original).isComplete
             userChild.child(WordTable.PHONETIC).setValue(word.phonetic).isComplete
             cont.resume(true)
@@ -870,6 +872,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             _id = map[WordTable._ID] as String?,
                             dictionaryId = map[WordTable.DICTIONARY_ID] as String,
                             original = map[WordTable.ORIGINAL] as String,
+                            type = (map[WordTable.TYPE] as? Long)?.toInt() ?: 0,
                             phonetic = map[WordTable.PHONETIC] as String
                         )
                         trySend(word)
@@ -909,6 +912,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             _id = map[WordTable._ID] as String?,
                             dictionaryId = map[WordTable.DICTIONARY_ID] as String,
                             original = map[WordTable.ORIGINAL] as String,
+                            type = (map[WordTable.TYPE] as? Long)?.toInt() ?: 0,
                             phonetic = map[WordTable.PHONETIC] as String
                         )
                         trySend(word)
