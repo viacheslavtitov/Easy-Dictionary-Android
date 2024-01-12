@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnFocusChangeListener
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatSpinner
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
@@ -67,11 +68,13 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
     private lateinit var textInputEditTextWord: TextInputEditText
     private lateinit var textInputLayoutPhonetic: TextInputLayout
     private lateinit var textInputEditTextPhonetic: TextInputEditText
+    private lateinit var spinnerChooseWordType: AppCompatSpinner
     private lateinit var phoneticsView: PhoneticsView
     private lateinit var rootView: ViewGroup
 
     private var dictionaryId: String? = null
     private var phonetics: List<String>? = null
+    private var wordTypeAdapter: WordTypeSpinnerAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -84,6 +87,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         textInputEditTextWord = view.findViewById(R.id.edit_text_word)
         textInputLayoutPhonetic = view.findViewById(R.id.text_input_phonetic)
         textInputEditTextPhonetic = view.findViewById(R.id.edit_text_phonetic)
+        spinnerChooseWordType = view.findViewById(R.id.choose_word_type)
         phoneticsView = view.findViewById(R.id.phonetic_view)
         rootView = view.findViewById(R.id.root)
         phoneticsView.setOnClickListener(phoneticClickListener)
@@ -172,6 +176,11 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
+                    viewModel.typeUIState.collectLatest { position ->
+                        spinnerChooseWordType.setSelection(position)
+                    }
+                }
+                launch {
                     viewModel.phoneticUIState.drop(1).collectLatest { value ->
                         textInputEditTextPhonetic.setText(value)
                     }
@@ -190,7 +199,8 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     val translations = translationVariantsAdapter.getData()
                     if (viewModel.validate(context, word, translations)) {
                         val phonetic = textInputEditTextPhonetic.text?.toString()
-                        viewModel.save(context, word, translations, phonetic)
+                        val typePosition = spinnerChooseWordType.selectedItemPosition
+                        viewModel.save(context, word, typePosition, translations, phonetic)
                     }
                     return@addMenuProvider true
                 }
@@ -205,11 +215,18 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         ) else arguments?.getParcelable(BUNDLE_WORD) as? Word
         translationsRecyclerView.layoutManager = LinearLayoutManager(context)
         translationsRecyclerView.adapter = translationVariantsAdapter
+        spinnerChooseWordType.adapter = wordTypeAdapter
         viewModel.loadData(context, dictionaryId, word)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        context?.let {
+            val types = it.resources.getStringArray(R.array.word_types).toList()
+            val typesWithEmpty = mutableListOf("")
+            typesWithEmpty.addAll(types)
+            wordTypeAdapter = WordTypeSpinnerAdapter(it, typesWithEmpty)
+        }
         setFragmentResultListener(BUNDLE_TRANSLATION_VARIANT_RESULT) { requestKey, bundle ->
             val translation: TranslationVariant? =
                 if (hasTiramisu()) bundle.getParcelable(

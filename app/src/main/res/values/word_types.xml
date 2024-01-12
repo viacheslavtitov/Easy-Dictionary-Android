@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="word_types">
+        <item>nouns</item>
+        <item>verbs</item>
+        <item>adverbs</item>
+        <item>adjectives</item>
+        <item>prepositions</item>
+        <item>conjunctions</item>
+        <item>pronoun</item>
+        <item>determiners</item>
+        <item>interjection</item>
+    </string-array>
+</resources>

@@ -8,6 +8,7 @@ data class Word(
     val _id: String? = null,
     val dictionaryId: String,
     val original: String,
+    val type: Int,
     val phonetic: String? = null,
     val translates: List<TranslationVariant>
 ) : Parcelable {
@@ -15,6 +16,7 @@ data class Word(
         fun empty() = Word(
             _id = null,
             dictionaryId = "",
+            type = 0,
             original = "",
             phonetic = null,
             translates = emptyList()
@@ -25,6 +27,7 @@ data class Word(
         _id = _id,
         dictionaryId = dictionaryId,
         original = original,
+        type = type,
         phonetic = phonetic,
         translates = translateList
     )
