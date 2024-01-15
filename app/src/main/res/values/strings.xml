@@ -85,7 +85,8 @@
     <string name="word_type">Type (optional)</string>
     <string name="translation_variants">Translation variants</string>
     <string name="add_translation_variants">Add translation variants</string>
-    <string name="choose_category">Choose or add category (optional)</string>
+    <string name="choose_category_optional">Choose or add category (optional)</string>
+    <string name="choose_category">Choose category</string>
     <string name="error_not_found_phonetics">Phonetic symbols don\'t find for this language</string>
     <string name="add_category_name">Add category name</string>
     <string name="error_empty_translations">You have to add at least one translation variant</string>

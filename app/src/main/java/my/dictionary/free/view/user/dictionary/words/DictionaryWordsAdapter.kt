@@ -120,7 +120,7 @@ class DictionaryWordsAdapter(
 
     fun selectAll() {
         selectedWords.clear()
-        data.forEach {
+        filteredData.forEach {
             selectedWords.add(it)
         }
         this.notifyDataSetChanged()
@@ -140,6 +140,19 @@ class DictionaryWordsAdapter(
     fun add(dict: Word) {
         data.add(dict)
         filteredData.add(dict)
+        this.notifyDataSetChanged()
+    }
+
+    fun filterByCategory(categoryId: String?) {
+        if(categoryId == null) {
+            filteredData.clear()
+            filteredData.addAll(data)
+        } else {
+            val filteredByCategory =
+                data.filter { it.translates.filter { it.categoryId == categoryId }.isNotEmpty() }
+            filteredData.clear()
+            filteredData.addAll(filteredByCategory)
+        }
         this.notifyDataSetChanged()
     }
 
@@ -167,7 +180,6 @@ class DictionaryWordsAdapter(
             filteredData.addAll(fr?.values as? MutableList<Word> ?: emptyList())
             notifyDataSetChanged()
         }
-
     }
 
 }

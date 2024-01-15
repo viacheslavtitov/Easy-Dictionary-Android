@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import androidx.appcompat.widget.AppCompatSpinner
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
@@ -27,6 +29,7 @@ import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
+import my.dictionary.free.view.user.dictionary.words.translations.add.CategorySpinnerAdapter
 import my.dictionary.free.view.widget.ListItemDecoration
 import my.dictionary.free.view.widget.OnListItemClickListener
 import my.dictionary.free.view.widget.OnListTouchListener
@@ -50,7 +53,9 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
     private val viewModel: DictionaryWordsViewModel by viewModels()
 
     private lateinit var wordsRecyclerView: RecyclerView
+    private lateinit var chooseCategorySpinner: AppCompatSpinner
     private var wordsAdapter: DictionaryWordsAdapter? = null
+    private var categoryAdapter: CategorySpinnerAdapter? = null
     private var dictionaryId: String? = null
     private var editWords: ArrayList<Word>? = null
 
@@ -60,6 +65,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_words_multichoose, null)
+        chooseCategorySpinner = view.findViewById(R.id.choose_category)
         wordsRecyclerView = view.findViewById(R.id.recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
@@ -72,12 +78,17 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
         )
         wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
         wordsRecyclerView.adapter = wordsAdapter
+        chooseCategorySpinner.onItemSelectedListener = onCategoryChooseListener
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated")
+        context?.let {
+            categoryAdapter = CategorySpinnerAdapter(it)
+            chooseCategorySpinner.adapter = categoryAdapter
+        }
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -112,6 +123,18 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                     viewModel.titleUIState.collect { title ->
                         Log.d(TAG, "set title: $title")
                         sharedViewModel.setTitle(title)
+                    }
+                }
+                launch {
+                    viewModel.categoriesUIState.collect { category ->
+                        categoryAdapter?.add(category)
+                    }
+                }
+                launch {
+                    viewModel.shouldClearCategoriesUIState.collect { clear ->
+                        if (clear) {
+                            categoryAdapter?.clear()
+                        }
                     }
                 }
             }
@@ -182,6 +205,20 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
         if (selectedDictionaryCount < 1) {
             wordsAdapter?.clearSelectedWords()
         }
+    }
+
+    private val onCategoryChooseListener = object : AdapterView.OnItemSelectedListener {
+        override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
+            categoryAdapter?.getItemByPosition(position)?.let { category ->
+                Log.d(TAG, "selected ${category.categoryName}")
+                wordsAdapter?.filterByCategory(category._id)
+            }
+        }
+
+        override fun onNothingSelected(p0: AdapterView<*>?) {
+
+        }
+
     }
 
 }
