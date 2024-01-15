@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,19 +14,20 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
+import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
-import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class DictionaryWordsViewModel @Inject constructor(
     private val wordsUseCase: WordsUseCase,
-    private val getCreateDictionaryUseCase: GetCreateDictionaryUseCase
+    private val getCreateDictionaryUseCase: GetCreateDictionaryUseCase,
+    private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase,
 ) : ViewModel() {
 
     companion object {
@@ -59,6 +59,16 @@ class DictionaryWordsViewModel @Inject constructor(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
+
+    val categoriesUIState: MutableSharedFlow<TranslationCategory> = MutableSharedFlow(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    private val _shouldClearCategoriesUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val shouldClearCategoriesUIState: StateFlow<Boolean> =
+        _shouldClearCategoriesUIState.asStateFlow()
 
     private var dictionary: Dictionary? = null
 
@@ -128,6 +138,7 @@ class DictionaryWordsViewModel @Inject constructor(
                     )
                 }
             }
+            loadCategories(context)
         }
     }
 
@@ -151,6 +162,36 @@ class DictionaryWordsViewModel @Inject constructor(
             _clearActionModeUIState.value = true
         }.invokeOnCompletion {
             loadWords(context, dictionaryId)
+        }
+    }
+
+    fun loadCategories(context: Context?) {
+        if (context == null) return
+        Log.d(TAG, "loadCategories()")
+        viewModelScope.launch {
+            getCreateTranslationCategoriesUseCase.getCategories()
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    _displayErrorUIState.value =
+                        it.message ?: context.getString(R.string.unknown_error)
+                }
+                .onStart {
+                    Log.d(TAG, "onStart")
+                    _shouldClearCategoriesUIState.value = true
+                    _loadingUIState.value = true
+                }
+                .onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _loadingUIState.value = false
+                    _shouldClearCategoriesUIState.value = false
+                }
+                .collect {
+                    Log.d(
+                        TAG,
+                        "category loaded = ${it.categoryName}"
+                    )
+                    categoriesUIState.tryEmit(it)
+                }
         }
     }
 
