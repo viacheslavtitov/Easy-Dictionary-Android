@@ -8,6 +8,7 @@ import android.widget.Filterable
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.AlphabetSort
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.view.ext.getColorInt
 
@@ -19,6 +20,7 @@ class DictionaryWordsAdapter(
 
     private var tempRemoveItem: Word? = null
     private var tempRemoveItemPosition: Int? = null
+    private var sort: AlphabetSort? = null
     private var selectedWords = mutableListOf<Word>()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -140,6 +142,7 @@ class DictionaryWordsAdapter(
     fun add(dict: Word) {
         data.add(dict)
         filteredData.add(dict)
+        needSortByAlphabet(sort)
         this.notifyDataSetChanged()
     }
 
@@ -153,7 +156,26 @@ class DictionaryWordsAdapter(
             filteredData.clear()
             filteredData.addAll(filteredByCategory)
         }
+        needSortByAlphabet(sort)
         this.notifyDataSetChanged()
+    }
+
+    fun sortByAlphabet(sort: AlphabetSort) {
+        this.sort = sort
+        needSortByAlphabet(sort)
+        this.notifyDataSetChanged()
+    }
+
+    private fun needSortByAlphabet(sort: AlphabetSort?) {
+        if(sort == null) return
+        when(sort) {
+            AlphabetSort.A_Z -> {
+                filteredData.sortBy { it.original }
+            }
+            AlphabetSort.Z_A -> {
+                filteredData.sortByDescending { it.original }
+            }
+        }
     }
 
     override fun getFilter(): Filter {
@@ -178,6 +200,7 @@ class DictionaryWordsAdapter(
         override fun publishResults(query: CharSequence?, fr: FilterResults?) {
             filteredData.clear()
             filteredData.addAll(fr?.values as? MutableList<Word> ?: emptyList())
+            needSortByAlphabet(sort)
             notifyDataSetChanged()
         }
     }

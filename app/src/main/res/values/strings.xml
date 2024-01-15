@@ -29,6 +29,8 @@
     <string name="success">Success</string>
     <string name="finish">Finish</string>
     <string name="history">History</string>
+    <string name="sort_a_z">A-Z</string>
+    <string name="sort_z_a">Z-A</string>
     <!-- Sign-in -->
     <string name="sign_in_error_description">%s\nDo you want to retry?</string>
     <!-- Menu -->

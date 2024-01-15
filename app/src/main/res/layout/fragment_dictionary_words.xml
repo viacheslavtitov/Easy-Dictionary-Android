@@ -5,6 +5,27 @@
     android:background="@color/gray_200"
     android:orientation="vertical">
 
+    <RadioGroup
+        android:id="@+id/sorting_radio_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/sorting_a_z_button"
+            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/sort_a_z"
+            android:layout_height="wrap_content" />
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/sorting_z_a_button"
+            android:layout_width="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/sort_z_a"
+            android:layout_height="wrap_content" />
+    </RadioGroup>
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"

@@ -11,6 +11,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
@@ -30,6 +31,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.AlphabetSort
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
 import my.dictionary.free.domain.models.words.Word
@@ -99,6 +101,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_dictionary_words, null)
+        view.findViewById<RadioGroup>(R.id.sorting_radio_group).setOnCheckedChangeListener(onSortingGroupListener)
         wordsRecyclerView = view.findViewById(R.id.recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         val itemTouchHelper =
@@ -328,5 +331,16 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         Log.d(TAG, "onStop()")
         undoRemoveWordSnackbar?.dismiss()
         super.onStop()
+    }
+
+    private val onSortingGroupListener = RadioGroup.OnCheckedChangeListener { p0, checkedId ->
+        when(checkedId) {
+            R.id.sorting_a_z_button -> {
+                wordsAdapter?.sortByAlphabet(AlphabetSort.A_Z)
+            }
+            R.id.sorting_z_a_button -> {
+                wordsAdapter?.sortByAlphabet(AlphabetSort.Z_A)
+            }
+        }
     }
 }
