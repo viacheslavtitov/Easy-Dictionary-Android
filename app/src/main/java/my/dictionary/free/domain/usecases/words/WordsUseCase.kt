@@ -150,13 +150,11 @@ class WordsUseCase @Inject constructor(
         val languageType =
             LanguageType.values().firstOrNull { it.name == langCode }
                 ?: LanguageType.EN
-        var phoneticFileName = when (languageType) {
+        var phoneticFileName = "phonetics/" + when (languageType) {
             LanguageType.EN -> "phonetic_en.json"
-            LanguageType.UKR -> "phonetic_en.json"
-            LanguageType.RU -> "phonetic_en.json"
-            LanguageType.DE -> "phonetic_en.json"
-            LanguageType.FR -> "phonetic_en.json"
-            LanguageType.ES -> "phonetic_en.json"
+            LanguageType.DE -> "phonetic_de.json"
+            LanguageType.FR -> "phonetic_fr.json"
+            else -> "phonetic_common.json"
         }
         try {
             val jsonString = context.assets.open(phoneticFileName)
@@ -170,11 +168,26 @@ class WordsUseCase @Inject constructor(
                     convertedPhonetics.add(it.toUnicode())
                 } catch (ex: IllegalArgumentException) {
                     Log.e(TAG, "Failed to convert HEX $it to ${Charsets.US_ASCII.name()}")
+                    if (it.contains("+")) {
+                        val codes = it.split("+")
+                        var result = ""
+                        for (code in codes) {
+                            try {
+                                result += code.toUnicode()
+                            } catch (skipEx: IllegalArgumentException) {
+                                Log.e(
+                                    TAG,
+                                    "Failed to convert HEX $code to ${Charsets.US_ASCII.name()}"
+                                )
+                            }
+                        }
+                        if(result.isNotEmpty()) convertedPhonetics.add(result)
+                    }
                 }
             }
             return convertedPhonetics
         } catch (ex: IOException) {
-            //skip
+            Log.e(TAG, "phonetics error", ex)
         }
         return emptyList()
     }
