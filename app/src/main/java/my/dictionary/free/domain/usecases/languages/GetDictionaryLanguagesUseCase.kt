@@ -15,7 +15,7 @@ class GetDictionaryLanguagesUseCase @Inject constructor() {
         val languageType =
             LanguageType.values().firstOrNull { it.name == Locale.getDefault().language }
                 ?: LanguageType.EN
-        var languageFileName = when (languageType) {
+        var languageFileName = "languages/" + when (languageType) {
             LanguageType.EN -> "languages_en.json"
             LanguageType.UKR -> "languages_ukr.json"
             LanguageType.RU -> "languages_ru.json"
