@@ -28,12 +28,14 @@ import com.google.android.material.navigation.NavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
+import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
@@ -41,6 +43,7 @@ import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.EditQuizScreenFromDetail
 import my.dictionary.free.domain.models.navigation.EditQuizScreenFromQuizList
 import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
+import my.dictionary.free.domain.models.navigation.HomeScreen
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
 import my.dictionary.free.domain.models.navigation.UserQuizScreen
@@ -191,204 +194,38 @@ class MainActivity : AbstractBaseActivity() {
             }
         }
         navController.navigate(R.id.simpleFragment)
-        sharedViewModel.navigation.observe(this) { navigation ->
-            when (navigation) {
-                is LanguagesScreen -> {
-                    val bundle = Bundle().apply {
-                        putInt(
-                            LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY,
-                            navigation.langType.ordinal
-                        )
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    sharedViewModel.navigation.drop(1).collect { navigation ->
+                        navigate(navigation)
                     }
-                    navController.navigate(
-                        R.id.action_addUserDictionaryFragment_to_languagesFragment,
-                        bundle
-                    )
-                }
-
-                is AddUserDictionaryScreen -> {
-                    navController.navigate(R.id.action_userDictionaryFragment_to_addUserDictionaryFragment)
-                }
-
-                is EditDictionaryScreen -> {
-                    val bundle = Bundle().apply {
-                        putParcelable(
-                            AddUserDictionaryFragment.BUNDLE_DICTIONARY,
-                            navigation.dictionary
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_userDictionaryFragment_to_addUserDictionaryFragment,
-                        bundle
-                    )
-                }
-
-                is DictionaryWordsScreen -> {
-                    val bundle = Bundle().apply {
-                        putString(
-                            DictionaryWordsFragment.BUNDLE_DICTIONARY_ID,
-                            navigation.dictionary._id
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_userDictionaryFragment_to_dictionaryWordsFragment,
-                        bundle
-                    )
-                }
-
-                is AddDictionaryWordScreen -> {
-                    val bundle = Bundle().apply {
-                        putString(
-                            AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID,
-                            navigation.dictionaryId
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment,
-                        bundle
-                    )
-                }
-
-                is EditDictionaryWordScreen -> {
-                    val bundle = Bundle().apply {
-                        putString(
-                            AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID,
-                            navigation.word.dictionaryId
-                        )
-                        putParcelable(
-                            AddDictionaryWordFragment.BUNDLE_WORD,
-                            navigation.word
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment,
-                        bundle
-                    )
-                }
-
-                is AddTranslationVariantsScreen -> {
-                    val bundle = Bundle().apply {
-                        putString(
-                            AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
-                            navigation.word
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_addDictionaryWordFragment_to_addTranslationVariant,
-                        bundle
-                    )
-                }
-
-                is EditTranslationVariantsScreen -> {
-                    val bundle = Bundle().apply {
-                        putString(
-                            AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
-                            navigation.word
-                        )
-                        putString(
-                            AddTranslationVariantFragment.BUNDLE_DICTIONARY_ID,
-                            navigation.dictionaryId
-                        )
-                        putParcelable(
-                            AddTranslationVariantFragment.BUNDLE_TRANSLATION,
-                            navigation.translation
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_addDictionaryWordFragment_to_addTranslationVariant,
-                        bundle
-                    )
-                }
-
-                is UserQuizScreen -> {
-                    val bundle = Bundle().apply {
-                        putString(
-                            QuizDetailTabsFragment.BUNDLE_QUIZ_ID,
-                            navigation.quiz._id
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_userQuizzesFragment_to_quizDetailFragment,
-                        bundle
-                    )
-                }
-
-                is RunQuizScreen -> {
-                    val bundle = Bundle().apply {
-                        putParcelable(
-                            RunQuizFragment.BUNDLE_QUIZ,
-                            navigation.quiz
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_quizDetailFragment_to_runQuizFragment,
-                        bundle
-                    )
-                }
-
-                is EditQuizScreenFromDetail -> {
-                    val bundle = Bundle().apply {
-                        putParcelable(
-                            AddQuizFragment.BUNDLE_QUIZ,
-                            navigation.quiz
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_quizDetailTabsFragment_to_addQuizFragment,
-                        bundle
-                    )
-                }
-
-                is EditQuizScreenFromQuizList -> {
-                    val bundle = Bundle().apply {
-                        putParcelable(
-                            AddQuizFragment.BUNDLE_QUIZ,
-                            navigation.quiz
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_userQuizzesFragment_to_addQuizFragment,
-                        bundle
-                    )
-                }
-
-                is AddUserQuizScreen -> {
-                    navController.navigate(R.id.action_userQuizzesFragment_to_addQuizFragment)
-                }
-
-                is WordsMultiChooseScreen -> {
-                    val bundle = Bundle().apply {
-                        putString(
-                            WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID,
-                            navigation.dictionaryId
-                        )
-                        putParcelableArrayList(
-                            WordsMultiChooseFragment.BUNDLE_WORDS,
-                            navigation.words
-                        )
-                    }
-                    navController.navigate(
-                        R.id.action_addQuizFragment_to_wordsMultiChooseFragment,
-                        bundle
-                    )
-                }
-
-                is DictionaryChooseScreen -> {
-                    navController.navigate(R.id.action_addQuizFragment_to_dictionaryChooseDialogFragment)
                 }
             }
         }
-        sharedViewModel.userEmailValue.observe(this) { email ->
-            userEmail.text = email
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    sharedViewModel.userEmailValue.drop(1).collect { email ->
+                        userEmail.text = email
+                    }
+                }
+            }
         }
-        sharedViewModel.userAvatarUri.observe(this) { uri ->
-            Glide
-                .with(this)
-                .load(uri)
-                .centerCrop()
-                .apply(RequestOptions.circleCropTransform())
-                .placeholder(R.drawable.ic_baseline_account_circle_24)
-                .into(userLogo)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    sharedViewModel.userAvatarUri.collect { uri ->
+                        Glide
+                            .with(applicationContext)
+                            .load(uri)
+                            .centerCrop()
+                            .apply(RequestOptions.circleCropTransform())
+                            .placeholder(R.drawable.ic_baseline_account_circle_24)
+                            .into(userLogo)
+                    }
+                }
+            }
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -451,6 +288,197 @@ class MainActivity : AbstractBaseActivity() {
         ) {
             override fun onDrawerOpened(drawerView: View) {
                 super.onDrawerOpened(drawerView)
+            }
+        }
+    }
+
+    private fun navigate(navigation: AppNavigation) {
+        when (navigation) {
+            is HomeScreen -> {
+
+            }
+            is LanguagesScreen -> {
+                val bundle = Bundle().apply {
+                    putInt(
+                        LanguagesFragment.BUNDLE_LANGUAGE_TYPE_KEY,
+                        navigation.langType.ordinal
+                    )
+                }
+                navController.navigate(
+                    R.id.action_addUserDictionaryFragment_to_languagesFragment,
+                    bundle
+                )
+            }
+
+            is AddUserDictionaryScreen -> {
+                navController.navigate(R.id.action_userDictionaryFragment_to_addUserDictionaryFragment)
+            }
+
+            is EditDictionaryScreen -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        AddUserDictionaryFragment.BUNDLE_DICTIONARY,
+                        navigation.dictionary
+                    )
+                }
+                navController.navigate(
+                    R.id.action_userDictionaryFragment_to_addUserDictionaryFragment,
+                    bundle
+                )
+            }
+
+            is DictionaryWordsScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        DictionaryWordsFragment.BUNDLE_DICTIONARY_ID,
+                        navigation.dictionary._id
+                    )
+                }
+                navController.navigate(
+                    R.id.action_userDictionaryFragment_to_dictionaryWordsFragment,
+                    bundle
+                )
+            }
+
+            is AddDictionaryWordScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID,
+                        navigation.dictionaryId
+                    )
+                }
+                navController.navigate(
+                    R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment,
+                    bundle
+                )
+            }
+
+            is EditDictionaryWordScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        AddDictionaryWordFragment.BUNDLE_DICTIONARY_ID,
+                        navigation.word.dictionaryId
+                    )
+                    putParcelable(
+                        AddDictionaryWordFragment.BUNDLE_WORD,
+                        navigation.word
+                    )
+                }
+                navController.navigate(
+                    R.id.action_dictionaryWordsFragment_to_addDictionaryWordFragment,
+                    bundle
+                )
+            }
+
+            is AddTranslationVariantsScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
+                        navigation.word
+                    )
+                }
+                navController.navigate(
+                    R.id.action_addDictionaryWordFragment_to_addTranslationVariant,
+                    bundle
+                )
+            }
+
+            is EditTranslationVariantsScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        AddTranslationVariantFragment.BUNDLE_TRANSLATE_WORD,
+                        navigation.word
+                    )
+                    putString(
+                        AddTranslationVariantFragment.BUNDLE_DICTIONARY_ID,
+                        navigation.dictionaryId
+                    )
+                    putParcelable(
+                        AddTranslationVariantFragment.BUNDLE_TRANSLATION,
+                        navigation.translation
+                    )
+                }
+                navController.navigate(
+                    R.id.action_addDictionaryWordFragment_to_addTranslationVariant,
+                    bundle
+                )
+            }
+
+            is UserQuizScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        QuizDetailTabsFragment.BUNDLE_QUIZ_ID,
+                        navigation.quiz._id
+                    )
+                }
+                navController.navigate(
+                    R.id.action_userQuizzesFragment_to_quizDetailFragment,
+                    bundle
+                )
+            }
+
+            is RunQuizScreen -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        RunQuizFragment.BUNDLE_QUIZ,
+                        navigation.quiz
+                    )
+                }
+                navController.navigate(
+                    R.id.action_quizDetailFragment_to_runQuizFragment,
+                    bundle
+                )
+            }
+
+            is EditQuizScreenFromDetail -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        AddQuizFragment.BUNDLE_QUIZ,
+                        navigation.quiz
+                    )
+                }
+                navController.navigate(
+                    R.id.action_quizDetailTabsFragment_to_addQuizFragment,
+                    bundle
+                )
+            }
+
+            is EditQuizScreenFromQuizList -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        AddQuizFragment.BUNDLE_QUIZ,
+                        navigation.quiz
+                    )
+                }
+                navController.navigate(
+                    R.id.action_userQuizzesFragment_to_addQuizFragment,
+                    bundle
+                )
+            }
+
+            is AddUserQuizScreen -> {
+                navController.navigate(R.id.action_userQuizzesFragment_to_addQuizFragment)
+            }
+
+            is WordsMultiChooseScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID,
+                        navigation.dictionaryId
+                    )
+                    putParcelableArrayList(
+                        WordsMultiChooseFragment.BUNDLE_WORDS,
+                        navigation.words
+                    )
+                }
+                navController.navigate(
+                    R.id.action_addQuizFragment_to_wordsMultiChooseFragment,
+                    bundle
+                )
+            }
+
+            is DictionaryChooseScreen -> {
+                navController.navigate(R.id.action_addQuizFragment_to_dictionaryChooseDialogFragment)
             }
         }
     }

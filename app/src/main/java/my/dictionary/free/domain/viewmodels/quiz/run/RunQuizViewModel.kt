@@ -6,10 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.quiz.Quiz
@@ -31,19 +35,18 @@ class RunQuizViewModel @Inject constructor(
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     val nextWordUIState: MutableSharedFlow<Pair<Word, Boolean>> = MutableSharedFlow(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    val validationErrorUIState: MutableSharedFlow<String> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _validationErrorUIState = Channel<String>()
+    val validationErrorUIState: StateFlow<String> = _validationErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     private val _validationSuccessUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -99,17 +102,23 @@ class RunQuizViewModel @Inject constructor(
         _validationSuccessUIState.value = false
         if (context == null) return
         if (answer.isNullOrEmpty()) {
-            validationErrorUIState.tryEmit(context.getString(R.string.error_validation))
+            viewModelScope.launch {
+                _validationErrorUIState.send(context.getString(R.string.error_validation))
+            }
             return
         }
-        val result = if(!reversed) currentWord?.translates?.find {
+        val result = if (!reversed) currentWord?.translates?.find {
             it.translation == answer
-        } else if(currentWord?.original == answer) TranslationVariant.empty() else null
+        } else if (currentWord?.original == answer) TranslationVariant.empty() else null
         if (result == null) {
-            validationErrorUIState.tryEmit(context.getString(R.string.error_validation))
+            viewModelScope.launch {
+                _validationErrorUIState.send(context.getString(R.string.error_validation))
+            }
             return
         }
-        validationErrorUIState.tryEmit("")
+        viewModelScope.launch {
+            _validationErrorUIState.send("")
+        }
         _validationSuccessUIState.value = true
     }
 
@@ -119,7 +128,7 @@ class RunQuizViewModel @Inject constructor(
                 QuizWordResult(
                     quizId = quiz!!._id!!,
                     wordId = it._id!!,
-                    originalWord = if(reversed) it.translates.first().translation else it.original
+                    originalWord = if (reversed) it.translates.first().translation else it.original
                 )
             )
         }
@@ -132,7 +141,7 @@ class RunQuizViewModel @Inject constructor(
                 QuizWordResult(
                     quizId = quiz!!._id!!,
                     wordId = it._id!!,
-                    originalWord = if(reversed) it.translates.first().translation else it.original,
+                    originalWord = if (reversed) it.translates.first().translation else it.original,
                     answer = answer
                 )
             )
@@ -156,7 +165,7 @@ class RunQuizViewModel @Inject constructor(
             _loadingUIState.value = false
             if (!quizResult.first) {
                 val error = quizResult.second ?: context.getString(R.string.error_save_result_quiz)
-                _displayErrorUIState.value = error
+                _displayErrorUIState.send(error)
             } else {
                 var quizSavedSuccess = true
                 val quizResultId = quizResult.third ?: ""
@@ -165,7 +174,7 @@ class RunQuizViewModel @Inject constructor(
                     if (!wordResult.first) {
                         val error =
                             wordResult.second ?: context.getString(R.string.error_save_result_quiz)
-                        _displayErrorUIState.value = error
+                        _displayErrorUIState.send(error)
                         getCreateQuizUseCase.deleteQuizResult(
                             quizId = quiz?._id ?: "",
                             quizResultId = quizResultId

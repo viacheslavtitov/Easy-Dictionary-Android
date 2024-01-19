@@ -5,16 +5,16 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -50,14 +50,13 @@ class AddDictionaryWordViewModel @Inject constructor(
         MutableStateFlow(false)
     val clearTranslationsUIState: StateFlow<Boolean> = _clearTranslationsUIState.asStateFlow()
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
-    val validateWord: MutableSharedFlow<String> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _validateWord = Channel<String>()
+    val validateWord: StateFlow<String> = _validateWord.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     private val _successCreateWordUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -79,6 +78,7 @@ class AddDictionaryWordViewModel @Inject constructor(
 
     private val _translationVariantsUIState = Channel<TranslationVariant>()
     val translationVariantsUIState = _translationVariantsUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TranslationVariant.empty())
 
     private var dictionary: Dictionary? = null
     private var editWord: Word? = null
@@ -88,7 +88,9 @@ class AddDictionaryWordViewModel @Inject constructor(
     fun loadData(context: Context?, dictionaryId: String?, word: Word?) {
         if (context == null) return
         if (dictionaryId.isNullOrEmpty()) {
-            _displayErrorUIState.value = context.getString(R.string.error_load_data)
+            viewModelScope.launch {
+                _displayErrorUIState.send(context.getString(R.string.error_load_data))
+            }
             return
         }
         this.editWord = word
@@ -96,8 +98,9 @@ class AddDictionaryWordViewModel @Inject constructor(
             getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.value =
+                    _displayErrorUIState.send(
                         it.message ?: context.getString(R.string.unknown_error)
+                    )
                 }
                 .onStart {
                     Log.d(TAG, "onStart")
@@ -185,11 +188,15 @@ class AddDictionaryWordViewModel @Inject constructor(
     ): Boolean {
         if (context == null) return false
         if (word.isNullOrEmpty()) {
-            validateWord.tryEmit(context.getString(R.string.field_required))
+            viewModelScope.launch {
+                _validateWord.send(context.getString(R.string.field_required))
+            }
             return false
         }
         if (translations.isEmpty()) {
-            _displayErrorUIState.value = context.getString(R.string.error_empty_translations)
+            viewModelScope.launch {
+                _displayErrorUIState.send(context.getString(R.string.error_empty_translations))
+            }
             return false
         }
         return true
@@ -220,7 +227,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                 val wordResult = wordsUseCase.updateWord(entity)
                 if (!wordResult) {
                     val error = context.getString(R.string.error_update_word)
-                    _displayErrorUIState.value = error
+                    _displayErrorUIState.send(error)
                     _loadingUIState.value = false
                 } else {
                     val shouldDeleteTranslationsIds = arrayListOf<String>()
@@ -239,7 +246,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                         if (!resultDeleteTranslations.first) {
                             val error = resultDeleteTranslations.second
                                 ?: context.getString(R.string.error_create_quiz)
-                            _displayErrorUIState.value = error
+                            _displayErrorUIState.send(error)
                         }
                     }
                     var translationUpdatedSuccess = true
@@ -252,7 +259,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                             val error =
                                 translationResult.second
                                     ?: context.getString(R.string.error_create_word)
-                            _displayErrorUIState.value = error
+                            _displayErrorUIState.send(error)
                             translationUpdatedSuccess = false
                             break
                         }
@@ -272,7 +279,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                 val wordResult = wordsUseCase.createWord(entity)
                 if (!wordResult.first) {
                     val error = wordResult.second ?: context.getString(R.string.error_create_word)
-                    _displayErrorUIState.value = error
+                    _displayErrorUIState.send(error)
                     _loadingUIState.value = false
                 } else {
                     var translationCreatedSuccess = true
@@ -284,7 +291,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                             val error =
                                 translationResult.second
                                     ?: context.getString(R.string.error_create_word)
-                            _displayErrorUIState.value = error
+                            _displayErrorUIState.send(error)
                             wordsUseCase.deleteWord(entity)
                             translationCreatedSuccess = false
                             break

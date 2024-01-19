@@ -6,10 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -26,9 +30,9 @@ class AddQuizViewModel @Inject constructor(
         private val TAG = AddQuizViewModel::class.simpleName
     }
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     private val _loadingUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -38,10 +42,9 @@ class AddQuizViewModel @Inject constructor(
         MutableStateFlow(false)
     val successCreateQuizUIState: StateFlow<Boolean> = _successCreateQuizUIState.asStateFlow()
 
-    val validateName: MutableSharedFlow<String> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _validateName = Channel<String>()
+    val validateName: StateFlow<String> = _validateName.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     //edit flows
     private val _reversedUIState: MutableStateFlow<Boolean> =
@@ -62,10 +65,9 @@ class AddQuizViewModel @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_LATEST,
     )
 
-    val wordUIState: MutableSharedFlow<List<Word>> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_LATEST,
-    )
+    private val _wordUIState = Channel<List<Word>>()
+    val wordUIState: StateFlow<List<Word>> = _wordUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private var editQuiz: Quiz? = null
 
@@ -78,21 +80,31 @@ class AddQuizViewModel @Inject constructor(
     ): Boolean {
         if (context == null) return false
         if (name?.isNullOrEmpty() == true) {
-            validateName.tryEmit(context.getString(R.string.field_required))
+            viewModelScope.launch {
+                _validateName.send(context.getString(R.string.field_required))
+            }
             return false
         } else {
-            validateName.tryEmit("")
+            viewModelScope.launch {
+                _validateName.send("")
+            }
         }
         if (duration == null || duration <= 0) {
-            _displayErrorUIState.value = context.getString(R.string.error_empty_duration)
+            viewModelScope.launch {
+                _displayErrorUIState.send(context.getString(R.string.error_empty_duration))
+            }
             return false
         }
         if (dictionary == null || dictionary._id == null) {
-            _displayErrorUIState.value = context.getString(R.string.error_empty_dictionary)
+            viewModelScope.launch {
+                _displayErrorUIState.send(context.getString(R.string.error_empty_dictionary))
+            }
             return false
         }
         if (words.isEmpty()) {
-            _displayErrorUIState.value = context.getString(R.string.error_empty_words)
+            viewModelScope.launch {
+                _displayErrorUIState.send(context.getString(R.string.error_empty_words))
+            }
             return false
         }
         return true
@@ -131,25 +143,36 @@ class AddQuizViewModel @Inject constructor(
                 if (updatedQuiz) {
                     val shouldDeleteWordsIds = arrayListOf<String>()
                     editQuiz?.quizWords?.forEach { word ->
-                        if(words.find { it._id == word.wordId } == null) {
+                        if (words.find { it._id == word.wordId } == null) {
                             shouldDeleteWordsIds.add(word._id!!)
                         }
                     }
-                    val resultDeleteWords = getCreateQuizUseCase.deleteWordsFromQuiz(editQuiz!!._id!!, shouldDeleteWordsIds)
+                    val resultDeleteWords = getCreateQuizUseCase.deleteWordsFromQuiz(
+                        editQuiz!!._id!!,
+                        shouldDeleteWordsIds
+                    )
                     if (!resultDeleteWords.first) {
-                        val error = resultDeleteWords.second ?: context.getString(R.string.error_create_quiz)
-                        _displayErrorUIState.value = error
+                        val error = resultDeleteWords.second
+                            ?: context.getString(R.string.error_create_quiz)
+                        _displayErrorUIState.send(error)
                     } else {
-                        val resultToAddWords = addWordsToQuiz(editQuiz!!._id!!, name, duration, reversed, dictionary, words)
-                        if(!resultToAddWords) {
+                        val resultToAddWords = addWordsToQuiz(
+                            editQuiz!!._id!!,
+                            name,
+                            duration,
+                            reversed,
+                            dictionary,
+                            words
+                        )
+                        if (!resultToAddWords) {
                             val error = context.getString(R.string.error_create_word)
-                            _displayErrorUIState.value = error
+                            _displayErrorUIState.send(error)
                         } else {
                             successUpdateQuiz = true
                         }
                     }
                 } else {
-                    _displayErrorUIState.value = context.getString(R.string.error_update_quiz)
+                    _displayErrorUIState.send(context.getString(R.string.error_update_quiz))
                 }
                 _loadingUIState.value = false
                 _successCreateQuizUIState.value = successUpdateQuiz
@@ -168,13 +191,14 @@ class AddQuizViewModel @Inject constructor(
                 _loadingUIState.value = false
                 if (!quizResult.first) {
                     val error = quizResult.second ?: context.getString(R.string.error_create_quiz)
-                    _displayErrorUIState.value = error
+                    _displayErrorUIState.send(error)
                 } else {
                     val quizId = quizResult.third ?: ""
-                    val resultToAddWords = addWordsToQuiz(quizId, name, duration, reversed, dictionary, words, true)
-                    if(!resultToAddWords) {
+                    val resultToAddWords =
+                        addWordsToQuiz(quizId, name, duration, reversed, dictionary, words, true)
+                    if (!resultToAddWords) {
                         val error = context.getString(R.string.error_create_word)
-                        _displayErrorUIState.value = error
+                        _displayErrorUIState.send(error)
                     }
                     _loadingUIState.value = false
                     _successCreateQuizUIState.value = resultToAddWords
@@ -183,10 +207,12 @@ class AddQuizViewModel @Inject constructor(
         }
     }
 
-    private suspend fun addWordsToQuiz(quizId: String, name: String?,
-                                       duration: Int?,
-                                       reversed: Boolean,
-                                       dictionary: Dictionary?, words: List<Word>, shouldDeleteWordIfNotSuccess : Boolean = false): Boolean {
+    private suspend fun addWordsToQuiz(
+        quizId: String, name: String?,
+        duration: Int?,
+        reversed: Boolean,
+        dictionary: Dictionary?, words: List<Word>, shouldDeleteWordIfNotSuccess: Boolean = false
+    ): Boolean {
         var quizCreatedSuccess = true
         for (word in words) {
             val wordResult = getCreateQuizUseCase.addWordToQuiz(quizId, word._id ?: "")
@@ -214,13 +240,15 @@ class AddQuizViewModel @Inject constructor(
     fun setQuiz(quiz: Quiz?) {
         editQuiz = quiz
         if (quiz != null) {
-            _nameUIState.value = quiz.name
-            quiz.dictionary?.let { dict ->
-                dictionaryUIState.tryEmit(dict)
+            viewModelScope.launch {
+                _nameUIState.value = quiz.name
+                quiz.dictionary?.let { dict ->
+                    dictionaryUIState.tryEmit(dict)
+                }
+                durationUIState.tryEmit(quiz.timeInSeconds)
+                _wordUIState.send(quiz.words)
+                _reversedUIState.value = quiz.reversed
             }
-            durationUIState.tryEmit(quiz.timeInSeconds)
-            wordUIState.tryEmit(quiz.words)
-            _reversedUIState.value = quiz.reversed
         }
     }
 }

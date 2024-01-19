@@ -6,13 +6,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -34,10 +38,9 @@ class DictionaryWordsViewModel @Inject constructor(
         private val TAG = DictionaryWordsViewModel::class.simpleName
     }
 
-    val wordsUIState: MutableSharedFlow<Word> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _wordsUIState = Channel<Word>()
+    val wordsUIState: StateFlow<Word> = _wordsUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Word.empty())
 
     private val _clearActionModeUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -51,19 +54,18 @@ class DictionaryWordsViewModel @Inject constructor(
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     val titleUIState: MutableSharedFlow<String> = MutableSharedFlow(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    val categoriesUIState: MutableSharedFlow<TranslationCategory> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _categoriesUIState = Channel<TranslationCategory>()
+    val categoriesUIState: StateFlow<TranslationCategory> = _categoriesUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TranslationCategory.empty())
 
     private val _shouldClearCategoriesUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -75,7 +77,9 @@ class DictionaryWordsViewModel @Inject constructor(
     fun loadWords(context: Context?, dictionaryId: String?) {
         if (context == null) return
         if (dictionaryId.isNullOrEmpty()) {
-            _displayErrorUIState.value = context.getString(R.string.error_load_data)
+            viewModelScope.launch {
+                _displayErrorUIState.send(context.getString(R.string.error_load_data))
+            }
             return
         }
         Log.d(TAG, "loadWords()")
@@ -83,8 +87,8 @@ class DictionaryWordsViewModel @Inject constructor(
             wordsUseCase.getWordsByDictionaryId(dictionaryId)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.value =
-                        it.message ?: context.getString(R.string.unknown_error)
+                    _displayErrorUIState.send(
+                        it.message ?: context.getString(R.string.unknown_error))
                 }
                 .onStart {
                     Log.d(TAG, "onStart")
@@ -101,7 +105,7 @@ class DictionaryWordsViewModel @Inject constructor(
                         TAG,
                         "collect word ${it.original} | translates ${it.translates.size}"
                     )
-                    wordsUIState.tryEmit(it)
+                    _wordsUIState.send(it)
                 }
         }.invokeOnCompletion {
             if (dictionary == null) {
@@ -109,8 +113,8 @@ class DictionaryWordsViewModel @Inject constructor(
                     getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
                         .catch {
                             Log.d(TAG, "catch ${it.message}")
-                            _displayErrorUIState.value =
-                                it.message ?: context.getString(R.string.unknown_error)
+                            _displayErrorUIState.send(
+                                it.message ?: context.getString(R.string.unknown_error))
                         }
                         .onStart {
                             Log.d(TAG, "onStart")
@@ -155,7 +159,7 @@ class DictionaryWordsViewModel @Inject constructor(
             if (!result.first) {
                 val error =
                     result.second ?: context.getString(R.string.error_delete_word)
-                _displayErrorUIState.value = error
+                _displayErrorUIState.send(error)
             } else {
                 _shouldClearWordsUIState.value = true
             }
@@ -172,8 +176,8 @@ class DictionaryWordsViewModel @Inject constructor(
             getCreateTranslationCategoriesUseCase.getCategories()
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.value =
-                        it.message ?: context.getString(R.string.unknown_error)
+                    _displayErrorUIState.send(
+                        it.message ?: context.getString(R.string.unknown_error))
                 }
                 .onStart {
                     Log.d(TAG, "onStart")
@@ -190,7 +194,7 @@ class DictionaryWordsViewModel @Inject constructor(
                         TAG,
                         "category loaded = ${it.categoryName}"
                     )
-                    categoriesUIState.tryEmit(it)
+                    _categoriesUIState.send(it)
                 }
         }
     }

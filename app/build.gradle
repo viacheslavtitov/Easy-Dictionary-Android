@@ -40,8 +40,8 @@ android {
         applicationId "my.dictionary.free"
         minSdk 24
         targetSdk 34
-        versionCode 3
-        versionName "0.1"
+        versionCode 4
+        versionName "0.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.debug
@@ -104,7 +104,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     //dependency injections
     implementation("com.google.dagger:hilt-android:2.48.1")
-    implementation 'androidx.security:security-crypto-ktx:1.1.0-alpha06'
     kapt("com.google.dagger:hilt-android-compiler:2.48.1")
     //navigation
     implementation 'androidx.navigation:navigation-ui-ktx:2.7.5'

@@ -1,40 +1,38 @@
 package my.dictionary.free.domain.viewmodels.user.dictionary.add.languages
 
 import android.content.Context
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import my.dictionary.free.domain.models.language.Language
 import my.dictionary.free.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import javax.inject.Inject
 
 @HiltViewModel
-class LanguagesViewModel @Inject constructor() : ViewModel() {
+class LanguagesViewModel @Inject constructor(
+    private val languagesUseCase: GetDictionaryLanguagesUseCase
+) : ViewModel() {
 
-    val languages = MutableLiveData<List<Language>>()
-
-    @Inject
-    lateinit var languagesUseCase: GetDictionaryLanguagesUseCase
+    private val _languages = Channel<List<Language>>()
+    val languages = _languages.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     fun loadLanguages(context: Context) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             val languageList = languagesUseCase.getLanguages(context)
-            withContext(Dispatchers.Main) {
-                languages.value = languageList
-            }
+            _languages.send(languageList)
         }
     }
 
     fun queryLanguages(context: Context, query: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch {
             val languageList = languagesUseCase.getLanguages(context, query)
-            withContext(Dispatchers.Main) {
-                languages.value = languageList
-            }
+            _languages.send(languageList)
         }
     }
 }

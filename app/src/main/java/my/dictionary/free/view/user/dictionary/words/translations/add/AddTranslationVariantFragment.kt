@@ -129,12 +129,12 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.validateTranslation.collect { error ->
+                    viewModel.validateTranslation.drop(1).collect { error ->
                         textInputLayoutTranslation.error = error
                     }
                 }
                 launch {
-                    viewModel.categoriesUIState.collect { category ->
+                    viewModel.categoriesUIState.drop(1).collect { category ->
                         categoryAdapter?.add(category)
                     }
                 }

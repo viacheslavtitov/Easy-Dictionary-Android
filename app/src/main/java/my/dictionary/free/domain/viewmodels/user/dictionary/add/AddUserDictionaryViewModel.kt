@@ -5,9 +5,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -34,9 +38,9 @@ class AddUserDictionaryViewModel @Inject constructor(
     var dialect: String? = null
     private var editDictionary: Dictionary? = null
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     private val _successCreateDictionaryUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -81,7 +85,7 @@ class AddUserDictionaryViewModel @Inject constructor(
                 )
                 if (!result) {
                     val error = context.getString(R.string.error_update_dictionary)
-                    _displayErrorUIState.value = error
+                    _displayErrorUIState.send(error)
                 } else {
                     _successCreateDictionaryUIState.value = true
                 }
@@ -100,7 +104,7 @@ class AddUserDictionaryViewModel @Inject constructor(
                 )
                 if (!result.first) {
                     val error = result.second ?: context.getString(R.string.error_create_dictionary)
-                    _displayErrorUIState.value = error
+                    _displayErrorUIState.send(error)
                 } else {
                     _successCreateDictionaryUIState.value = true
                 }

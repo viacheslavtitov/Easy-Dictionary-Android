@@ -160,7 +160,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.quizzesUIState.collect { quiz ->
+                    viewModel.quizzesUIState.drop(1).collect { quiz ->
                         Log.d(TAG, "quiz updated: $quiz")
                         quizzesAdapter?.add(quiz)
                     }

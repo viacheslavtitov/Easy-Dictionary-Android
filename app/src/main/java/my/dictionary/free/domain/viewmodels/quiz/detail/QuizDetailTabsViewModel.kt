@@ -6,14 +6,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.quiz.Quiz
@@ -30,18 +34,17 @@ class QuizDetailTabsViewModel @Inject constructor(
         private val TAG = QuizDetailTabsViewModel::class.simpleName
     }
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     private val _loadingUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
-    val quizUIState: MutableSharedFlow<Quiz> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _quizUIState = Channel<Quiz>()
+    val quizUIState: StateFlow<Quiz> = _quizUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Quiz.empty())
 
     private var quizModel: Quiz? = null
 
@@ -53,8 +56,8 @@ class QuizDetailTabsViewModel @Inject constructor(
             getCreateQuizUseCase.getQuiz(context, quizId)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.value =
-                        it.message ?: context.getString(R.string.unknown_error)
+                    _displayErrorUIState.send(
+                        it.message ?: context.getString(R.string.unknown_error))
                 }
                 .onStart {
                     Log.d(TAG, "loadQuizzes onStart")
@@ -80,8 +83,8 @@ class QuizDetailTabsViewModel @Inject constructor(
                         wordsUseCase.getWordById(dictionaryId, id)
                             .catch {
                                 Log.d(TAG, "catch ${it.message}")
-                                _displayErrorUIState.value =
-                                    it.message ?: context.getString(R.string.unknown_error)
+                                _displayErrorUIState.send(
+                                    it.message ?: context.getString(R.string.unknown_error))
                             }
                             .onStart {
                                 Log.d(TAG, "loadWords onStart")
@@ -100,7 +103,7 @@ class QuizDetailTabsViewModel @Inject constructor(
             quiz.quizWords.addAll((quizWords))
             Log.d(TAG, "emit quiz ${quiz.name}")
             quizModel = quiz
-            quizUIState.tryEmit(quiz)
+            _quizUIState.send(quiz)
         }
     }
 
