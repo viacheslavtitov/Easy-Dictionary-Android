@@ -142,7 +142,9 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val dictionaryKey = reference.child(DictionaryTable._NAME).push().key
+            val dictionaryKey =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .push().key
             if (dictionaryKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -191,7 +193,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val categoryKey = reference.child(TranslationCategoryTable._NAME).push().key
+            val categoryKey = reference.child(UsersTable._NAME).child(userId)
+                .child(TranslationCategoryTable._NAME).push().key
             if (categoryKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -222,7 +225,9 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val translationKey = reference.child(TranslationVariantTable._NAME).push().key
+            val translationKey =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(dictionaryId).child(TranslationVariantTable._NAME).push().key
             if (translationKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -400,7 +405,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Triple<Boolean, String?, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val quizKey = reference.child(QuizTable._NAME).push().key
+            val quizKey =
+                reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).push().key
             if (quizKey == null) {
                 cont.resume(Triple(false, null, null))
             }
@@ -452,7 +458,9 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val wordKey = reference.child(WordTable._NAME).push().key
+            val wordKey =
+                reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).child(quizId)
+                    .child(WordTable._NAME).push().key
             if (wordKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -741,7 +749,9 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Triple<Boolean, String?, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val wordKey = reference.child(WordTable._NAME).push().key
+            val wordKey =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(word.dictionaryId).child(WordTable._NAME).push().key
             if (wordKey == null) {
                 cont.resume(Triple(false, null, null))
             }
@@ -976,7 +986,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val wordKey = reference.child(QuizWordResultTable._NAME).push().key
+            val wordKey = reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME)
+                .child(quizWordResult.quizId).child(QuizWordResultTable._NAME).push().key
             if (wordKey == null) {
                 cont.resume(Pair(false, null))
             }
