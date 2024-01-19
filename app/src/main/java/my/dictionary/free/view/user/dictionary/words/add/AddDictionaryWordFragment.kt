@@ -153,7 +153,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.validateWord.collect { error ->
+                    viewModel.validateWord.drop(1).collect { error ->
                         textInputLayoutWord.error = error
                     }
                 }
@@ -186,7 +186,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.translationVariantsUIState.collect { value ->
+                    viewModel.translationVariantsUIState.drop(1).collect { value ->
                         translationVariantsAdapter.add(value)
                     }
                 }

@@ -114,7 +114,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.wordsUIState.collect { word ->
+                    viewModel.wordsUIState.drop(1).collect { word ->
                         Log.d(TAG, "word updated: $word")
                         wordsAdapter?.add(word)
                     }
@@ -126,7 +126,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.categoriesUIState.collect { category ->
+                    viewModel.categoriesUIState.drop(1).collect { category ->
                         categoryAdapter?.add(category)
                     }
                 }

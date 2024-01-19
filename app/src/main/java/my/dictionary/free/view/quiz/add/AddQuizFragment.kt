@@ -152,7 +152,7 @@ class AddQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.validateName.collect { error ->
+                    viewModel.validateName.drop(1).collect { error ->
                         nameTextInputLayout?.error = error
                     }
                 }
@@ -169,7 +169,7 @@ class AddQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.wordUIState.collect { words ->
+                    viewModel.wordUIState.drop(1).collect { words ->
                         if (wordsAdapter?.getWords()?.isEmpty() == true) {
                             fillWords(words)
                         }

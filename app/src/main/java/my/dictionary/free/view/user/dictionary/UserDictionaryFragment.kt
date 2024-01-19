@@ -160,7 +160,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.dictionariesUIState.collect { dict ->
+                    viewModel.dictionariesUIState.drop(1).collect { dict ->
                         Log.d(TAG, "dictionary updated: $dict")
                         dictionariesAdapter?.add(dict)
                     }

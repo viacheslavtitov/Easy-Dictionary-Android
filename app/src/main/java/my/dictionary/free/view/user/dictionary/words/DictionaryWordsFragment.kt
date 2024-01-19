@@ -164,7 +164,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.wordsUIState.collect { word ->
+                    viewModel.wordsUIState.drop(1).collect { word ->
                         Log.d(TAG, "word updated: $word")
                         wordsAdapter?.add(word)
                     }

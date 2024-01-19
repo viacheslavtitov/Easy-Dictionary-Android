@@ -7,13 +7,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
@@ -40,15 +44,13 @@ class AddTranslationVariantViewModel @Inject constructor(
     val exampleSavedUIState: StateFlow<String> = uiStateHandle.getStateFlow(KEY_STATE_EXAMPLE, "")
     val categorySavedUIState: StateFlow<Int> = uiStateHandle.getStateFlow(KEY_STATE_CATEGORY, -1)
 
-    val categoriesUIState: MutableSharedFlow<TranslationCategory> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _categoriesUIState = Channel<TranslationCategory>()
+    val categoriesUIState: StateFlow<TranslationCategory> = _categoriesUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TranslationCategory.empty())
 
-    val validateTranslation: MutableSharedFlow<String> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _validateTranslation = Channel<String>()
+    val validateTranslation: StateFlow<String> = _validateTranslation.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     private val _shouldClearCategoriesUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -64,9 +66,9 @@ class AddTranslationVariantViewModel @Inject constructor(
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     //edit flows
     private val _updateUIState: MutableStateFlow<Boolean> =
@@ -81,9 +83,9 @@ class AddTranslationVariantViewModel @Inject constructor(
         MutableStateFlow("")
     val translationUIState: StateFlow<String> = _translationUIState.asStateFlow()
 
-    private val _categoryUIState: MutableStateFlow<TranslationCategory> =
-        MutableStateFlow(TranslationCategory.empty())
-    val categoryUIState: StateFlow<TranslationCategory> = _categoryUIState.asStateFlow()
+    private val _categoryUIState = Channel<TranslationCategory>()
+    val categoryUIState: StateFlow<TranslationCategory> = _categoryUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TranslationCategory.empty())
 
     private var editModel: TranslationVariant? = null
 
@@ -95,8 +97,8 @@ class AddTranslationVariantViewModel @Inject constructor(
             getCreateTranslationCategoriesUseCase.getCategories()
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.value =
-                        it.message ?: context.getString(R.string.unknown_error)
+                    _displayErrorUIState.send(
+                        it.message ?: context.getString(R.string.unknown_error))
                 }
                 .onStart {
                     Log.d(TAG, "onStart")
@@ -110,7 +112,7 @@ class AddTranslationVariantViewModel @Inject constructor(
                         existCategory?.let { category ->
                             editModel?.category = category
                             Log.d(TAG, "found category $category")
-                            _categoryUIState.value = category
+                            _categoryUIState.send(category)
                         }
                     }
                     _loadingUIState.value = false
@@ -122,7 +124,7 @@ class AddTranslationVariantViewModel @Inject constructor(
                         "category loaded = ${it.categoryName}"
                     )
                     categories.add(it)
-                    categoriesUIState.tryEmit(it)
+                    _categoriesUIState.send(it)
                 }
         }
     }
@@ -149,7 +151,7 @@ class AddTranslationVariantViewModel @Inject constructor(
             val result = getCreateTranslationCategoriesUseCase.createCategory(categoryName)
             if (!result.first) {
                 val error = result.second ?: context.getString(R.string.error_create_dictionary)
-                _displayErrorUIState.value = error
+                _displayErrorUIState.send(error)
             } else {
                 _successCreateCategoryUIState.value = true
             }
@@ -159,7 +161,9 @@ class AddTranslationVariantViewModel @Inject constructor(
     fun validateTranslation(context: Context?, translation: String?): Boolean {
         if (context == null) return false
         if (translation.isNullOrEmpty()) {
-            validateTranslation.tryEmit(context.getString(R.string.field_required))
+            viewModelScope.launch {
+                _validateTranslation.send(context.getString(R.string.field_required))
+            }
             return false
         }
         return true
@@ -214,7 +218,7 @@ class AddTranslationVariantViewModel @Inject constructor(
             )
             _loadingUIState.value = false
             if (!result) {
-                _displayErrorUIState.value = context.getString(R.string.error_update_translation)
+                _displayErrorUIState.send(context.getString(R.string.error_update_translation))
             } else {
                 _updateUIState.value = true
             }

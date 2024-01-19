@@ -8,6 +8,7 @@ import my.dictionary.free.domain.models.words.variants.TranslationVariant
 
 sealed class AppNavigation()
 
+class HomeScreen() : AppNavigation()
 class LanguagesScreen(val langType: LangType) : AppNavigation()
 
 class AddUserDictionaryScreen() : AppNavigation()

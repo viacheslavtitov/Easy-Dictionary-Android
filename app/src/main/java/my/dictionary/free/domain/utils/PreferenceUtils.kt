@@ -2,9 +2,6 @@ package my.dictionary.free.domain.utils
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
-import androidx.security.crypto.MasterKeys
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,7 +10,6 @@ class PreferenceUtils @Inject constructor(
     context: Context
 ) {
     companion object {
-        private const val SECRET_SHARED_PREFERENCES = "easy_dictionary_encrypt_pref"
         private const val NOT_SECRET_SHARED_PREFERENCES = "easy_dictionary_pref"
         const val CURRENT_USER_ID = "CURRENT_USER_ID"
         const val CURRENT_USER_UUID = "CURRENT_USER_UUID"
@@ -23,15 +19,7 @@ class PreferenceUtils @Inject constructor(
      * Instantiate [SharedPreferences] depends on Android version. If Android is Marshmallow or higher
      * it returns [EncryptedSharedPreferences] otherwise SharedPreferences with private mode
      */
-    private val sharedPreferences: SharedPreferences = if(hasMarshmallow()) EncryptedSharedPreferences.create(
-        context,
-        SECRET_SHARED_PREFERENCES,
-        MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    ) else context.getSharedPreferences(NOT_SECRET_SHARED_PREFERENCES, Context.MODE_PRIVATE)
+    private val sharedPreferences: SharedPreferences = context.getSharedPreferences(NOT_SECRET_SHARED_PREFERENCES, Context.MODE_PRIVATE)
 
     fun getString(
         key: String,

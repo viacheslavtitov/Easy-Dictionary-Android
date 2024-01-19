@@ -101,7 +101,7 @@ class RunQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.validationErrorUIState.collect { error ->
+                    viewModel.validationErrorUIState.drop(1).collect { error ->
                         if (answerEditText?.text?.isNullOrEmpty() == false) {
                             answerInputLayout?.error = error
                         } else {

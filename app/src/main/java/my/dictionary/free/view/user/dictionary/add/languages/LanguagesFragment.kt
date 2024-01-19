@@ -11,10 +11,15 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.language.Language
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
@@ -49,14 +54,20 @@ class LanguagesFragment : Fragment() {
         recyclerViewLanguages = view.findViewById(R.id.recycler_view)
         recyclerViewLanguages.layoutManager = LinearLayoutManager(requireContext())
         recyclerViewLanguages.addItemDecoration(ListItemDecoration(requireContext()))
-        viewModel.languages.observe(requireActivity()) { languages ->
-            recyclerViewLanguages.adapter = LanguagesAdapter(languages, onLanguageClickListener)
-        }
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.languages.drop(1).collect { languages ->
+                        recyclerViewLanguages.adapter = LanguagesAdapter(languages, onLanguageClickListener)
+                    }
+                }
+            }
+        }
         addMenuProvider(R.menu.menu_languages_search, menuCreated = { menu ->
             val searchManager =
                 getSystemService(requireContext(), SearchManager::class.java) as SearchManager

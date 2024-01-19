@@ -69,7 +69,7 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.quizUIState.collect { quiz ->
+                    viewModel.quizUIState.drop(1).collect { quiz ->
                         adapter = QuizDetailTabsAdapter(this@QuizDetailTabsFragment, quiz)
                         viewPager?.adapter = adapter
                         TabLayoutMediator(tabLayout!!, viewPager!!) { tab, position ->

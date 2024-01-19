@@ -5,15 +5,17 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.quiz.Quiz
@@ -31,10 +33,9 @@ class UserQuizzesViewModel @Inject constructor(
         private val TAG = UserQuizzesViewModel::class.simpleName
     }
 
-    val quizzesUIState: MutableSharedFlow<Quiz> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _quizzesUIState = Channel<Quiz>()
+    val quizzesUIState: StateFlow<Quiz> = _quizzesUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Quiz.empty())
 
     private val _clearActionModeUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
@@ -48,9 +49,9 @@ class UserQuizzesViewModel @Inject constructor(
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
 
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
+    private val _displayErrorUIState = Channel<String>()
+    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     fun loadQuizzes(context: Context?) {
         if (context == null) return
@@ -59,14 +60,13 @@ class UserQuizzesViewModel @Inject constructor(
             getCreateQuizUseCase.getQuizzes(context)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.value =
-                        it.message ?: context.getString(R.string.unknown_error)
+                    _displayErrorUIState.send(
+                        it.message ?: context.getString(R.string.unknown_error))
                 }
                 .onStart {
                     Log.d(TAG, "loadQuizzes onStart")
                     _shouldClearQuizzesUIState.value = true
                     _loadingUIState.value = true
-                    quizzesUIState.resetReplayCache()
                 }
                 .onCompletion {
                     Log.d(TAG, "loadQuizzes onCompletion")
@@ -89,8 +89,8 @@ class UserQuizzesViewModel @Inject constructor(
                         wordsUseCase.getWordById(dictionaryId, id)
                             .catch {
                                 Log.d(TAG, "catch ${it.message}")
-                                _displayErrorUIState.value =
-                                    it.message ?: context.getString(R.string.unknown_error)
+                                _displayErrorUIState.send(
+                                    it.message ?: context.getString(R.string.unknown_error))
                             }
                             .onStart {
                                 Log.d(TAG, "loadWords onStart")
@@ -104,10 +104,11 @@ class UserQuizzesViewModel @Inject constructor(
                             }
                     }
                 }
-            val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "").firstOrNull() ?: emptyList()
+            val quizWords =
+                getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "").firstOrNull() ?: emptyList()
             quiz.quizWords.addAll((quizWords))
             Log.d(TAG, "emit quiz ${quiz.name}")
-            quizzesUIState.tryEmit(quiz)
+            _quizzesUIState.send(quiz)
         }
     }
 
@@ -123,7 +124,7 @@ class UserQuizzesViewModel @Inject constructor(
             if (!result.first) {
                 val error =
                     result.second ?: context.getString(R.string.error_delete_dictionary)
-                _displayErrorUIState.value = error
+                _displayErrorUIState.send(error)
             } else {
                 _shouldClearQuizzesUIState.value = true
             }
