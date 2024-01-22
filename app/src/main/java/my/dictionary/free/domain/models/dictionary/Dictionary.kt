@@ -2,6 +2,7 @@ package my.dictionary.free.domain.models.dictionary
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import my.dictionary.free.domain.models.words.WordTag
 
 @Parcelize
 data class Dictionary(
@@ -9,7 +10,8 @@ data class Dictionary(
     val userUUID: String,
     val dictionaryFrom: DictionaryItem,
     val dictionaryTo: DictionaryItem,
-    val dialect: String? = null
+    val dialect: String? = null,
+    val tags: MutableList<WordTag> = mutableListOf()
 ) : Parcelable {
     companion object {
         fun empty(): Dictionary = Dictionary(
@@ -17,12 +19,13 @@ data class Dictionary(
             userUUID = "",
             dictionaryFrom = DictionaryItem.empty(),
             dictionaryTo = DictionaryItem.empty(),
-            dialect = null
+            dialect = null,
+            tags = mutableListOf()
         )
     }
 
     override fun toString(): String {
-        return "id = $_id | userUUID = $userUUID | from = ${dictionaryFrom.lang} | to = ${dictionaryTo.lang} | dialect = $dialect"
+        return "id = $_id | userUUID = $userUUID | from = ${dictionaryFrom.lang} | to = ${dictionaryTo.lang} | dialect = $dialect | tags = ${tags.size}"
     }
 }
 @Parcelize

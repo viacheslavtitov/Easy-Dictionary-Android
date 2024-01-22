@@ -5,13 +5,20 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import my.dictionary.free.data.models.words.WordTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.utils.PreferenceUtils
 import my.dictionary.free.view.ext.toUnicode
@@ -70,40 +77,62 @@ class WordsUseCase @Inject constructor(
         return databaseRepository.deleteWords(userId, dictionaryId, requestDeleteWordIds)
     }
 
-    suspend fun getWordsByDictionaryId(dictionaryId: String): Flow<Word> {
+    suspend fun getWordsByDictionaryId(dictionaryId: String, tags: List<WordTag>): Flow<Word> {
         val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
         if (userId.isNullOrEmpty()) {
             return emptyFlow()
         } else {
             return databaseRepository.getWordsByDictionaryId(userId, dictionaryId)
                 .map { table ->
-                    return@map Word(
-                        _id = table._id,
-                        dictionaryId = table.dictionaryId,
-                        original = table.original,
-                        type = table.type,
-                        phonetic = table.phonetic,
-                        translates = emptyList()
-                    )
-                }
-                .map {
-                    val converted: MutableList<TranslationVariant> = mutableListOf()
-                    databaseRepository.getTranslationVariantByWordId(
-                        userId,
-                        dictionaryId,
-                        it._id ?: ""
-                    ).firstOrNull()?.forEach {
-                        converted.add(
-                            TranslationVariant(
-                                _id = it._id,
-                                wordId = it.wordId,
-                                categoryId = it.categoryId,
-                                example = it.description,
-                                translation = it.translate
+                    return@map combine(
+                        flowOf(table),
+                        databaseRepository.getTranslationVariantByWordId(
+                            userId,
+                            dictionaryId,
+                            table._id ?: ""
+                        ),
+                        databaseRepository.getTagsIdsForWord(
+                            userId,
+                            dictionaryId,
+                            table._id ?: ""
+                        )
+                    ) { word, translations, tagIds ->
+                        val convertedTranslations: MutableList<TranslationVariant> = mutableListOf()
+                        val convertedTags: MutableList<WordTag> = mutableListOf()
+                        translations.forEach {
+                            convertedTranslations.add(
+                                TranslationVariant(
+                                    _id = it._id,
+                                    wordId = it.wordId,
+                                    categoryId = it.categoryId,
+                                    example = it.description,
+                                    translation = it.translate
+                                )
                             )
+                        }
+                        tagIds.forEach { id ->
+                            tags.find { it._id == id }?.let { table ->
+                                convertedTags.add(
+                                    WordTag(
+                                        _id = table._id,
+                                        userUUID = userId,
+                                        tagName = table.tagName
+                                    )
+                                )
+                            }
+                        }
+                        return@combine Word(
+                            _id = word._id,
+                            dictionaryId = word.dictionaryId,
+                            original = word.original,
+                            phonetic = word.phonetic,
+                            type = word.type,
+                            translates = convertedTranslations,
+                            tags = convertedTags
                         )
                     }
-                    return@map it.copyWithNewTranslations(converted)
+                }.map {
+                    it.first()
                 }
         }
     }
@@ -113,36 +142,57 @@ class WordsUseCase @Inject constructor(
         if (userId.isNullOrEmpty()) {
             return emptyFlow()
         } else {
-            return databaseRepository.getWordById(userId, dictionaryId, wordId)
-                .map { table ->
-                    return@map Word(
-                        _id = table._id,
-                        dictionaryId = table.dictionaryId,
-                        original = table.original,
-                        phonetic = table.phonetic,
-                        type = table.type,
-                        translates = emptyList()
+            return combine(
+                databaseRepository.getWordById(userId, dictionaryId, wordId),
+                databaseRepository.getTranslationVariantByWordId(
+                    userId,
+                    dictionaryId,
+                    wordId
+                ),
+                databaseRepository.getTagsIdsForWord(
+                    userId,
+                    dictionaryId,
+                    wordId
+                ),
+                databaseRepository.getTagsForDictionary(
+                    userId,
+                    dictionaryId
+                )
+            ) { table, translations, tagIds, allTags ->
+                val convertedTranslations: MutableList<TranslationVariant> = mutableListOf()
+                val convertedTags: MutableList<WordTag> = mutableListOf()
+                translations.forEach {
+                    convertedTranslations.add(
+                        TranslationVariant(
+                            _id = it._id,
+                            wordId = it.wordId,
+                            categoryId = it.categoryId,
+                            example = it.description,
+                            translation = it.translate
+                        )
                     )
                 }
-                .map {
-                    val converted: MutableList<TranslationVariant> = mutableListOf()
-                    databaseRepository.getTranslationVariantByWordId(
-                        userId,
-                        dictionaryId,
-                        it._id ?: ""
-                    ).firstOrNull()?.forEach {
-                        converted.add(
-                            TranslationVariant(
-                                _id = it._id,
-                                wordId = it.wordId,
-                                categoryId = it.categoryId,
-                                example = it.description,
-                                translation = it.translate
+                tagIds.forEach { id ->
+                    allTags.find { it._id == id }?.let { table ->
+                        convertedTags.add(
+                            WordTag(
+                                _id = table._id,
+                                userUUID = userId,
+                                tagName = table.tagName
                             )
                         )
                     }
-                    return@map it.copyWithNewTranslations(converted)
                 }
+                return@combine Word(
+                    _id = table._id,
+                    dictionaryId = table.dictionaryId,
+                    original = table.original,
+                    phonetic = table.phonetic,
+                    type = table.type,
+                    translates = convertedTranslations,
+                    tags = convertedTags
+                )
+            }
         }
     }
 
@@ -181,7 +231,7 @@ class WordsUseCase @Inject constructor(
                                 )
                             }
                         }
-                        if(result.isNotEmpty()) convertedPhonetics.add(result)
+                        if (result.isNotEmpty()) convertedPhonetics.add(result)
                     }
                 }
             }

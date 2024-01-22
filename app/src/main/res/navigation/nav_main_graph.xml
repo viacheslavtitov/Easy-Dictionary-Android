@@ -71,6 +71,9 @@
         <action
             android:id="@+id/action_addDictionaryWordFragment_to_addTranslationVariant"
             app:destination="@id/addTranslationVariant" />
+        <action
+            android:id="@+id/action_addDictionaryWordFragment_to_wordCategoryFragment"
+            app:destination="@id/wordCategoryFragment" />
     </fragment>
 
     <fragment
@@ -148,4 +151,9 @@
             android:defaultValue="null"
             app:argType="string" />
     </fragment>
+    <fragment
+        android:id="@+id/wordCategoryFragment"
+        android:name="my.dictionary.free.view.user.dictionary.words.category.WordCategoryFragment"
+        android:label="WordCategoryFragment"
+        tools:layout="@layout/fragment_word_category" />
 </navigation>

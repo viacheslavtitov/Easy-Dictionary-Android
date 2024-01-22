@@ -19,6 +19,7 @@ import my.dictionary.free.data.models.quiz.QuizWordResultTable
 import my.dictionary.free.data.models.quiz.QuizWordsTable
 import my.dictionary.free.data.models.users.UsersTable
 import my.dictionary.free.data.models.words.WordTable
+import my.dictionary.free.data.models.words.WordTagTable
 import my.dictionary.free.data.models.words.variants.TranslationCategoryTable
 import my.dictionary.free.data.models.words.variants.TranslationVariantTable
 import my.dictionary.free.domain.models.words.Word
@@ -227,7 +228,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
             val reference = database.reference
             val translationKey =
                 reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
-                    .child(dictionaryId).child(TranslationVariantTable._NAME).push().key
+                    .child(dictionaryId).child(WordTable._NAME).child(translation.wordId)
+                    .child(TranslationVariantTable._NAME).push().key
             if (translationKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -1073,4 +1075,188 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
             }
         }.flowOn(ioScope)
     }
+
+    suspend fun createDictionaryTag(
+        userId: String,
+        dictionaryId: String,
+        tagName: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val tagKey = reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(WordTagTable._NAME)
+                .push().key
+            if (tagKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            tagKey?.let { key ->
+                val table = WordTagTable(
+                    _id = key,
+                    userUUID = userId,
+                    tagName = tagName
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${WordTagTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun addTagToWord(
+        userId: String,
+        tagId: String,
+        dictionaryId: String,
+        wordId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val tagKey =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(dictionaryId).child(WordTable._NAME).child(wordId)
+                    .child(WordTagTable._NAME).push().key
+            if (tagKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            tagKey?.let { key ->
+                val valueMap = mapOf(WordTagTable._ID to tagId)
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${WordTable._NAME}/${wordId}/${WordTagTable._NAME}/$key" to valueMap.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun getTagsForDictionary(
+        userId: String,
+        dictionaryId: String,
+    ): Flow<List<WordTagTable>> {
+        Log.d(TAG, "getTagsForDictionary")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+                .child(WordTagTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val tags = arrayListOf<WordTagTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val category = WordTagTable(
+                            _id = map[WordTagTable._ID] as String?,
+                            userUUID = map[WordTagTable.USER_UUID] as String,
+                            tagName = map[WordTagTable.TAG_NAME] as String
+                        )
+                        tags.add(category)
+                    }
+                    trySend(tags)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getTagsIdsForWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+    ): Flow<List<String>> {
+        Log.d(TAG, "getCategoriesForWords")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+                .child(WordTable._NAME).child(wordId)
+                .child(WordTagTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val translations = arrayListOf<String>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val tagId = map[WordTagTable._ID] as String? ?: ""
+                        translations.add(tagId)
+                    }
+                    trySend(translations)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun deleteWordTagFromWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+        tagId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            childRemoves["/${WordTagTable._NAME}/$tagId"] = null
+            database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+                .child(WordTable._NAME).child(wordId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
+    suspend fun deleteWordTagFromDictionary(
+        userId: String,
+        dictionaryId: String,
+        tagId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            childRemoves["/${WordTagTable._NAME}/$tagId"] = null
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId)
+                .updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
 }

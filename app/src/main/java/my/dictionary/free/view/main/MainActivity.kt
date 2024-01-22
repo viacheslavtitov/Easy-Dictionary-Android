@@ -35,6 +35,7 @@ import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
+import my.dictionary.free.domain.models.navigation.AddWordCategoryScreen
 import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
@@ -60,6 +61,7 @@ import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
+import my.dictionary.free.view.user.dictionary.words.category.WordCategoryFragment
 import my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment
 import my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment
 
@@ -297,6 +299,7 @@ class MainActivity : AbstractBaseActivity() {
             is HomeScreen -> {
 
             }
+
             is LanguagesScreen -> {
                 val bundle = Bundle().apply {
                     putInt(
@@ -479,6 +482,19 @@ class MainActivity : AbstractBaseActivity() {
 
             is DictionaryChooseScreen -> {
                 navController.navigate(R.id.action_addQuizFragment_to_dictionaryChooseDialogFragment)
+            }
+
+            is AddWordCategoryScreen -> {
+                val bundle = Bundle().apply {
+                    putString(
+                        WordCategoryFragment.BUNDLE_WORD,
+                        navigation.word
+                    )
+                }
+                navController.navigate(
+                    R.id.action_addDictionaryWordFragment_to_wordCategoryFragment,
+                    bundle
+                )
             }
         }
     }

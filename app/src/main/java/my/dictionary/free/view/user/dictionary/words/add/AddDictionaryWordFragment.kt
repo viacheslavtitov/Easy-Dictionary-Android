@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
+import my.dictionary.free.domain.models.navigation.AddWordCategoryScreen
 import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
@@ -98,6 +99,14 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 togglePhoneticsView(false)
             }
             sharedViewModel.navigateTo(AddTranslationVariantsScreen(textInputEditTextWord.text?.toString()))
+        }
+        view.findViewById<View>(R.id.add_category_container).setOnClickListener {
+            context?.hideKeyboard(textInputEditTextWord)
+            context?.hideKeyboard(textInputEditTextPhonetic)
+            if (!phonetics.isNullOrEmpty()) {
+                togglePhoneticsView(false)
+            }
+            sharedViewModel.navigateTo(AddWordCategoryScreen(textInputEditTextWord.text?.toString()))
         }
         textInputLayoutPhonetic.setEndIconOnClickListener {
             context?.hideKeyboard(textInputEditTextWord)
