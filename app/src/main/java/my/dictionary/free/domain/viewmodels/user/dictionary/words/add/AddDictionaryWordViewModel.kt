@@ -332,4 +332,6 @@ class AddDictionaryWordViewModel @Inject constructor(
         }
     }
 
+    fun getDictionary() = dictionary
+
 }

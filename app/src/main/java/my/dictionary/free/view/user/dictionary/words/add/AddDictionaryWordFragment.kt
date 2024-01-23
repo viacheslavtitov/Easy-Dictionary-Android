@@ -27,8 +27,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.navigation.AddTagNavigation
+import my.dictionary.free.domain.models.navigation.AddTranslationVariantNavigation
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
-import my.dictionary.free.domain.models.navigation.AddWordCategoryScreen
+import my.dictionary.free.domain.models.navigation.AddWordTagsScreen
 import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
@@ -92,22 +94,6 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         phoneticsView = view.findViewById(R.id.phonetic_view)
         rootView = view.findViewById(R.id.root)
         phoneticsView.setOnClickListener(phoneticClickListener)
-        view.findViewById<View>(R.id.add_variants_container).setOnClickListener {
-            context?.hideKeyboard(textInputEditTextWord)
-            context?.hideKeyboard(textInputEditTextPhonetic)
-            if (!phonetics.isNullOrEmpty()) {
-                togglePhoneticsView(false)
-            }
-            sharedViewModel.navigateTo(AddTranslationVariantsScreen(textInputEditTextWord.text?.toString()))
-        }
-        view.findViewById<View>(R.id.add_category_container).setOnClickListener {
-            context?.hideKeyboard(textInputEditTextWord)
-            context?.hideKeyboard(textInputEditTextPhonetic)
-            if (!phonetics.isNullOrEmpty()) {
-                togglePhoneticsView(false)
-            }
-            sharedViewModel.navigateTo(AddWordCategoryScreen(textInputEditTextWord.text?.toString()))
-        }
         textInputLayoutPhonetic.setEndIconOnClickListener {
             context?.hideKeyboard(textInputEditTextWord)
             context?.hideKeyboard(textInputEditTextPhonetic)
@@ -197,6 +183,30 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.translationVariantsUIState.drop(1).collect { value ->
                         translationVariantsAdapter.add(value)
+                    }
+                }
+                launch {
+                    sharedViewModel.actionNavigation.drop(1).collect { action ->
+                        when(action) {
+                            is AddTagNavigation -> {
+                                context?.hideKeyboard(textInputEditTextWord)
+                                context?.hideKeyboard(textInputEditTextPhonetic)
+                                if (!phonetics.isNullOrEmpty()) {
+                                    togglePhoneticsView(false)
+                                }
+                                viewModel.getDictionary()?.let { dictionary ->
+                                    sharedViewModel.navigateTo(AddWordTagsScreen(textInputEditTextWord.text?.toString(), dictionary))
+                                }
+                            }
+                            is AddTranslationVariantNavigation -> {
+                                context?.hideKeyboard(textInputEditTextWord)
+                                context?.hideKeyboard(textInputEditTextPhonetic)
+                                if (!phonetics.isNullOrEmpty()) {
+                                    togglePhoneticsView(false)
+                                }
+                                sharedViewModel.navigateTo(AddTranslationVariantsScreen(textInputEditTextWord.text?.toString()))
+                            }
+                        }
                     }
                 }
             }

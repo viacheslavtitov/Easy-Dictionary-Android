@@ -1,4 +1,4 @@
-package my.dictionary.free.view.user.dictionary.words.category
+package my.dictionary.free.view.user.dictionary.words.tags
 
 import android.os.Bundle
 import android.util.Log
@@ -16,12 +16,14 @@ import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
 
 @AndroidEntryPoint
-class WordCategoryFragment : AbstractBaseFragment() {
+class AddWordTagsFragment : AbstractBaseFragment() {
 
     companion object {
-        private val TAG = WordCategoryFragment::class.simpleName
+        private val TAG = AddWordTagsFragment::class.simpleName
         const val BUNDLE_WORD =
-            "my.dictionary.free.view.user.dictionary.words.category.WordCategoryFragment.BUNDLE_WORD"
+            "my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment.BUNDLE_WORD"
+        const val BUNDLE_DICTIONARY =
+            "my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment.BUNDLE_DICTIONARY"
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -32,7 +34,7 @@ class WordCategoryFragment : AbstractBaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_word_category, null)
+        val view = inflater.inflate(R.layout.fragment_add_word_tags, null)
 
         return view
     }

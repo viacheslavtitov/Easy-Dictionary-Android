@@ -92,55 +92,13 @@
                     android:spinnerMode="dropdown"
                     tools:listitem="@layout/item_spinner_single" />
 
-                <androidx.appcompat.widget.LinearLayoutCompat
-                    android:id="@+id/add_category_container"
+                <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="9dp"
-                    android:orientation="horizontal"
-                    android:padding="9dp">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:text="@string/choose_category_optional"
-                        android:textColor="@color/main_text"
-                        android:textSize="16dp" />
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="right"
-                        android:src="@drawable/ic_baseline_add_24"
-                        android:tint="@color/black" />
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
-                <androidx.appcompat.widget.LinearLayoutCompat
-                    android:id="@+id/add_variants_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="9dp"
-                    android:orientation="horizontal"
-                    android:padding="9dp">
-
-                    <androidx.appcompat.widget.AppCompatTextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:text="@string/translation_variants"
-                        android:textColor="@color/main_text"
-                        android:textSize="16dp" />
-
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="right"
-                        android:src="@drawable/ic_baseline_add_24"
-                        android:tint="@color/black" />
-                </androidx.appcompat.widget.LinearLayoutCompat>
+                    android:padding="9dp"
+                    android:text="@string/translation_variants"
+                    android:textColor="@color/main_text"
+                    android:textSize="16dp" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/translations_recycler_view"
