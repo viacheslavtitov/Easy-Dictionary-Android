@@ -185,4 +185,17 @@ class GetCreateDictionaryUseCase @Inject constructor(
                 }
         }
     }
+
+    /**
+     * @return first - if true tag was created success
+     * @return second - created tag id
+     */
+    suspend fun createDictionaryTag(dictionary: Dictionary, tag: String): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(
+                false,
+                null
+            )
+        return databaseRepository.createDictionaryTag(userId, dictionary._id ?: "", tag)
+    }
 }

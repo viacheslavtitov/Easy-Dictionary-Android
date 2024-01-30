@@ -176,6 +176,10 @@ class MainActivity : AbstractBaseActivity() {
                     toolbar.setTitle(R.string.quiz)
                 }
 
+                R.id.addWordTagsFragment -> {
+                    toolbar.setTitle(R.string.add_or_choose_tags)
+                }
+
                 R.id.simpleFragment -> {
                     toolbar.title = "Home"
                     toolbar.menu.clear()
@@ -218,7 +222,6 @@ class MainActivity : AbstractBaseActivity() {
                 }
             }
         }
-        navController.navigate(R.id.simpleFragment)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -275,6 +278,7 @@ class MainActivity : AbstractBaseActivity() {
                 }
             }
         }
+        navController.navigate(R.id.simpleFragment)
         sharedViewModel.loadUserData()
     }
 
@@ -523,7 +527,7 @@ class MainActivity : AbstractBaseActivity() {
 
             is AddWordTagsScreen -> {
                 val bundle = Bundle().apply {
-                    putString(
+                    putParcelable(
                         AddWordTagsFragment.BUNDLE_WORD,
                         navigation.word
                     )

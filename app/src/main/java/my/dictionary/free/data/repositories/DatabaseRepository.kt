@@ -1099,7 +1099,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${WordTagTable._NAME}/$key" to table.toMap()
                 )
                 reference.updateChildren(childUpdates).addOnSuccessListener {
-                    cont.resume(Pair(true, null))
+                    cont.resume(Pair(true, key))
                 }.addOnFailureListener {
                     cont.resume(Pair(false, it.message))
                 }.addOnCanceledListener {

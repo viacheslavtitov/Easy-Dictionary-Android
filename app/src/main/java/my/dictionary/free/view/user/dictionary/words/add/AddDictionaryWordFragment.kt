@@ -142,7 +142,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.clearTranslationsUIState.collect { clear ->
-                        if(clear) {
+                        if (clear) {
                             translationVariantsAdapter.clear()
                         }
                     }
@@ -187,7 +187,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 }
                 launch {
                     sharedViewModel.actionNavigation.drop(1).collect { action ->
-                        when(action) {
+                        when (action) {
                             is AddTagNavigation -> {
                                 context?.hideKeyboard(textInputEditTextWord)
                                 context?.hideKeyboard(textInputEditTextPhonetic)
@@ -195,16 +195,31 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                                     togglePhoneticsView(false)
                                 }
                                 viewModel.getDictionary()?.let { dictionary ->
-                                    sharedViewModel.navigateTo(AddWordTagsScreen(textInputEditTextWord.text?.toString(), dictionary))
+                                    val originalWord = textInputEditTextWord.text?.toString()
+                                    val word = viewModel.getEditedWord() ?: Word(
+                                        _id = null,
+                                        dictionaryId = dictionary._id ?: "",
+                                        original = originalWord ?: "",
+                                        type = 0,
+                                        phonetic = null,
+                                        translates = emptyList(),
+                                        tags = emptyList()
+                                    )
+                                    sharedViewModel.navigateTo(AddWordTagsScreen(word, dictionary))
                                 }
                             }
+
                             is AddTranslationVariantNavigation -> {
                                 context?.hideKeyboard(textInputEditTextWord)
                                 context?.hideKeyboard(textInputEditTextPhonetic)
                                 if (!phonetics.isNullOrEmpty()) {
                                     togglePhoneticsView(false)
                                 }
-                                sharedViewModel.navigateTo(AddTranslationVariantsScreen(textInputEditTextWord.text?.toString()))
+                                sharedViewModel.navigateTo(
+                                    AddTranslationVariantsScreen(
+                                        textInputEditTextWord.text?.toString()
+                                    )
+                                )
                             }
                         }
                     }

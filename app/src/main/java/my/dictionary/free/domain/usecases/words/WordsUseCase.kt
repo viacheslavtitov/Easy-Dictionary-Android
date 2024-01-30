@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import my.dictionary.free.data.models.words.WordTable
 import my.dictionary.free.data.repositories.DatabaseRepository
+import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.WordTag
@@ -240,6 +241,19 @@ class WordsUseCase @Inject constructor(
             Log.e(TAG, "phonetics error", ex)
         }
         return emptyList()
+    }
+
+    /**
+     * @return first - if true tag was created success
+     * @return second - created tag id
+     */
+    suspend fun createDictionaryTag(dictionary: Dictionary, tag: String): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(
+                false,
+                null
+            )
+        return databaseRepository.createDictionaryTag(userId, dictionary._id ?: "", tag)
     }
 
 }
