@@ -12,7 +12,7 @@ data class Word(
     val type: Int,
     val phonetic: String? = null,
     val translates: List<TranslationVariant>,
-    val tags: List<WordTag>
+    val tags: ArrayList<WordTag>
 ) : Parcelable {
     companion object {
         fun empty() = Word(
@@ -22,7 +22,7 @@ data class Word(
             original = "",
             phonetic = null,
             translates = emptyList(),
-            tags = emptyList()
+            tags = arrayListOf()
         )
     }
 

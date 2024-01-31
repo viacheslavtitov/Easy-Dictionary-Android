@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import my.dictionary.free.domain.models.words.WordTag
 import my.dictionary.free.view.ext.findViewByCoordinate
 import kotlin.math.max
 
@@ -26,6 +27,8 @@ class BubbleLayout : ViewGroup {
         init(context, attrs)
     }
 
+    private var readOnly: Boolean = false
+
     fun init(context: Context, attrs: AttributeSet?) {
         setWillNotDraw(false)
     }
@@ -33,6 +36,7 @@ class BubbleLayout : ViewGroup {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         var maxHeight = 0
         var maxWidth = 0
+        val isWrapContent = layoutParams.height == LayoutParams.WRAP_CONTENT
         // Find out how big everyone wants to be
         measureChildren(widthMeasureSpec, heightMeasureSpec)
         // Find rightmost and bottom-most child
@@ -51,7 +55,27 @@ class BubbleLayout : ViewGroup {
         maxWidth = max(maxWidth, suggestedMinimumWidth)
 
         val measureWidth = resolveSizeAndState(maxWidth, widthMeasureSpec, 0)
+        if (isWrapContent) {
+            maxHeight = 0
+            maxWidth = 0
+            var childrenRowsCount = 1
+            for (i in 0 until childCount) {
+                val child: View = getChildAt(i)
+                if (child.visibility != GONE) {
+                    val childLayoutParams = child.layoutParams as BubbleLayoutParams
+                    maxHeight = max(maxHeight, child.measuredHeight)
+                    maxWidth += child.measuredWidth + childLayoutParams.leftMargin + childLayoutParams.rightMargin
+                    if (maxWidth > measureWidth) {
+                        maxWidth = 0
+                        childrenRowsCount++
+                    }
+                }
+            }
+            if (childrenRowsCount > 0) childrenRowsCount++
+            maxHeight *= childrenRowsCount
+        }
         val measureHeight = resolveSizeAndState(maxHeight, heightMeasureSpec, 0)
+
         setMeasuredDimension(
             measureWidth,
             measureHeight
@@ -95,14 +119,33 @@ class BubbleLayout : ViewGroup {
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
-        when (ev?.action) {
-            MotionEvent.ACTION_DOWN -> {
-                (findViewByCoordinate(ev.x, ev.y) as? BubbleView)?.let {
-                    it.select(!it.selected())
+        if (!readOnly) {
+            when (ev?.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    (findViewByCoordinate(ev.x, ev.y) as? BubbleView)?.let {
+                        it.select(!it.selected())
+                    }
                 }
             }
         }
         return super.dispatchTouchEvent(ev)
+    }
+
+    fun getSelectedTags(): ArrayList<WordTag> {
+        val tags = arrayListOf<WordTag>()
+        for (i in 0 until childCount) {
+            val child = getChildAt(i)
+            if (child.visibility != GONE && child is BubbleView && child.selected()) {
+                child.getWordTag()?.let {
+                    tags.add(it)
+                }
+            }
+        }
+        return tags
+    }
+
+    fun setReadOnly(enable: Boolean) {
+        readOnly = enable
     }
 
     class BubbleLayoutParams(width: Int, height: Int) : LayoutParams(width, height) {

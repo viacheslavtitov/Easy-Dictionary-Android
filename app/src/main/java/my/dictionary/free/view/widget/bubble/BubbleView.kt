@@ -11,6 +11,7 @@ import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
+import my.dictionary.free.domain.models.words.WordTag
 import my.dictionary.free.view.ext.dp
 
 class BubbleView : View {
@@ -73,7 +74,7 @@ class BubbleView : View {
         }
     }
 
-    private var text: String? = null
+    private var wordTag: WordTag? = null
 
     fun init(context: Context, attrs: AttributeSet?) {
         val params = BubbleLayout.BubbleLayoutParams(
@@ -88,16 +89,17 @@ class BubbleView : View {
         layoutParams = params
     }
 
-    fun setText(text: String?) {
-        this.text = text
+    fun setWordTag(tag: WordTag?) {
+        this.wordTag = tag
         invalidate()
     }
 
-    fun getText() = text
+    fun getWordTag() = wordTag
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val bounds = Rect()
-        textPaint.getTextBounds(text, 0, text?.length ?: 0, bounds)
+        val text = wordTag?.tagName ?: ""
+        textPaint.getTextBounds(text, 0, text.length, bounds)
         textExactCenterY = bounds.exactCenterY()
         textHeight = bounds.height().toFloat()
         textWidth = bounds.width().toFloat()
@@ -124,7 +126,7 @@ class BubbleView : View {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        text?.let { tag ->
+        wordTag?.tagName?.let { tag ->
             if (selected()) {
                 drawBackground(canvas, selectBackgroundPaint)
             } else {

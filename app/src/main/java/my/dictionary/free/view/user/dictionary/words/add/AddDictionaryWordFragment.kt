@@ -33,6 +33,7 @@ import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.AddWordTagsScreen
 import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.utils.hasTiramisu
@@ -41,6 +42,9 @@ import my.dictionary.free.domain.viewmodels.user.dictionary.words.add.AddDiction
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.hideKeyboard
+import my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment
+import my.dictionary.free.view.widget.bubble.BubbleLayout
+import my.dictionary.free.view.widget.bubble.BubbleView
 import my.dictionary.free.view.widget.phonetic.OnPhoneticClickListener
 import my.dictionary.free.view.widget.phonetic.PhoneticsView
 
@@ -74,6 +78,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
     private lateinit var spinnerChooseWordType: AppCompatSpinner
     private lateinit var phoneticsView: PhoneticsView
     private lateinit var rootView: ViewGroup
+    private lateinit var tagsLayout: BubbleLayout
 
     private var dictionaryId: String? = null
     private var phonetics: List<String>? = null
@@ -93,6 +98,8 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         spinnerChooseWordType = view.findViewById(R.id.choose_word_type)
         phoneticsView = view.findViewById(R.id.phonetic_view)
         rootView = view.findViewById(R.id.root)
+        tagsLayout = view.findViewById(R.id.bubbles_layout)
+        tagsLayout.setReadOnly(true)
         phoneticsView.setOnClickListener(phoneticClickListener)
         textInputLayoutPhonetic.setEndIconOnClickListener {
             context?.hideKeyboard(textInputEditTextWord)
@@ -203,7 +210,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                                         type = 0,
                                         phonetic = null,
                                         translates = emptyList(),
-                                        tags = emptyList()
+                                        tags = arrayListOf()
                                     )
                                     sharedViewModel.navigateTo(AddWordTagsScreen(word, dictionary))
                                 }
@@ -278,6 +285,19 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 viewModel.addTranslation(it)
             }
         }
+        setFragmentResultListener(AddWordTagsFragment.BUNDLE_TAGS_RESULT_KEY) { requestKey, bundle ->
+            val tags: ArrayList<WordTag> = bundle.getParcelableArrayList(AddWordTagsFragment.BUNDLE_TAGS_KEY) ?: ArrayList()
+            if(tags.isNotEmpty()) {
+                tagsLayout.removeAllViews()
+            }
+            tags.forEach {
+                addTag(it)
+            }
+            viewModel.getEditedWord()?.tags?.let {
+                it.clear()
+                it.addAll(tags)
+            }
+        }
     }
 
     private fun togglePhoneticsView(show: Boolean) {
@@ -341,4 +361,10 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     private val translationVariantsAdapter =
         TranslationVariantsAdapter(listener = onTranslationVariantEditListener)
+
+    private fun addTag(tag: WordTag) {
+        val bubbleView = BubbleView(requireContext())
+        bubbleView.setWordTag(tag)
+        tagsLayout.addView(bubbleView)
+    }
 }

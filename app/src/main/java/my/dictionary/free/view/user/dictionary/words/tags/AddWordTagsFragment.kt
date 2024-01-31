@@ -7,10 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -38,6 +40,10 @@ class AddWordTagsFragment : AbstractBaseFragment() {
             "my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment.BUNDLE_WORD"
         const val BUNDLE_DICTIONARY =
             "my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment.BUNDLE_DICTIONARY"
+        const val BUNDLE_TAGS_KEY =
+            "my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment.BUNDLE_TAGS_KEY"
+        const val BUNDLE_TAGS_RESULT_KEY =
+            "my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment.BUNDLE_TAGS_RESULT_KEY"
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -75,7 +81,7 @@ class AddWordTagsFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.createdTagUIState.drop(1).collect { tag ->
                         Log.d(TAG, "tag added: $tag")
-                        addTag(tag)
+                        addTag(tag, true)
                     }
                 }
             }
@@ -83,7 +89,12 @@ class AddWordTagsFragment : AbstractBaseFragment() {
         addMenuProvider(R.menu.menu_tags, { menu, mi -> }, {
             when (it) {
                 R.id.nav_save_tags -> {
-
+                    val selectedTags = bubbleLayout.getSelectedTags()
+                    val bundle = Bundle().apply {
+                        putParcelableArrayList(BUNDLE_TAGS_KEY, selectedTags)
+                    }
+                    setFragmentResult(BUNDLE_TAGS_RESULT_KEY, bundle)
+                    findNavController().popBackStack()
                     return@addMenuProvider true
                 }
 
@@ -123,16 +134,21 @@ class AddWordTagsFragment : AbstractBaseFragment() {
         ) else arguments?.getParcelable(BUNDLE_DICTIONARY) as? Dictionary
         viewModel.loadData(context, word, dictionary)
         wordTextView.text = word?.original
+        if(!dictionary?.tags.isNullOrEmpty()) {
+            bubbleLayout.removeAllViews()
+        }
         dictionary?.let {
             for (tag in it.tags) {
-                addTag(tag)
+                val select = word?.tags?.find { it._id == tag._id } != null
+                addTag(tag, select)
             }
         }
     }
 
-    private fun addTag(tag: WordTag) {
+    private fun addTag(tag: WordTag, selected: Boolean) {
         val bubbleView = BubbleView(requireContext())
-        bubbleView.setText(tag.tagName)
+        bubbleView.setWordTag(tag)
+        bubbleView.select(selected)
         bubbleLayout.addView(bubbleView)
     }
 }

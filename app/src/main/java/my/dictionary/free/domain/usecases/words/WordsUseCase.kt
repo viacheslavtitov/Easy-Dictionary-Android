@@ -131,7 +131,7 @@ class WordsUseCase @Inject constructor(
             )
         ) { table, translations, tagIds, allTags ->
             val convertedTranslations: MutableList<TranslationVariant> = mutableListOf()
-            val convertedTags: MutableList<WordTag> = mutableListOf()
+            val convertedTags: ArrayList<WordTag> = arrayListOf()
             translations.forEach {
                 convertedTranslations.add(
                     TranslationVariant(

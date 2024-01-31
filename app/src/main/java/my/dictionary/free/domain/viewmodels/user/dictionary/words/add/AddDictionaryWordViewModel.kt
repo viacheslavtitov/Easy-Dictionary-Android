@@ -223,7 +223,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                     type = typePosition,
                     phonetic = phonetic,
                     translates = translations,
-                    tags = emptyList()
+                    tags = arrayListOf()
                 )
                 val wordResult = wordsUseCase.updateWord(entity)
                 if (!wordResult) {
@@ -276,7 +276,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                     type = typePosition,
                     phonetic = phonetic,
                     translates = translations,
-                    tags = emptyList()
+                    tags = arrayListOf()
                 )
                 val wordResult = wordsUseCase.createWord(entity)
                 if (!wordResult.first) {

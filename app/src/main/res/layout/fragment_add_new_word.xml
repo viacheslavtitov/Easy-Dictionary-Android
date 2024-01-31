@@ -92,6 +92,11 @@
                     android:spinnerMode="dropdown"
                     tools:listitem="@layout/item_spinner_single" />
 
+                <my.dictionary.free.view.widget.bubble.BubbleLayout
+                    android:id="@+id/bubbles_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
