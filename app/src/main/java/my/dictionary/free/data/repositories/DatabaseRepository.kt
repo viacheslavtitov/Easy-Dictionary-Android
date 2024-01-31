@@ -1144,14 +1144,14 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         userId: String,
         dictionaryId: String,
     ): Flow<List<WordTagTable>> {
-        Log.d(TAG, "getTagsForDictionary")
+        Log.d(TAG, "getTagsForDictionary($dictionaryId)")
         return callbackFlow {
             val reference = database.reference.child(UsersTable._NAME).child(userId)
                 .child(DictionaryTable._NAME).child(dictionaryId)
                 .child(WordTagTable._NAME)
             val valueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    Log.d(TAG, "onDataChange tags in dictionary ${snapshot.children.count()}")
                     val tags = arrayListOf<WordTagTable>()
                     snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
@@ -1162,6 +1162,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                         )
                         tags.add(category)
                     }
+                    Log.d(TAG, "trySend tags = ${tags.size}")
                     trySend(tags)
                     close()
                 }

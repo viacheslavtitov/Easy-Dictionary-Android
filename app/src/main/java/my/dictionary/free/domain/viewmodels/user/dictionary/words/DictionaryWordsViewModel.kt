@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -85,32 +86,27 @@ class DictionaryWordsViewModel @Inject constructor(
         }
         Log.d(TAG, "loadWords()")
         viewModelScope.launch {
-            getCreateDictionaryUseCase.getDictionaryTags(dictionaryId).map { tags ->
-                wordsUseCase.getWordsByDictionaryId(dictionaryId, tags)
-                    .catch {
-                        Log.d(TAG, "catch ${it.message}")
-                        _displayErrorUIState.send(
-                            it.message ?: context.getString(R.string.unknown_error)
-                        )
-                    }
-                    .onStart {
-                        Log.d(TAG, "onStart")
-                        _shouldClearWordsUIState.value = true
-                        _loadingUIState.value = true
-                    }
-                    .onCompletion {
-                        Log.d(TAG, "onCompletion")
-                        _shouldClearWordsUIState.value = false
-                        _loadingUIState.value = false
-                    }
-                    .collect {
-                        Log.d(
-                            TAG,
-                            "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
-                        )
-                        _wordsUIState.send(it)
-                    }
-            }
+            wordsUseCase.getWordsByDictionaryId(dictionaryId)
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    _displayErrorUIState.send(
+                        it.message ?: context.getString(R.string.unknown_error)
+                    )
+                }.onStart {
+                    Log.d(TAG, "onStart")
+                    _shouldClearWordsUIState.value = true
+                    _loadingUIState.value = true
+                }.onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _shouldClearWordsUIState.value = false
+                    _loadingUIState.value = false
+                }.collect {
+                    Log.d(
+                        TAG,
+                        "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
+                    )
+                    _wordsUIState.send(it)
+                }
         }.invokeOnCompletion {
             if (dictionary == null) {
                 viewModelScope.launch {

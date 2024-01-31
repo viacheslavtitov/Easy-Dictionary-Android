@@ -1,6 +1,7 @@
 package my.dictionary.free.domain.usecases.dictionary
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
@@ -165,12 +166,14 @@ class GetCreateDictionaryUseCase @Inject constructor(
     }
 
     suspend fun getDictionaryTags(dictionaryId: String): Flow<List<WordTag>> {
+        Log.d(TAG, "getDictionaryTags($dictionaryId)")
         val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
         if (userId.isNullOrEmpty()) {
             return emptyFlow()
         } else {
             return databaseRepository.getTagsForDictionary(userId, dictionaryId)
                 .map { tableList ->
+                    Log.d(TAG, "tags=${tableList.size}")
                     val tagList = mutableListOf<WordTag>()
                     tableList.forEach {
                         tagList.add(
