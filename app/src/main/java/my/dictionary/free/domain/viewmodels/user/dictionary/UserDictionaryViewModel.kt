@@ -2,6 +2,7 @@ package my.dictionary.free.domain.viewmodels.user.dictionary
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +12,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -19,6 +23,7 @@ import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
+import my.dictionary.free.view.FetchDataState
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,77 +35,45 @@ class UserDictionaryViewModel @Inject constructor(
         private val TAG = UserDictionaryViewModel::class.simpleName
     }
 
-    private val _dictionariesUIState = Channel<Dictionary>()
-    val dictionariesUIState: StateFlow<Dictionary> = _dictionariesUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Dictionary.empty())
-
-    private val _clearActionModeUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val clearActionModeUIState: StateFlow<Boolean> = _clearActionModeUIState.asStateFlow()
-
-    private val _shouldClearDictionariesUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val shouldClearDictionariesUIState: StateFlow<Boolean> =
-        _shouldClearDictionariesUIState.asStateFlow()
-
-    private val _loadingUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
-
-    private val _displayErrorUIState = Channel<String>()
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
-
-    fun loadDictionaries(context: Context?) {
-        if (context == null) return
-        Log.d(TAG, "loadDictionaries()")
-        viewModelScope.launch {
-            dictionaryUseCase.getDictionaries(context)
-                .catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.send(
-                        it.message ?: context.getString(R.string.unknown_error)
-                    )
-                }
-                .onStart {
-                    Log.d(TAG, "onStart")
-                    _shouldClearDictionariesUIState.value = true
-                    _loadingUIState.value = true
-                }
-                .onCompletion {
-                    Log.d(TAG, "onCompletion")
-                    _shouldClearDictionariesUIState.value = false
-                    _loadingUIState.value = false
-                }
-                .collect {
-                    Log.d(
-                        TAG,
-                        "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
-                    )
-                    _dictionariesUIState.send(it)
-                }
+    fun loadDictionaries(context: Context?) = flow<FetchDataState<Dictionary>> {
+        if (context == null) {
+            return@flow
         }
+        Log.d(TAG, "loadDictionaries()")
+        emit(FetchDataState.StartLoadingState)
+        dictionaryUseCase.getDictionaries(context)
+            .catch {
+                Log.d(TAG, "catch ${it.message}")
+                emit(FetchDataState.ErrorState(it))
+            }
+            .onCompletion {
+                Log.d(TAG, "onCompletion")
+                emit(FetchDataState.FinishLoadingState)
+            }
+            .collect {
+                Log.d(
+                    TAG,
+                    "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
+                )
+                emit(FetchDataState.DataState(it))
+            }
     }
 
-    fun deleteDictionaries(context: Context?, list: List<Dictionary>?) {
-        if (context == null || list.isNullOrEmpty()) return
-        Log.d(TAG, "deleteDictionaries()")
-        viewModelScope.launch {
-            _loadingUIState.value = true
+    fun deleteDictionaries(context: Context?, list: List<Dictionary>?) =
+        flow<FetchDataState<Nothing>> {
+            if (context == null || list.isNullOrEmpty()) {
+                return@flow
+            }
+            Log.d(TAG, "deleteDictionaries()")
+            emit(FetchDataState.StartLoadingState)
             val result = dictionaryUseCase.deleteDictionaries(list)
-            _clearActionModeUIState.value = true
-            _loadingUIState.value = false
+            emit(FetchDataState.FinishLoadingState)
             Log.d(TAG, "delete result is ${result.first}")
             if (!result.first) {
                 val error =
                     result.second ?: context.getString(R.string.error_delete_dictionary)
-                _displayErrorUIState.send(error)
-            } else {
-                _shouldClearDictionariesUIState.value = true
+                emit(FetchDataState.ErrorStateString(error))
             }
-        }.invokeOnCompletion {
-            loadDictionaries(context)
         }
-    }
 
 }

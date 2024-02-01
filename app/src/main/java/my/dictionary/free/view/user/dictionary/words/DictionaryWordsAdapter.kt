@@ -1,5 +1,6 @@
 package my.dictionary.free.view.user.dictionary.words
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -79,6 +80,8 @@ class DictionaryWordsAdapter(
     fun getRemoveWordByTimer() = tempRemoveItem
 
     fun undoRemovedItem() {
+        Log.d("MyTag", "undoRemovedItem by position $tempRemoveItemPosition")
+        Log.d("MyTag", "data sized = ${data.size}")
         if (tempRemoveItemPosition != null && tempRemoveItem != null) {
             data.add(tempRemoveItemPosition!!, tempRemoveItem!!)
             this.notifyItemInserted(tempRemoveItemPosition!!)

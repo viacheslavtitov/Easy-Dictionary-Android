@@ -13,10 +13,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -27,6 +25,7 @@ import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
+import my.dictionary.free.view.FetchDataState
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,90 +39,38 @@ class DictionaryWordsViewModel @Inject constructor(
         private val TAG = DictionaryWordsViewModel::class.simpleName
     }
 
-    private val _wordsUIState = Channel<Word>()
-    val wordsUIState: StateFlow<Word> = _wordsUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Word.empty())
-
-    private val _clearActionModeUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val clearActionModeUIState: StateFlow<Boolean> = _clearActionModeUIState.asStateFlow()
-
-    private val _shouldClearWordsUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val shouldClearWordsUIState: StateFlow<Boolean> = _shouldClearWordsUIState.asStateFlow()
-
-    private val _loadingUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
-
-    private val _displayErrorUIState = Channel<String>()
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
-
     val titleUIState: MutableSharedFlow<String> = MutableSharedFlow(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    private val _categoriesUIState = Channel<TranslationCategory>()
-    val categoriesUIState: StateFlow<TranslationCategory> = _categoriesUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TranslationCategory.empty())
-
-    private val _shouldClearCategoriesUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val shouldClearCategoriesUIState: StateFlow<Boolean> =
-        _shouldClearCategoriesUIState.asStateFlow()
-
     private var dictionary: Dictionary? = null
 
-    fun loadWords(context: Context?, dictionaryId: String?) {
-        if (context == null) return
+    fun loadWords(context: Context?, dictionaryId: String?) = flow<FetchDataState<Word>> {
+        if (context == null) {
+            return@flow
+        }
         if (dictionaryId.isNullOrEmpty()) {
-            viewModelScope.launch {
-                _displayErrorUIState.send(context.getString(R.string.error_load_data))
-            }
-            return
+            emit(FetchDataState.ErrorStateString(context.getString(R.string.error_load_data)))
+            return@flow
         }
         Log.d(TAG, "loadWords()")
-        viewModelScope.launch {
-            wordsUseCase.getWordsByDictionaryId(dictionaryId)
-                .catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.send(
-                        it.message ?: context.getString(R.string.unknown_error)
-                    )
-                }.onStart {
-                    Log.d(TAG, "onStart")
-                    _shouldClearWordsUIState.value = true
-                    _loadingUIState.value = true
-                }.onCompletion {
-                    Log.d(TAG, "onCompletion")
-                    _shouldClearWordsUIState.value = false
-                    _loadingUIState.value = false
-                }.collect {
-                    Log.d(
-                        TAG,
-                        "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
-                    )
-                    _wordsUIState.send(it)
-                }
-        }.invokeOnCompletion {
-            if (dictionary == null) {
-                viewModelScope.launch {
+        emit(FetchDataState.StartLoadingState)
+        wordsUseCase.getWordsByDictionaryId(dictionaryId)
+            .catch {
+                Log.d(TAG, "catch ${it.message}")
+                emit(FetchDataState.ErrorState(it))
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                if (dictionary == null) {
                     getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
                         .catch {
                             Log.d(TAG, "catch ${it.message}")
-                            _displayErrorUIState.send(
-                                it.message ?: context.getString(R.string.unknown_error)
-                            )
-                        }
-                        .onStart {
-                            Log.d(TAG, "onStart")
-                            _loadingUIState.value = true
+                            emit(FetchDataState.ErrorState(it))
                         }
                         .onCompletion {
                             Log.d(TAG, "onCompletion")
-                            _loadingUIState.value = false
+                            emit(FetchDataState.FinishLoadingState)
                         }
                         .collect {
                             Log.d(
@@ -135,70 +82,62 @@ class DictionaryWordsViewModel @Inject constructor(
                                 "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
                             )
                         }
+                } else {
+                    emit(FetchDataState.FinishLoadingState)
+                    dictionary?.let {
+                        titleUIState.tryEmit(
+                            "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
+                        )
+                    }
                 }
-            } else {
-                dictionary?.let {
-                    titleUIState.tryEmit(
-                        "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
-                    )
-                }
+            }.collect {
+                Log.d(
+                    TAG,
+                    "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
+                )
+                emit(FetchDataState.DataState(it))
             }
-            loadCategories(context)
-        }
     }
 
-    fun deleteWords(context: Context?, words: List<Word>?) {
-        if (context == null || words.isNullOrEmpty()) return
-        val dictionaryId = dictionary?._id ?: return
+    fun deleteWords(context: Context?, words: List<Word>?) = flow<FetchDataState<Nothing>> {
+        if (context == null || words.isNullOrEmpty()) {
+            return@flow
+        }
+        val dictionaryId = dictionary?._id ?: return@flow
         Log.d(TAG, "deleteWords(${words.size})")
-        viewModelScope.launch {
-            _loadingUIState.value = true
-            val result = wordsUseCase.deleteWords(dictionaryId, words)
-            _clearActionModeUIState.value = true
-            _loadingUIState.value = false
-            Log.d(TAG, "delete result is ${result.first}")
-            if (!result.first) {
-                val error =
-                    result.second ?: context.getString(R.string.error_delete_word)
-                _displayErrorUIState.send(error)
-            } else {
-                _shouldClearWordsUIState.value = true
-            }
-            _clearActionModeUIState.value = true
-        }.invokeOnCompletion {
-            loadWords(context, dictionaryId)
+        emit(FetchDataState.StartLoadingState)
+        val result = wordsUseCase.deleteWords(dictionaryId, words)
+        emit(FetchDataState.FinishLoadingState)
+        Log.d(TAG, "delete result is ${result.first}")
+        if (!result.first) {
+            val error =
+                result.second ?: context.getString(R.string.error_delete_word)
+            emit(FetchDataState.ErrorStateString(error))
         }
     }
 
-    fun loadCategories(context: Context?) {
-        if (context == null) return
-        Log.d(TAG, "loadCategories()")
-        viewModelScope.launch {
-            getCreateTranslationCategoriesUseCase.getCategories()
-                .catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.send(
-                        it.message ?: context.getString(R.string.unknown_error)
-                    )
-                }
-                .onStart {
-                    Log.d(TAG, "onStart")
-                    _shouldClearCategoriesUIState.value = true
-                    _loadingUIState.value = true
-                }
-                .onCompletion {
-                    Log.d(TAG, "onCompletion")
-                    _loadingUIState.value = false
-                    _shouldClearCategoriesUIState.value = false
-                }
-                .collect {
-                    Log.d(
-                        TAG,
-                        "category loaded = ${it.categoryName}"
-                    )
-                    _categoriesUIState.send(it)
-                }
+    fun loadCategories(context: Context?) = flow<FetchDataState<TranslationCategory>> {
+        if (context == null) {
+            return@flow
         }
+        Log.d(TAG, "loadCategories()")
+        emit(FetchDataState.StartLoadingState)
+        getCreateTranslationCategoriesUseCase.getCategories()
+            .catch {
+                Log.d(TAG, "catch ${it.message}")
+                emit(FetchDataState.ErrorState(it))
+            }
+            .onCompletion {
+                Log.d(TAG, "onCompletion")
+                emit(FetchDataState.FinishLoadingState)
+            }
+            .collect {
+                Log.d(
+                    TAG,
+                    "category loaded = ${it.categoryName}"
+                )
+                emit(FetchDataState.DataState(it))
+            }
     }
 
 }

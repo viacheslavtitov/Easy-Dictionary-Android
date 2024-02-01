@@ -28,7 +28,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.AlphabetSort
@@ -38,6 +37,7 @@ import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
 import my.dictionary.free.view.widget.ListItemDecoration
@@ -86,12 +86,10 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
             override fun onFinish() {
                 undoRemoveWordSnackbar = null
                 wordsAdapter?.getRemoveWordByTimer()?.let { word ->
-                    viewModel.deleteWords(
-                        context,
-                        listOf(word)
-                    )
+                    deleteWords(listOf(word)) {
+                        wordsAdapter?.finallyRemoveItem()
+                    }
                 }
-                wordsAdapter?.finallyRemoveItem()
             }
         }
 
@@ -101,7 +99,8 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_dictionary_words, null)
-        view.findViewById<RadioGroup>(R.id.sorting_radio_group).setOnCheckedChangeListener(onSortingGroupListener)
+        view.findViewById<RadioGroup>(R.id.sorting_radio_group)
+            .setOnCheckedChangeListener(onSortingGroupListener)
         wordsRecyclerView = view.findViewById(R.id.recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         val itemTouchHelper =
@@ -137,38 +136,6 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         Log.d(TAG, "onViewCreated")
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.clearActionModeUIState.drop(1).collect { clear ->
-                        if (clear) {
-                            actionMode?.finish()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, wordsRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        swipeRefreshLayout?.isRefreshing = visible
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearWordsUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear words")
-                            wordsAdapter?.clearData()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.wordsUIState.drop(1).collect { word ->
-                        Log.d(TAG, "word updated: $word")
-                        wordsAdapter?.add(word)
-                    }
-                }
                 launch {
                     viewModel.titleUIState.collect { title ->
                         Log.d(TAG, "set title: $title")
@@ -209,8 +176,37 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
     }
 
     private fun refreshWords() {
-        wordsAdapter?.clearData()
-        viewModel.loadWords(context, dictionaryId)
+        lifecycleScope.launch {
+            viewModel.loadWords(context, dictionaryId).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        wordsAdapter?.clearData()
+                        swipeRefreshLayout?.isRefreshing = true
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = false
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            wordsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        wordsAdapter?.add(it.data)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, wordsRecyclerView)
+                    }
+                }
+            }
+        }
     }
 
     private val onWordsQueryListener = object : SearchView.OnQueryTextListener {
@@ -227,7 +223,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
 
     private val onItemSwipedListener = object : OnItemSwipedListener {
         override fun onSwiped(position: Int) {
-            Log.d(TAG, "swipe item by position $position")
+            Log.d("MyTag", "swipe item by position $position")
             wordsAdapter?.temporaryRemoveItem(position)
             undoRemoveWordSnackbar = Snackbar.make(
                 wordsRecyclerView,
@@ -266,10 +262,9 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 }
 
                 R.id.menu_delete -> {
-                    viewModel.deleteWords(
-                        context,
-                        wordsAdapter?.getSelectedWords()
-                    )
+                    deleteWords(wordsAdapter?.getSelectedWords()) {
+
+                    }
                     true
                 }
 
@@ -280,6 +275,46 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         override fun onDestroyActionMode(mode: ActionMode?) {
             wordsAdapter?.clearSelectedWords()
             actionMode = null
+        }
+    }
+
+    private fun deleteWords(words: List<Word>?, onSuccessDelete: () -> Unit) {
+        lifecycleScope.launch {
+            viewModel.deleteWords(
+                context,
+                words
+            ).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = true
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = false
+                        sharedViewModel.loading(false)
+                        actionMode?.finish()
+                        onSuccessDelete()
+                        refreshWords()
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message
+                                ?: context?.getString(R.string.unknown_error),
+                            wordsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        //skip
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, wordsRecyclerView)
+                    }
+                }
+            }
         }
     }
 
@@ -334,10 +369,11 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
     }
 
     private val onSortingGroupListener = RadioGroup.OnCheckedChangeListener { p0, checkedId ->
-        when(checkedId) {
+        when (checkedId) {
             R.id.sorting_a_z_button -> {
                 wordsAdapter?.sortByAlphabet(AlphabetSort.A_Z)
             }
+
             R.id.sorting_z_a_button -> {
                 wordsAdapter?.sortByAlphabet(AlphabetSort.Z_A)
             }

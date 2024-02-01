@@ -17,7 +17,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.words.Word
@@ -25,10 +24,9 @@ import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
-import my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
-import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import my.dictionary.free.view.user.dictionary.words.translations.add.CategorySpinnerAdapter
 import my.dictionary.free.view.widget.ListItemDecoration
 import my.dictionary.free.view.widget.OnListItemClickListener
@@ -92,49 +90,9 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, wordsRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearWordsUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear words")
-                            wordsAdapter?.clearData()
-                        } else {
-                            editWords?.forEach {
-                                wordsAdapter?.selectWord(it)
-                            }
-                        }
-                    }
-                }
-                launch {
-                    viewModel.wordsUIState.drop(1).collect { word ->
-                        Log.d(TAG, "word updated: $word")
-                        wordsAdapter?.add(word)
-                    }
-                }
-                launch {
                     viewModel.titleUIState.collect { title ->
                         Log.d(TAG, "set title: $title")
                         sharedViewModel.setTitle(title)
-                    }
-                }
-                launch {
-                    viewModel.categoriesUIState.drop(1).collect { category ->
-                        categoryAdapter?.add(category)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearCategoriesUIState.collect { clear ->
-                        if (clear) {
-                            categoryAdapter?.clear()
-                        }
                     }
                 }
             }
@@ -177,8 +135,35 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
     }
 
     private fun refreshWords() {
-        wordsAdapter?.clearData()
-        viewModel.loadWords(context, dictionaryId)
+        lifecycleScope.launch {
+            viewModel.loadWords(context, dictionaryId).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        wordsAdapter?.clearData()
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            wordsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        wordsAdapter?.add(it.data)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, wordsRecyclerView)
+                    }
+                }
+            }
+        }
     }
 
     private val onWordsClickListener = object : OnListItemClickListener {

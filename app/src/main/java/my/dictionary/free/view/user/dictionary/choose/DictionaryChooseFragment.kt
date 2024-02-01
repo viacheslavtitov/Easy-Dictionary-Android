@@ -21,6 +21,7 @@ import my.dictionary.free.R
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.user.dictionary.UserDictionaryAdapter
 import my.dictionary.free.view.widget.OnListItemClickListener
 import my.dictionary.free.view.widget.OnListTouchListener
@@ -63,35 +64,39 @@ class DictionaryChooseFragment : AbstractBaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated")
+        refreshDictionaries()
+    }
+
+    private fun refreshDictionaries() {
         lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, dictionariesRecyclerView)
+            viewModel.loadDictionaries(context).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        dictionariesAdapter?.clearData()
+                        sharedViewModel.loading(true)
                     }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
                     }
-                }
-                launch {
-                    viewModel.shouldClearDictionariesUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear dictionaries")
-                            dictionariesAdapter?.clearData()
-                        }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            dictionariesRecyclerView
+                        )
                     }
-                }
-                launch {
-                    viewModel.dictionariesUIState.drop(1).collect { dict ->
-                        Log.d(TAG, "dictionary updated: $dict")
-                        dictionariesAdapter?.add(dict)
+
+                    is FetchDataState.DataState -> {
+                        dictionariesAdapter?.add(it.data)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, dictionariesRecyclerView)
                     }
                 }
             }
         }
-        viewModel.loadDictionaries(context)
     }
 
     private val onDictionaryClickListener = object : OnListItemClickListener {
