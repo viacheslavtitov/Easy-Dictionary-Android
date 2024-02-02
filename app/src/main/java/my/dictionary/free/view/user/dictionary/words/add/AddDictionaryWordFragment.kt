@@ -230,7 +230,8 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                                         val phonetic = textInputEditTextPhonetic.text?.toString()
                                         val typePosition =
                                             spinnerChooseWordType.selectedItemPosition
-                                        saveWord(word, typePosition, translations, phonetic)
+                                        val tags = tagsLayout.getTags(false)
+                                        saveWord(word, typePosition, translations, phonetic, tags)
                                     }
                                 }
 
@@ -301,6 +302,14 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         translationVariantsAdapter.clear()
         lifecycleScope.launch {
             viewModel.loadWordData()
+                .onCompletion {
+                    viewModel.getEditedWord()?.tags?.let { tags ->
+                        tagsLayout.removeAllViews()
+                        tags.forEach { tag ->
+                            addTag(tag)
+                        }
+                    }
+                }
                 .collect {
                     when (it) {
                         is FetchDataState.StartLoadingState -> {
@@ -335,10 +344,11 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         word: String?,
         typePosition: Int,
         translations: List<TranslationVariant>,
-        phonetic: String?
+        phonetic: String?,
+        tags: List<WordTag>
     ) {
         lifecycleScope.launch {
-            viewModel.save(context, word, typePosition, translations, phonetic).collect {
+            viewModel.save(context, word, typePosition, translations, phonetic, tags).collect {
                 when (it) {
                     is FetchDataState.StartLoadingState -> {
                         sharedViewModel.loading(true)

@@ -8,16 +8,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import my.dictionary.free.data.models.words.WordTable
 import my.dictionary.free.data.repositories.DatabaseRepository
-import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.WordTag
@@ -77,6 +71,14 @@ class WordsUseCase @Inject constructor(
         val requestDeleteWordIds = mutableListOf<String>()
         words.forEach { if (it._id != null) requestDeleteWordIds.add(it._id) }
         return databaseRepository.deleteWords(userId, dictionaryId, requestDeleteWordIds)
+    }
+
+    suspend fun addTagsToWord(dictionaryId: String, tags: List<WordTag>, wordId: String): Boolean {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return false
+        val requestTagIds = mutableListOf<String>()
+        tags.forEach { if (it._id != null) requestTagIds.add(it._id) }
+        return databaseRepository.addTagsToWord(userId, requestTagIds, dictionaryId, wordId)
     }
 
     suspend fun getWordsByDictionaryId(dictionaryId: String): Flow<Word> {
@@ -210,19 +212,6 @@ class WordsUseCase @Inject constructor(
             Log.e(TAG, "phonetics error", ex)
         }
         return emptyList()
-    }
-
-    /**
-     * @return first - if true tag was created success
-     * @return second - created tag id
-     */
-    suspend fun createDictionaryTag(dictionary: Dictionary, tag: String): Pair<Boolean, String?> {
-        val userId =
-            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(
-                false,
-                null
-            )
-        return databaseRepository.createDictionaryTag(userId, dictionary._id ?: "", tag)
     }
 
 }

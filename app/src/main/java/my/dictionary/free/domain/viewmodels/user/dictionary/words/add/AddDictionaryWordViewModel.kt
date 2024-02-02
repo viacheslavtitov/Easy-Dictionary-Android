@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
@@ -41,10 +42,6 @@ class AddDictionaryWordViewModel @Inject constructor(
     companion object {
         private val TAG = AddDictionaryWordViewModel::class.simpleName
     }
-
-    private val _phoneticsUIState: MutableStateFlow<List<String>> =
-        MutableStateFlow(emptyList())
-    val phoneticsUIState: StateFlow<List<String>> = _phoneticsUIState.asStateFlow()
 
     private val _validateWord = Channel<String>()
     val validateWord: StateFlow<String> = _validateWord.receiveAsFlow()
@@ -88,9 +85,6 @@ class AddDictionaryWordViewModel @Inject constructor(
                 .onCompletion {
                     Log.d(TAG, "onCompletion")
                     emit(FetchDataState.FinishLoadingState)
-                    if (isEditMode()) {
-                        loadWordData()
-                    }
                 }
                 .map {
                     Log.d(
@@ -184,7 +178,8 @@ class AddDictionaryWordViewModel @Inject constructor(
         wordName: String?,
         typePosition: Int,
         translations: List<TranslationVariant>,
-        phonetic: String?
+        phonetic: String?,
+        tags: List<WordTag>
     ) = flow<FetchDataState<Boolean>> {
         if (context == null) return@flow
         if (wordName.isNullOrEmpty()) return@flow
@@ -240,6 +235,11 @@ class AddDictionaryWordViewModel @Inject constructor(
                         break
                     }
                 }
+                if(tags.isNotEmpty()) {
+                    Log.d(TAG, "add tags ${tags.size}")
+                    val addTagsResult = wordsUseCase.addTagsToWord(dictionary!!._id!!, tags, editWord!!._id!!)
+                    Log.d(TAG, "tags added result ${addTagsResult}")
+                }
                 emit(FetchDataState.FinishLoadingState)
                 emit(FetchDataState.DataState(translationUpdatedSuccess))
             }
@@ -273,6 +273,11 @@ class AddDictionaryWordViewModel @Inject constructor(
                         translationCreatedSuccess = false
                         break
                     }
+                }
+                if(tags.isNotEmpty()) {
+                    Log.d(TAG, "add tags ${tags.size}")
+                    val addTagsResult = wordsUseCase.addTagsToWord(dictionaryId, tags, wordResult.third ?: "")
+                    Log.d(TAG, "tags added result ${addTagsResult}")
                 }
                 emit(FetchDataState.FinishLoadingState)
                 emit(FetchDataState.DataState(translationCreatedSuccess))

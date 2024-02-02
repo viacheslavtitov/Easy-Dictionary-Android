@@ -1109,34 +1109,23 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
-    suspend fun addTagToWord(
+    suspend fun addTagsToWord(
         userId: String,
-        tagId: String,
+        tagIds: List<String>,
         dictionaryId: String,
         wordId: String
-    ): Pair<Boolean, String?> {
+    ): Boolean {
         return suspendCoroutine { cont ->
-            val reference = database.reference
-            val tagKey =
-                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+            val wordChild =
+                database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
                     .child(dictionaryId).child(WordTable._NAME).child(wordId)
-                    .child(WordTagTable._NAME).push().key
-            if (tagKey == null) {
-                cont.resume(Pair(false, null))
+            val childAdds = mutableMapOf<String, Any?>()
+            tagIds.forEach {
+                Log.d(TAG, "add tag $it")
+                childAdds["/$it"] = null
             }
-            tagKey?.let { key ->
-                val valueMap = mapOf(WordTagTable._ID to tagId)
-                val childUpdates = hashMapOf<String, Any>(
-                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${WordTable._NAME}/${wordId}/${WordTagTable._NAME}/$key" to valueMap.toMap()
-                )
-                reference.updateChildren(childUpdates).addOnSuccessListener {
-                    cont.resume(Pair(true, null))
-                }.addOnFailureListener {
-                    cont.resume(Pair(false, it.message))
-                }.addOnCanceledListener {
-                    cont.resume(Pair(false, null))
-                }
-            }
+            wordChild.child(WordTagTable._NAME).setValue(tagIds).isComplete
+            cont.resume(true)
         }
     }
 
@@ -1196,8 +1185,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     Log.d(TAG, "onDataChange ${snapshot.children.count()}")
                     val translations = arrayListOf<String>()
                     snapshot.children.forEach { data ->
-                        val map = data.value as HashMap<*, *>
-                        val tagId = map[WordTagTable._ID] as String? ?: ""
+                        val tagId = data.value as String? ?: ""
                         translations.add(tagId)
                     }
                     trySend(translations)
