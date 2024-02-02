@@ -9,12 +9,9 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -24,6 +21,7 @@ import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.tags.AddWordTagsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.dialogs.DialogBuilders
 import my.dictionary.free.view.dialogs.InputDialogListener
 import my.dictionary.free.view.ext.addMenuProvider
@@ -66,30 +64,10 @@ class AddWordTagsFragment : AbstractBaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated")
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, bubbleLayout)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.createdTagUIState.drop(1).collect { tag ->
-                        Log.d(TAG, "tag added: $tag")
-                        addTag(tag, true)
-                    }
-                }
-            }
-        }
         addMenuProvider(R.menu.menu_tags, { menu, mi -> }, {
             when (it) {
                 R.id.nav_save_tags -> {
-                    val selectedTags = bubbleLayout.getSelectedTags()
+                    val selectedTags = bubbleLayout.getTags(true)
                     val bundle = Bundle().apply {
                         putParcelableArrayList(BUNDLE_TAGS_KEY, selectedTags)
                     }
@@ -113,7 +91,7 @@ class AddWordTagsFragment : AbstractBaseFragment() {
                             }
 
                             override fun onOkButtonClicked() {
-                                viewModel.addTag(context, tagName)
+                                createTag(tagName)
                             }
                         }).build()
                     childFragmentManager.findAndDismissDialog("InputDialog")
@@ -132,9 +110,19 @@ class AddWordTagsFragment : AbstractBaseFragment() {
             BUNDLE_DICTIONARY,
             Dictionary::class.java
         ) else arguments?.getParcelable(BUNDLE_DICTIONARY) as? Dictionary
-        viewModel.loadData(context, word, dictionary)
+        lifecycleScope.launch {
+            viewModel.loadData(context, word, dictionary).collect {
+                when (it) {
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, bubbleLayout)
+                    }
+
+                    else -> {}
+                }
+            }
+        }
         wordTextView.text = word?.original
-        if(!dictionary?.tags.isNullOrEmpty()) {
+        if (!dictionary?.tags.isNullOrEmpty()) {
             bubbleLayout.removeAllViews()
         }
         dictionary?.let {
@@ -150,5 +138,39 @@ class AddWordTagsFragment : AbstractBaseFragment() {
         bubbleView.setWordTag(tag)
         bubbleView.select(selected)
         bubbleLayout.addView(bubbleView)
+    }
+
+    private fun createTag(tag: String?) {
+        lifecycleScope.launch {
+            viewModel.addTag(context, tag).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message
+                                ?: context?.getString(R.string.unknown_error),
+                            bubbleLayout
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        val createdTag = it.data
+                        Log.d(TAG, "tag added: $createdTag")
+                        addTag(createdTag, true)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, bubbleLayout)
+                    }
+                }
+            }
+        }
     }
 }

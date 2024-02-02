@@ -223,7 +223,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
 
     private val onItemSwipedListener = object : OnItemSwipedListener {
         override fun onSwiped(position: Int) {
-            Log.d("MyTag", "swipe item by position $position")
+            Log.d(TAG, "swipe item by position $position")
             wordsAdapter?.temporaryRemoveItem(position)
             undoRemoveWordSnackbar = Snackbar.make(
                 wordsRecyclerView,

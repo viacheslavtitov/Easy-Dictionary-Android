@@ -131,13 +131,16 @@ class BubbleLayout : ViewGroup {
         return super.dispatchTouchEvent(ev)
     }
 
-    fun getSelectedTags(): ArrayList<WordTag> {
+    fun getTags(selected: Boolean): ArrayList<WordTag> {
         val tags = arrayListOf<WordTag>()
         for (i in 0 until childCount) {
             val child = getChildAt(i)
-            if (child.visibility != GONE && child is BubbleView && child.selected()) {
-                child.getWordTag()?.let {
-                    tags.add(it)
+            if (child.visibility != GONE && child is BubbleView) {
+                val childSelected = child.selected()
+                if(selected == childSelected) {
+                    child.getWordTag()?.let {
+                        tags.add(it)
+                    }
                 }
             }
         }
