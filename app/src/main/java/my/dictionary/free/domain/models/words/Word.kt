@@ -2,6 +2,7 @@ package my.dictionary.free.domain.models.words
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 
 @Parcelize

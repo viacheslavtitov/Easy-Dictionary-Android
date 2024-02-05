@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.flow
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.view.FetchDataState
 import javax.inject.Inject
@@ -43,7 +43,7 @@ class AddWordTagsViewModel @Inject constructor(
         if (context == null) return@flow
         if (dictionary == null) return@flow
         if (tagName.isNullOrEmpty()) return@flow
-        if (dictionary?.tags?.find { it.tagName == tagName } != null) {
+        if (dictionary?.tags?.find { it.tag == tagName } != null) {
             emit(FetchDataState.ErrorStateString(context.getString(R.string.error_tag_exist)))
             return@flow
         }
@@ -56,7 +56,7 @@ class AddWordTagsViewModel @Inject constructor(
                 createdTagResult.second ?: context.getString(R.string.error_delete_word)
             emit(FetchDataState.ErrorStateString(error))
         } else {
-            val tag = WordTag(_id = createdTagResult.second, userUUID = "", tagName = tagName)
+            val tag = WordTag(_id = createdTagResult.second, userUUID = "", tag = tagName)
             dictionary?.tags?.add(tag)
             emit(FetchDataState.DataState(tag))
         }

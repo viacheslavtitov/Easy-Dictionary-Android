@@ -34,7 +34,7 @@ import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.AddWordTagsScreen
 import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.words.Word
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.utils.hasTiramisu
@@ -170,7 +170,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                                 }
                                 viewModel.getDictionary()?.let { dictionary ->
                                     val originalWord = textInputEditTextWord.text?.toString()
-                                    val tags = tagsLayout.getTags(false)
+                                    val tags = tagsLayout.getTags<WordTag>(false)
                                     val word = viewModel.getEditedWord() ?: Word(
                                         _id = null,
                                         dictionaryId = dictionary._id ?: "",
@@ -230,7 +230,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                                         val phonetic = textInputEditTextPhonetic.text?.toString()
                                         val typePosition =
                                             spinnerChooseWordType.selectedItemPosition
-                                        val tags = tagsLayout.getTags(false)
+                                        val tags = tagsLayout.getTags<WordTag>(false)
                                         saveWord(word, typePosition, translations, phonetic, tags)
                                     }
                                 }

@@ -1,6 +1,7 @@
 package my.dictionary.free.domain.models.navigation
 
 import my.dictionary.free.domain.models.dictionary.Dictionary
+import my.dictionary.free.domain.models.filter.FilterModel
 import my.dictionary.free.domain.models.language.LangType
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.models.words.Word
@@ -26,4 +27,5 @@ class WordsMultiChooseScreen(val dictionaryId: String, val words: ArrayList<Word
 class DictionaryChooseScreen() : AppNavigation()
 class AddTranslationVariantsScreen(val word: String?) : AppNavigation()
 class AddWordTagsScreen(val word: Word?, val dictionary: Dictionary) : AppNavigation()
+class DictionaryFilterScreen(val dictionary: Dictionary, val filterModel: FilterModel?) : AppNavigation()
 class EditTranslationVariantsScreen(val word: String?, val dictionaryId: String, val translation: TranslationVariant) : AppNavigation()

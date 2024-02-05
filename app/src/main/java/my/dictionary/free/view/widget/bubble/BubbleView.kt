@@ -11,7 +11,7 @@ import android.text.TextPaint
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.Tag
 import my.dictionary.free.view.ext.dp
 
 class BubbleView : View {
@@ -74,7 +74,7 @@ class BubbleView : View {
         }
     }
 
-    private var wordTag: WordTag? = null
+    private var wordTag: Tag? = null
 
     fun init(context: Context, attrs: AttributeSet?) {
         val params = BubbleLayout.BubbleLayoutParams(
@@ -89,7 +89,7 @@ class BubbleView : View {
         layoutParams = params
     }
 
-    fun setWordTag(tag: WordTag?) {
+    fun setWordTag(tag: Tag?) {
         this.wordTag = tag
         invalidate()
     }

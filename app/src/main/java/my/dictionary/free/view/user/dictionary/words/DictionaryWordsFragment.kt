@@ -17,6 +17,7 @@ import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -31,15 +32,19 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.AlphabetSort
+import my.dictionary.free.domain.models.filter.FilterModel
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
+import my.dictionary.free.domain.models.navigation.DictionaryFilterScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
+import my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment
 import my.dictionary.free.view.widget.ListItemDecoration
 import my.dictionary.free.view.widget.OnItemSwipedListener
 import my.dictionary.free.view.widget.OnListItemClickListener
@@ -168,11 +173,30 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     return@addMenuProvider true
                 }
 
+                R.id.nav_filter -> {
+                    viewModel.getDictionary()?.let {dictionary ->
+                        sharedViewModel.navigateTo(DictionaryFilterScreen(dictionary, wordsAdapter?.getFilteredModel()))
+                    }
+                    return@addMenuProvider true
+                }
+
                 else -> false
             }
         })
         dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
         refreshWords()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setFragmentResultListener(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT_KEY) { requestKey, bundle ->
+            val filterModel: FilterModel? =
+                if (hasTiramisu()) bundle.getParcelable(
+                    DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT,
+                    FilterModel::class.java
+                ) else bundle.getParcelable(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT)
+            wordsAdapter?.setFilterModel(filterModel)
+        }
     }
 
     private fun refreshWords() {

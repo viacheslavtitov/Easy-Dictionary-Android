@@ -14,7 +14,7 @@ import my.dictionary.free.data.models.words.WordTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.words.Word
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.utils.PreferenceUtils
 import my.dictionary.free.view.ext.toUnicode
@@ -151,7 +151,7 @@ class WordsUseCase @Inject constructor(
                         WordTag(
                             _id = table._id,
                             userUUID = userId,
-                            tagName = table.tagName
+                            tag = table.tagName
                         )
                     )
                 }

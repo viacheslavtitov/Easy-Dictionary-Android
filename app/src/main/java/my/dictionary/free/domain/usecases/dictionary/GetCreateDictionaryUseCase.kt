@@ -12,7 +12,7 @@ import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.dictionary.DictionaryItem
 import my.dictionary.free.domain.models.dictionary.Flags
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
 import javax.inject.Inject
@@ -100,7 +100,7 @@ class GetCreateDictionaryUseCase @Inject constructor(
                             WordTag(
                                 _id = it._id,
                                 userUUID = userId,
-                                tagName = it.tagName
+                                tag = it.tagName
                             )
                         )
                     }
@@ -127,7 +127,7 @@ class GetCreateDictionaryUseCase @Inject constructor(
                         WordTag(
                             _id = it._id,
                             userUUID = userId,
-                            tagName = it.tagName
+                            tag = it.tagName
                         )
                     )
                 }
@@ -180,7 +180,7 @@ class GetCreateDictionaryUseCase @Inject constructor(
                             WordTag(
                                 _id = it._id,
                                 userUUID = userId,
-                                tagName = it.tagName
+                                tag = it.tagName
                             )
                         )
                     }

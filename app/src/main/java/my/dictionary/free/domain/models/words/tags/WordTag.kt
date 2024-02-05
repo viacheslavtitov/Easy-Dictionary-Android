@@ -1,4 +1,4 @@
-package my.dictionary.free.domain.models.words
+package my.dictionary.free.domain.models.words.tags
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
@@ -6,18 +6,17 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class WordTag(
     val _id: String? = null,
-    val userUUID: String,
-    val tagName: String
-) : Parcelable {
+    val userUUID: String, var tag: String
+) : Parcelable, Tag(tag) {
     companion object {
         fun empty(): WordTag = WordTag(
             _id = null,
             userUUID = "",
-            tagName = ""
+            tag = ""
         )
     }
 
     override fun toString(): String {
-        return "id = $_id | userUUID = $userUUID | tagName = $tagName"
+        return "id = $_id | userUUID = $userUUID | tagName = $tag"
     }
 }

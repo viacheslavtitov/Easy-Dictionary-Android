@@ -43,6 +43,7 @@ import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
 import my.dictionary.free.domain.models.navigation.AddWordTagsScreen
 import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
+import my.dictionary.free.domain.models.navigation.DictionaryFilterScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
@@ -66,8 +67,9 @@ import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
-import my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment
 import my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment
+import my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment
+import my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment
 import my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment
 
 @AndroidEntryPoint
@@ -126,7 +128,7 @@ class MainActivity : AbstractBaseActivity() {
         translationActionButton.setOnClickListener {
             sharedViewModel.actionNavigate(AddTranslationVariantNavigation())
         }
-        isExpandedActionButtons= false
+        isExpandedActionButtons = false
         tagActionButton.hide()
         translationActionButton.hide()
         setSupportActionBar(toolbar)
@@ -178,6 +180,10 @@ class MainActivity : AbstractBaseActivity() {
 
                 R.id.addWordTagsFragment -> {
                     toolbar.setTitle(R.string.add_or_choose_tags)
+                }
+
+                R.id.dictionaryWordsFilterFragment -> {
+                    toolbar.setTitle(R.string.filter)
                 }
 
                 R.id.simpleFragment -> {
@@ -268,7 +274,7 @@ class MainActivity : AbstractBaseActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 sharedViewModel.showActionButtonUIState.collect { show ->
                     isExpandedActionButtons = false
-                    if(show) {
+                    if (show) {
                         extendActionButton.show()
                     } else {
                         extendActionButton.hide()
@@ -541,12 +547,29 @@ class MainActivity : AbstractBaseActivity() {
                     bundle
                 )
             }
+
+            is DictionaryFilterScreen -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_DICTIONARY,
+                        navigation.dictionary
+                    )
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_FILTER,
+                        navigation.filterModel
+                    )
+                }
+                navController.navigate(
+                    R.id.action_dictionaryWordsFragment_to_dictionaryWordsFilterFragment,
+                    bundle
+                )
+            }
         }
     }
 
     private fun handleActionFloatingActionButton() {
         Log.d(TAG, "clicked on Floating Button, isExtended = $isExpandedActionButtons")
-        if(isExpandedActionButtons) {
+        if (isExpandedActionButtons) {
             isExpandedActionButtons = false
             tagActionButton.hide()
             translationActionButton.hide()

@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.Tag
 import my.dictionary.free.view.ext.findViewByCoordinate
 import kotlin.math.max
 
@@ -83,7 +83,8 @@ class BubbleLayout : ViewGroup {
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        var nextChildTop = top
+        var currentChildTop = 0
+        var previousChildBottom = 0
         var nextChildRight = 0
         for (i in 0 until childCount) {
             val child = getChildAt(i)
@@ -94,17 +95,18 @@ class BubbleLayout : ViewGroup {
                 val rightOffset = childLayoutParams.rightMargin
                 val bottomOffset = childLayoutParams.bottomMargin
 
-                var childLeft = nextChildRight + child.left + leftOffset
-                var childTop = child.top + topOffset
+                var childLeft = nextChildRight + leftOffset
+                var childTop = currentChildTop + topOffset
                 var childRight = childLeft + child.measuredWidth + rightOffset
                 var childBottom = childTop + child.measuredHeight
 
                 if (childRight >= right) {
                     nextChildRight = 0
-                    childLeft = nextChildRight + child.left + leftOffset
-                    childTop = nextChildTop + topOffset
-                    childRight = childLeft + child.measuredWidth + rightOffset
+                    childLeft = leftOffset
+                    childTop = previousChildBottom + topOffset
+                    childRight = childLeft + child.measuredWidth
                     childBottom = childTop + child.measuredHeight
+                    currentChildTop = childTop
                 }
 
                 child.layout(
@@ -112,8 +114,8 @@ class BubbleLayout : ViewGroup {
                     childRight,
                     childBottom
                 )
-                nextChildTop = child.bottom
-                nextChildRight += childRight
+                previousChildBottom = child.bottom
+                nextChildRight = childRight
             }
         }
     }
@@ -131,15 +133,15 @@ class BubbleLayout : ViewGroup {
         return super.dispatchTouchEvent(ev)
     }
 
-    fun getTags(selected: Boolean): ArrayList<WordTag> {
-        val tags = arrayListOf<WordTag>()
+    fun <T>getTags(selected: Boolean): ArrayList<T> {
+        val tags = arrayListOf<T>()
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             if (child.visibility != GONE && child is BubbleView) {
                 val childSelected = child.selected()
-                if(selected == childSelected) {
+                if (selected == childSelected) {
                     child.getWordTag()?.let {
-                        tags.add(it)
+                        tags.add(it as T)
                     }
                 }
             }

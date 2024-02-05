@@ -2,7 +2,7 @@ package my.dictionary.free.domain.models.dictionary
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.WordTag
 
 @Parcelize
 data class Dictionary(

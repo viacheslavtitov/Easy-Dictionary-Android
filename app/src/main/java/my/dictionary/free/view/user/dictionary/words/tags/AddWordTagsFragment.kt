@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
-import my.dictionary.free.domain.models.words.WordTag
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.tags.AddWordTagsViewModel
@@ -67,7 +67,7 @@ class AddWordTagsFragment : AbstractBaseFragment() {
         addMenuProvider(R.menu.menu_tags, { menu, mi -> }, {
             when (it) {
                 R.id.nav_save_tags -> {
-                    val selectedTags = bubbleLayout.getTags(true)
+                    val selectedTags = bubbleLayout.getTags<WordTag>(true)
                     val bundle = Bundle().apply {
                         putParcelableArrayList(BUNDLE_TAGS_KEY, selectedTags)
                     }
