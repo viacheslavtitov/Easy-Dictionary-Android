@@ -31,14 +31,14 @@
 
             <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/progress_bar"
-                android:visibility="gone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:trackColor="@color/secondary_light"
+                android:indeterminate="true"
+                android:visibility="gone"
+                app:hideAnimationBehavior="outward"
                 app:indicatorColor="@color/main_dark"
                 app:showAnimationBehavior="inward"
-                app:hideAnimationBehavior="outward"
-                android:indeterminate="true" />
+                app:trackColor="@color/secondary_light" />
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.fragment.app.FragmentContainerView
@@ -49,6 +49,47 @@
             app:defaultNavHost="true"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             app:navGraph="@navigation/nav_main_graph" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floating_action_tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:backgroundTint="@color/main_dark"
+                app:fabSize="normal"
+                app:layout_constraintBottom_toTopOf="@+id/floating_action_translation"
+                app:layout_constraintRight_toRightOf="@+id/floating_action_extend"
+                app:srcCompat="@drawable/ic_tag" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/floating_action_translation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:backgroundTint="@color/main_dark"
+                app:fabSize="normal"
+                app:layout_constraintBottom_toTopOf="@+id/floating_action_extend"
+                app:layout_constraintRight_toRightOf="@+id/floating_action_extend"
+                app:srcCompat="@drawable/ic_translation_variant" />
+
+            <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                android:id="@+id/floating_action_extend"
+                style="@style/Widget.Material3.ExtendedFloatingActionButton.Icon.Primary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="16dp"
+                app:backgroundTint="@color/main_light"
+                app:icon="@drawable/ic_baseline_add_24"
+                app:iconTint="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView

@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import my.dictionary.free.domain.models.navigation.ActionNavigation
+import my.dictionary.free.domain.models.navigation.AddTagNavigation
 import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.navigation.HomeScreen
 import my.dictionary.free.domain.models.users.User
@@ -44,6 +46,10 @@ class SharedMainViewModel @Inject constructor(
     val navigation: StateFlow<AppNavigation> = _navigation.receiveAsFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), HomeScreen())
 
+    private val _actionNavigation = Channel<ActionNavigation>()
+    val actionNavigation: StateFlow<ActionNavigation> = _actionNavigation.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), AddTagNavigation())
+
     val toolbarTitleUIState: MutableSharedFlow<String> = MutableSharedFlow(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -52,6 +58,10 @@ class SharedMainViewModel @Inject constructor(
     private val _loadingUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
+
+    private val _showActionButtonUIState: MutableStateFlow<Boolean> =
+        MutableStateFlow(false)
+    val showActionButtonUIState: StateFlow<Boolean> = _showActionButtonUIState.asStateFlow()
 
     private fun updateUserData(user: FirebaseUser) {
         viewModelScope.launch {
@@ -88,6 +98,12 @@ class SharedMainViewModel @Inject constructor(
         }
     }
 
+    fun actionNavigate(navigateTo: ActionNavigation) {
+        viewModelScope.launch {
+            _actionNavigation.send(navigateTo)
+        }
+    }
+
     fun clearData() {
         preferenceUtils.clear()
     }
@@ -98,6 +114,10 @@ class SharedMainViewModel @Inject constructor(
 
     fun loading(loading: Boolean) {
         _loadingUIState.value = loading
+    }
+
+    fun showOrHideActionButton(show: Boolean) {
+        _showActionButtonUIState.value = show
     }
 
 }

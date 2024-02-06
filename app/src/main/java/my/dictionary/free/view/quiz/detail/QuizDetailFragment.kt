@@ -57,7 +57,13 @@ class QuizDetailFragment : AbstractBaseFragment() {
         wordsRecyclerView = view.findViewById(R.id.words_recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(context)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
+        val wordTypes = mutableListOf<String>().apply {
+            add(" ")
+            context?.resources?.getStringArray(R.array.word_types)?.toList()?.let {
+                addAll(it)
+            }
+        }
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }

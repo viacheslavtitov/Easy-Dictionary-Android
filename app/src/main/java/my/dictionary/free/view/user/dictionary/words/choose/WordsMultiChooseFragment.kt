@@ -9,6 +9,7 @@ import android.widget.AdapterView
 import androidx.appcompat.widget.AppCompatSpinner
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -17,18 +18,20 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.filter.FilterModel
+import my.dictionary.free.domain.models.navigation.DictionaryFilterScreen
+import my.dictionary.free.domain.models.navigation.DictionaryMultiChooseFilterScreen
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
-import my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
-import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
+import my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment
 import my.dictionary.free.view.user.dictionary.words.translations.add.CategorySpinnerAdapter
 import my.dictionary.free.view.widget.ListItemDecoration
 import my.dictionary.free.view.widget.OnListItemClickListener
@@ -53,9 +56,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
     private val viewModel: DictionaryWordsViewModel by viewModels()
 
     private lateinit var wordsRecyclerView: RecyclerView
-    private lateinit var chooseCategorySpinner: AppCompatSpinner
     private var wordsAdapter: DictionaryWordsAdapter? = null
-    private var categoryAdapter: CategorySpinnerAdapter? = null
     private var dictionaryId: String? = null
     private var editWords: ArrayList<Word>? = null
 
@@ -65,7 +66,6 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_words_multichoose, null)
-        chooseCategorySpinner = view.findViewById(R.id.choose_category)
         wordsRecyclerView = view.findViewById(R.id.recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
@@ -76,65 +76,26 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                 onWordsClickListener
             )
         )
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
+        val wordTypes = mutableListOf<String>().apply {
+            add(" ")
+            context?.resources?.getStringArray(R.array.word_types)?.toList()?.let {
+                addAll(it)
+            }
+        }
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
-        chooseCategorySpinner.onItemSelectedListener = onCategoryChooseListener
         return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated")
-        context?.let {
-            categoryAdapter = CategorySpinnerAdapter(it)
-            chooseCategorySpinner.adapter = categoryAdapter
-        }
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, wordsRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearWordsUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear words")
-                            wordsAdapter?.clearData()
-                        } else {
-                            editWords?.forEach {
-                                wordsAdapter?.selectWord(it)
-                            }
-                        }
-                    }
-                }
-                launch {
-                    viewModel.wordsUIState.drop(1).collect { word ->
-                        Log.d(TAG, "word updated: $word")
-                        wordsAdapter?.add(word)
-                    }
-                }
                 launch {
                     viewModel.titleUIState.collect { title ->
                         Log.d(TAG, "set title: $title")
                         sharedViewModel.setTitle(title)
-                    }
-                }
-                launch {
-                    viewModel.categoriesUIState.drop(1).collect { category ->
-                        categoryAdapter?.add(category)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearCategoriesUIState.collect { clear ->
-                        if (clear) {
-                            categoryAdapter?.clear()
-                        }
                     }
                 }
             }
@@ -155,6 +116,12 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                     findNavController().popBackStack()
                     return@addMenuProvider true
                 }
+                R.id.nav_filter -> {
+                    viewModel.getDictionary()?.let {dictionary ->
+                        sharedViewModel.navigateTo(DictionaryMultiChooseFilterScreen(dictionary, wordsAdapter?.getFilteredModel()))
+                    }
+                    return@addMenuProvider true
+                }
                 R.id.nav_select_all -> {
                     wordsAdapter?.let {
                         if(it.isAllSelected()) {
@@ -170,6 +137,14 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
             }
         })
         dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
+        setFragmentResultListener(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT_KEY) { requestKey, bundle ->
+            val filterModel: FilterModel? =
+                if (hasTiramisu()) bundle.getParcelable(
+                    DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT,
+                    FilterModel::class.java
+                ) else bundle.getParcelable(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT)
+            wordsAdapter?.setFilterModel(filterModel)
+        }
         editWords = if (hasTiramisu())
             arguments?.getParcelableArrayList(BUNDLE_WORDS, Word::class.java)
         else arguments?.getParcelableArrayList(BUNDLE_WORDS)
@@ -177,8 +152,35 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
     }
 
     private fun refreshWords() {
-        wordsAdapter?.clearData()
-        viewModel.loadWords(context, dictionaryId)
+        lifecycleScope.launch {
+            viewModel.loadWords(context, dictionaryId).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        wordsAdapter?.clearData()
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            wordsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        wordsAdapter?.add(it.data)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, wordsRecyclerView)
+                    }
+                }
+            }
+        }
     }
 
     private val onWordsClickListener = object : OnListItemClickListener {
@@ -205,20 +207,6 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
         if (selectedDictionaryCount < 1) {
             wordsAdapter?.clearSelectedWords()
         }
-    }
-
-    private val onCategoryChooseListener = object : AdapterView.OnItemSelectedListener {
-        override fun onItemSelected(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
-            categoryAdapter?.getItemByPosition(position)?.let { category ->
-                Log.d(TAG, "selected ${category.categoryName}")
-                wordsAdapter?.filterByCategory(category._id)
-            }
-        }
-
-        override fun onNothingSelected(p0: AdapterView<*>?) {
-
-        }
-
     }
 
 }

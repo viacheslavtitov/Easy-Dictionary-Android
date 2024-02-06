@@ -17,6 +17,7 @@ import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -28,18 +29,22 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.AlphabetSort
+import my.dictionary.free.domain.models.filter.FilterModel
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
+import my.dictionary.free.domain.models.navigation.DictionaryFilterScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.DictionaryWordsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
+import my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment
 import my.dictionary.free.view.widget.ListItemDecoration
 import my.dictionary.free.view.widget.OnItemSwipedListener
 import my.dictionary.free.view.widget.OnListItemClickListener
@@ -86,12 +91,10 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
             override fun onFinish() {
                 undoRemoveWordSnackbar = null
                 wordsAdapter?.getRemoveWordByTimer()?.let { word ->
-                    viewModel.deleteWords(
-                        context,
-                        listOf(word)
-                    )
+                    deleteWords(listOf(word)) {
+                        wordsAdapter?.finallyRemoveItem()
+                    }
                 }
-                wordsAdapter?.finallyRemoveItem()
             }
         }
 
@@ -101,7 +104,8 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_dictionary_words, null)
-        view.findViewById<RadioGroup>(R.id.sorting_radio_group).setOnCheckedChangeListener(onSortingGroupListener)
+        view.findViewById<RadioGroup>(R.id.sorting_radio_group)
+            .setOnCheckedChangeListener(onSortingGroupListener)
         wordsRecyclerView = view.findViewById(R.id.recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         val itemTouchHelper =
@@ -127,7 +131,13 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     R.color.main_dark
                 )
             }
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
+        val wordTypes = mutableListOf<String>().apply {
+            add(" ")
+            context?.resources?.getStringArray(R.array.word_types)?.toList()?.let {
+                addAll(it)
+            }
+        }
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }
@@ -137,38 +147,6 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         Log.d(TAG, "onViewCreated")
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.clearActionModeUIState.drop(1).collect { clear ->
-                        if (clear) {
-                            actionMode?.finish()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, wordsRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        swipeRefreshLayout?.isRefreshing = visible
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearWordsUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear words")
-                            wordsAdapter?.clearData()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.wordsUIState.drop(1).collect { word ->
-                        Log.d(TAG, "word updated: $word")
-                        wordsAdapter?.add(word)
-                    }
-                }
                 launch {
                     viewModel.titleUIState.collect { title ->
                         Log.d(TAG, "set title: $title")
@@ -201,16 +179,60 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     return@addMenuProvider true
                 }
 
+                R.id.nav_filter -> {
+                    viewModel.getDictionary()?.let {dictionary ->
+                        sharedViewModel.navigateTo(DictionaryFilterScreen(dictionary, wordsAdapter?.getFilteredModel()))
+                    }
+                    return@addMenuProvider true
+                }
+
                 else -> false
             }
         })
         dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
+        setFragmentResultListener(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT_KEY) { requestKey, bundle ->
+            val filterModel: FilterModel? =
+                if (hasTiramisu()) bundle.getParcelable(
+                    DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT,
+                    FilterModel::class.java
+                ) else bundle.getParcelable(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT)
+            wordsAdapter?.setFilterModel(filterModel)
+        }
         refreshWords()
     }
 
     private fun refreshWords() {
-        wordsAdapter?.clearData()
-        viewModel.loadWords(context, dictionaryId)
+        lifecycleScope.launch {
+            viewModel.loadWords(context, dictionaryId).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        wordsAdapter?.clearData()
+                        swipeRefreshLayout?.isRefreshing = true
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = false
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            wordsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        wordsAdapter?.add(it.data)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, wordsRecyclerView)
+                    }
+                }
+            }
+        }
     }
 
     private val onWordsQueryListener = object : SearchView.OnQueryTextListener {
@@ -266,10 +288,9 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 }
 
                 R.id.menu_delete -> {
-                    viewModel.deleteWords(
-                        context,
-                        wordsAdapter?.getSelectedWords()
-                    )
+                    deleteWords(wordsAdapter?.getSelectedWords()) {
+
+                    }
                     true
                 }
 
@@ -280,6 +301,46 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         override fun onDestroyActionMode(mode: ActionMode?) {
             wordsAdapter?.clearSelectedWords()
             actionMode = null
+        }
+    }
+
+    private fun deleteWords(words: List<Word>?, onSuccessDelete: () -> Unit) {
+        lifecycleScope.launch {
+            viewModel.deleteWords(
+                context,
+                words
+            ).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = true
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = false
+                        sharedViewModel.loading(false)
+                        actionMode?.finish()
+                        onSuccessDelete()
+                        refreshWords()
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message
+                                ?: context?.getString(R.string.unknown_error),
+                            wordsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        //skip
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, wordsRecyclerView)
+                    }
+                }
+            }
         }
     }
 
@@ -334,10 +395,11 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
     }
 
     private val onSortingGroupListener = RadioGroup.OnCheckedChangeListener { p0, checkedId ->
-        when(checkedId) {
+        when (checkedId) {
             R.id.sorting_a_z_button -> {
                 wordsAdapter?.sortByAlphabet(AlphabetSort.A_Z)
             }
+
             R.id.sorting_z_a_button -> {
                 wordsAdapter?.sortByAlphabet(AlphabetSort.Z_A)
             }

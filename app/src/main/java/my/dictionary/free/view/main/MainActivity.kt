@@ -3,6 +3,7 @@ package my.dictionary.free.view.main
 import android.content.Intent
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.viewModels
@@ -24,6 +25,8 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.firebase.ui.auth.AuthUI
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.firebase.auth.FirebaseAuth
@@ -32,11 +35,16 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddDictionaryWordScreen
+import my.dictionary.free.domain.models.navigation.AddTagNavigation
+import my.dictionary.free.domain.models.navigation.AddTranslationVariantNavigation
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
 import my.dictionary.free.domain.models.navigation.AddUserDictionaryScreen
 import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
+import my.dictionary.free.domain.models.navigation.AddWordTagsScreen
 import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
+import my.dictionary.free.domain.models.navigation.DictionaryFilterScreen
+import my.dictionary.free.domain.models.navigation.DictionaryMultiChooseFilterScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
@@ -61,10 +69,16 @@ import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment
 import my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment
 import my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment
+import my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment
+import my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment
 import my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment
 
 @AndroidEntryPoint
 class MainActivity : AbstractBaseActivity() {
+
+    companion object {
+        private val TAG = MainActivity::class.simpleName
+    }
 
     private val sharedViewModel: SharedMainViewModel by viewModels()
 
@@ -74,6 +88,10 @@ class MainActivity : AbstractBaseActivity() {
     private lateinit var userLogo: AppCompatImageView
     private lateinit var userEmail: AppCompatTextView
     private lateinit var progressBar: LinearProgressIndicator
+    private lateinit var extendActionButton: ExtendedFloatingActionButton
+    private lateinit var tagActionButton: FloatingActionButton
+    private lateinit var translationActionButton: FloatingActionButton
+    private var isExpandedActionButtons = false
 
     private val navController: NavController by lazy {
         (supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment).navController
@@ -96,9 +114,24 @@ class MainActivity : AbstractBaseActivity() {
         userLogo = navView.getHeaderView(0).findViewById(R.id.user_logo)
         userEmail = navView.getHeaderView(0).findViewById(R.id.user_email)
         progressBar = findViewById(R.id.progress_bar)
+        extendActionButton = findViewById(R.id.floating_action_extend)
+        tagActionButton = findViewById(R.id.floating_action_tag)
+        translationActionButton = findViewById(R.id.floating_action_translation)
         findViewById<View>(R.id.nav_log_out).setOnClickListener {
             logOut()
         }
+        extendActionButton.setOnClickListener {
+            handleActionFloatingActionButton()
+        }
+        tagActionButton.setOnClickListener {
+            sharedViewModel.actionNavigate(AddTagNavigation())
+        }
+        translationActionButton.setOnClickListener {
+            sharedViewModel.actionNavigate(AddTranslationVariantNavigation())
+        }
+        isExpandedActionButtons = false
+        tagActionButton.hide()
+        translationActionButton.hide()
         setSupportActionBar(toolbar)
         supportActionBar?.let { actionBar ->
             actionBar.setDisplayHomeAsUpEnabled(true)
@@ -110,45 +143,48 @@ class MainActivity : AbstractBaseActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         toolbar.setupWithNavController(navController, navDrawerLayout)
         navController.addOnDestinationChangedListener { _, destination, _ ->
+            sharedViewModel.showOrHideActionButton(false)
+            navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
             when (destination.id) {
                 R.id.userDictionaryFragment -> {
                     toolbar.setTitle(R.string.my_dictionaries)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
 
                 R.id.addUserDictionaryFragment -> {
                     toolbar.setTitle(R.string.add_dictionary)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
 
                 R.id.languagesFragment -> {
                     toolbar.setTitle(R.string.add_language)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
 
                 R.id.dictionaryWordsFragment -> {
                     toolbar.setTitle(R.string.words)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
 
                 R.id.addDictionaryWordFragment -> {
                     toolbar.setTitle(R.string.add_word)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                    sharedViewModel.showOrHideActionButton(true)
                 }
 
                 R.id.addTranslationVariant -> {
                     toolbar.setTitle(R.string.add_translation_variants)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
 
                 R.id.quizDetailTabsFragment -> {
                     toolbar.setTitle(R.string.quiz)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
                 }
 
                 R.id.runQuizFragment -> {
                     toolbar.setTitle(R.string.quiz)
-                    navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+                }
+
+                R.id.addWordTagsFragment -> {
+                    toolbar.setTitle(R.string.add_or_choose_tags)
+                }
+
+                R.id.dictionaryWordsFilterFragment -> {
+                    toolbar.setTitle(R.string.filter)
                 }
 
                 R.id.simpleFragment -> {
@@ -193,7 +229,6 @@ class MainActivity : AbstractBaseActivity() {
                 }
             }
         }
-        navController.navigate(R.id.simpleFragment)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -236,6 +271,21 @@ class MainActivity : AbstractBaseActivity() {
                 }
             }
         }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                sharedViewModel.showActionButtonUIState.collect { show ->
+                    isExpandedActionButtons = false
+                    if (show) {
+                        extendActionButton.show()
+                    } else {
+                        extendActionButton.hide()
+                        tagActionButton.hide()
+                        translationActionButton.hide()
+                    }
+                }
+            }
+        }
+        navController.navigate(R.id.simpleFragment)
         sharedViewModel.loadUserData()
     }
 
@@ -297,6 +347,7 @@ class MainActivity : AbstractBaseActivity() {
             is HomeScreen -> {
 
             }
+
             is LanguagesScreen -> {
                 val bundle = Bundle().apply {
                     putInt(
@@ -480,6 +531,72 @@ class MainActivity : AbstractBaseActivity() {
             is DictionaryChooseScreen -> {
                 navController.navigate(R.id.action_addQuizFragment_to_dictionaryChooseDialogFragment)
             }
+
+            is AddWordTagsScreen -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        AddWordTagsFragment.BUNDLE_WORD,
+                        navigation.word
+                    )
+                    putParcelable(
+                        AddWordTagsFragment.BUNDLE_DICTIONARY,
+                        navigation.dictionary
+                    )
+                }
+                navController.navigate(
+                    R.id.action_addDictionaryWordFragment_to_addWordTagsFragment,
+                    bundle
+                )
+            }
+
+            is DictionaryFilterScreen -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_DICTIONARY,
+                        navigation.dictionary
+                    )
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_FILTER,
+                        navigation.filterModel
+                    )
+                }
+                navController.navigate(
+                    R.id.action_dictionaryWordsFragment_to_dictionaryWordsFilterFragment,
+                    bundle
+                )
+            }
+
+            is DictionaryMultiChooseFilterScreen -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_DICTIONARY,
+                        navigation.dictionary
+                    )
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_FILTER,
+                        navigation.filterModel
+                    )
+                }
+                navController.navigate(
+                    R.id.action_wordsMultiChooseFragment_to_dictionaryWordsFilterFragment,
+                    bundle
+                )
+            }
+        }
+    }
+
+    private fun handleActionFloatingActionButton() {
+        Log.d(TAG, "clicked on Floating Button, isExtended = $isExpandedActionButtons")
+        if (isExpandedActionButtons) {
+            isExpandedActionButtons = false
+            tagActionButton.hide()
+            translationActionButton.hide()
+            extendActionButton.shrink()
+        } else {
+            isExpandedActionButtons = true
+            tagActionButton.show()
+            translationActionButton.show()
+            extendActionButton.extend()
         }
     }
 }

@@ -11,6 +11,7 @@
     <string name="retry">Retry</string>
     <string name="error">Error</string>
     <string name="add">Add</string>
+    <string name="filter">Filter</string>
     <string name="save">Save</string>
     <string name="unknown_error">Unknown error</string>
     <string name="optional">Optional</string>
@@ -31,6 +32,7 @@
     <string name="history">History</string>
     <string name="sort_a_z">A-Z</string>
     <string name="sort_z_a">Z-A</string>
+    <string name="types">Types</string>
     <!-- Sign-in -->
     <string name="sign_in_error_description">%s\nDo you want to retry?</string>
     <!-- Menu -->
@@ -96,6 +98,12 @@
     <string name="error_update_word">Something was wrong to update word</string>
     <string name="error_update_translation">Something was wrong to update translation</string>
     <string name="error_delete_word">Something was wrong to delete word</string>
+    <!-- Tags -->
+    <string name="add_or_choose_tags">Add or choose tags</string>
+    <string name="add_tag">Add tag</string>
+    <string name="error_tag_exist">Tag is already exist</string>
+    <string name="tags">Tags</string>
+    <string name="categories">Categories</string>
 
     <string name="menu_drawer_open">DrawerOpen</string>
     <string name="menu_drawer_closed">DrawerClosed</string>

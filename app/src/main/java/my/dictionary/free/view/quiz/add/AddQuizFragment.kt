@@ -116,7 +116,13 @@ class AddQuizFragment : AbstractBaseFragment() {
             ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
         itemTouchHelper.attachToRecyclerView(wordsRecyclerView)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
+        val wordTypes = mutableListOf<String>().apply {
+            add(" ")
+            context?.resources?.getStringArray(R.array.word_types)?.toList()?.let {
+                addAll(it)
+            }
+        }
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }

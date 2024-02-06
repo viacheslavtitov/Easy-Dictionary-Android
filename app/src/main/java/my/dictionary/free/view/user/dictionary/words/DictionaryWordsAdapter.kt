@@ -9,12 +9,17 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.AlphabetSort
+import my.dictionary.free.domain.models.filter.FilterModel
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.tags.CategoryTag
+import my.dictionary.free.domain.models.words.tags.Tag
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.view.ext.getColorInt
 
 class DictionaryWordsAdapter(
     private val data: MutableList<Word>,
-    private val filteredData: MutableList<Word>
+    private val filteredData: MutableList<Word>,
+    private val wordTypes: List<String>
 ) :
     RecyclerView.Adapter<DictionaryWordsAdapter.ViewHolder>(), Filterable {
 
@@ -22,6 +27,7 @@ class DictionaryWordsAdapter(
     private var tempRemoveItemPosition: Int? = null
     private var sort: AlphabetSort? = null
     private var selectedWords = mutableListOf<Word>()
+    private var filterModel: FilterModel? = null
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var swipePosition: Int = 0
@@ -142,12 +148,13 @@ class DictionaryWordsAdapter(
     fun add(dict: Word) {
         data.add(dict)
         filteredData.add(dict)
+        filterIfNeeds()
         needSortByAlphabet(sort)
         this.notifyDataSetChanged()
     }
 
     fun filterByCategory(categoryId: String?) {
-        if(categoryId == null) {
+        if (categoryId == null) {
             filteredData.clear()
             filteredData.addAll(data)
         } else {
@@ -167,13 +174,74 @@ class DictionaryWordsAdapter(
     }
 
     private fun needSortByAlphabet(sort: AlphabetSort?) {
-        if(sort == null) return
-        when(sort) {
+        if (sort == null) return
+        when (sort) {
             AlphabetSort.A_Z -> {
                 filteredData.sortBy { it.original }
             }
+
             AlphabetSort.Z_A -> {
                 filteredData.sortByDescending { it.original }
+            }
+        }
+    }
+
+    fun setFilterModel(model: FilterModel?) {
+        filterModel = model
+        filterIfNeeds()
+        needSortByAlphabet(sort)
+        this.notifyDataSetChanged()
+    }
+
+    fun getFilteredModel() = filterModel
+
+    private fun filterIfNeeds() {
+        filterModel?.let { filter ->
+            if (filter.tags.isNotEmpty() || filter.categories.isNotEmpty() || filter.types.isNotEmpty()) {
+                val newFilteredData = mutableSetOf<Word>()
+                (filter.tags as? List<WordTag>)?.let { tags ->
+                    if (tags.isNotEmpty()) {
+                        val matchWordTag = arrayListOf<Word>()
+                        data.forEach { word ->
+                            val matchTag =
+                                tags.find { wordTag -> word.tags.find { it._id == wordTag._id } != null } != null
+                            if (matchTag) {
+                                matchWordTag.add(word)
+                            }
+                        }
+                        newFilteredData.addAll(matchWordTag)
+                    }
+                }
+                (filter.categories as? List<CategoryTag>)?.let { categories ->
+                    if (categories.isNotEmpty()) {
+                        val matchWordTag = arrayListOf<Word>()
+                        data.forEach { word ->
+                            val matchTag =
+                                categories.find { categoryTag -> word.translates.find { it.categoryId == categoryTag.id } != null } != null
+                            if (matchTag) {
+                                matchWordTag.add(word)
+                            }
+                        }
+                        newFilteredData.addAll(matchWordTag)
+                    }
+                }
+                (filter.types as? List<Tag>)?.let { types ->
+                    if (types.isNotEmpty()) {
+                        val matchWordTag = arrayListOf<Word>()
+                        for (word in data) {
+                            if (word.type == 0) continue
+                            val wordType = wordTypes[word.type]
+                            val matchTag =
+                                types.find { wordTag -> wordType == wordTag.tagName } != null
+                            if (matchTag) {
+                                matchWordTag.add(word)
+                            }
+                        }
+                        newFilteredData.addAll(matchWordTag)
+                    }
+                }
+                filteredData.clear()
+                filteredData.addAll(newFilteredData)
             }
         }
     }
@@ -200,6 +268,7 @@ class DictionaryWordsAdapter(
         override fun publishResults(query: CharSequence?, fr: FilterResults?) {
             filteredData.clear()
             filteredData.addAll(fr?.values as? MutableList<Word> ?: emptyList())
+            filterIfNeeds()
             needSortByAlphabet(sort)
             notifyDataSetChanged()
         }

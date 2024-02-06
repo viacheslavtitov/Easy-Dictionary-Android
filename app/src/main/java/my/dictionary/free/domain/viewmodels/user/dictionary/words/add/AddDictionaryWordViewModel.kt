@@ -11,19 +11,22 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationsUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
+import my.dictionary.free.view.FetchDataState
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,30 +41,9 @@ class AddDictionaryWordViewModel @Inject constructor(
         private val TAG = AddDictionaryWordViewModel::class.simpleName
     }
 
-    private val _phoneticsUIState: MutableStateFlow<List<String>> =
-        MutableStateFlow(emptyList())
-    val phoneticsUIState: StateFlow<List<String>> = _phoneticsUIState.asStateFlow()
-
-    private val _loadingUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
-
-    private val _clearTranslationsUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val clearTranslationsUIState: StateFlow<Boolean> = _clearTranslationsUIState.asStateFlow()
-
-    private val _displayErrorUIState = Channel<String>()
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
-
     private val _validateWord = Channel<String>()
     val validateWord: StateFlow<String> = _validateWord.receiveAsFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
-
-    private val _successCreateWordUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val successCreateWordUIState: StateFlow<Boolean> =
-        _successCreateWordUIState.asStateFlow()
 
     //edit flows
     private val _nameUIState: MutableStateFlow<String> =
@@ -76,103 +58,92 @@ class AddDictionaryWordViewModel @Inject constructor(
         MutableStateFlow("")
     val phoneticUIState: StateFlow<String> = _phoneticUIState.asStateFlow()
 
-    private val _translationVariantsUIState = Channel<TranslationVariant>()
-    val translationVariantsUIState = _translationVariantsUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), TranslationVariant.empty())
-
     private var dictionary: Dictionary? = null
     private var editWord: Word? = null
     private var notSavingTranslations = mutableListOf<TranslationVariant>()
     private var tempDeletedTranslations = mutableListOf<TranslationVariant>()
 
-    fun loadData(context: Context?, dictionaryId: String?, word: Word?) {
-        if (context == null) return
-        if (dictionaryId.isNullOrEmpty()) {
-            viewModelScope.launch {
-                _displayErrorUIState.send(context.getString(R.string.error_load_data))
+    fun loadData(context: Context?, dictionaryId: String?, word: Word?) =
+        flow<FetchDataState<List<String>>> {
+            if (context == null) {
+                return@flow
             }
-            return
-        }
-        this.editWord = word
-        viewModelScope.launch {
+            if (dictionaryId.isNullOrEmpty()) {
+                emit(FetchDataState.ErrorStateString(context.getString(R.string.error_load_data)))
+                return@flow
+            }
+            Log.d(TAG, "loadData($dictionaryId, ${word?.original})")
+            editWord = word
+            emit(FetchDataState.StartLoadingState)
             getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.send(
-                        it.message ?: context.getString(R.string.unknown_error)
-                    )
-                }
-                .onStart {
-                    Log.d(TAG, "onStart")
-                    _loadingUIState.value = true
+                    emit(FetchDataState.ErrorState(it))
                 }
                 .onCompletion {
                     Log.d(TAG, "onCompletion")
-                    _loadingUIState.value = false
+                    emit(FetchDataState.FinishLoadingState)
                 }
-                .collect {
+                .map {
                     Log.d(
                         TAG,
                         "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
                     )
                     dictionary = it
+                    return@map loadPhonetic(context, dictionary)
                 }
-        }.invokeOnCompletion {
-            loadPhonetic(context, dictionary)
-            if (isEditMode()) {
-                loadWordData()
-            }
+                .collect {
+                    emit(it.first())
+                }
         }
-    }
 
-    private fun loadPhonetic(context: Context, dictionary: Dictionary?) {
-        dictionary?.let { dict ->
-            viewModelScope.launch {
-                val phonetics = wordsUseCase.getPhonetics(context, dict.dictionaryFrom.lang)
+    private fun loadPhonetic(context: Context, dictionary: Dictionary?) =
+        flow<FetchDataState<List<String>>> {
+            if (dictionary != null) {
+                val phonetics =
+                    wordsUseCase.getPhonetics(context, dictionary!!.dictionaryFrom.lang)
                 Log.d(TAG, "found phonetics count ${phonetics.size}")
-                _phoneticsUIState.value = phonetics
+                emit(FetchDataState.DataState(phonetics))
+            } else {
+                emit(FetchDataState.DataState(emptyList()))
             }
         }
-    }
 
-    private fun loadWordData() {
-        editWord?.let { word ->
-            viewModelScope.launch {
-                _loadingUIState.value = true
-                _clearTranslationsUIState.value = true
-                _nameUIState.value = word.original
-                _typeUIState.value = word.type
-                word.phonetic?.let {
-                    _phoneticUIState.value = it
-                }
-                for (translate in word.translates) {
-                    if (isTranslationExistInTempDeletedList(translate)) continue
-                    if (translate.categoryId != null) {
-                        getCreateTranslationCategoriesUseCase.getCategoryById(
-                            translate.categoryId
+    fun loadWordData() = flow<FetchDataState<TranslationVariant>> {
+        Log.d(TAG, "not saving translations exist ${notSavingTranslations.size}")
+        notSavingTranslations.forEach {
+            emit(FetchDataState.DataState(it))
+        }
+        if (editWord == null) {
+            return@flow
+        }
+        editWord?.phonetic?.let {
+            _phoneticUIState.value = it
+        }
+        _nameUIState.value = editWord!!.original
+        _typeUIState.value = editWord!!.type
+        emit(FetchDataState.StartLoadingState)
+        for (translate in editWord!!.translates) {
+            if (isTranslationExistInTempDeletedList(translate)) continue
+            if (translate.categoryId != null) {
+                Log.d(TAG, "load translation category by id ${translate.categoryId}")
+                getCreateTranslationCategoriesUseCase.getCategoryById(
+                    translate.categoryId
+                )
+                    .onCompletion {
+                        Log.d(
+                            TAG,
+                            "load category for ${translate.translation} onCompletion"
                         )
-                            .onStart {
-                                Log.d(TAG, "load category for ${translate.translation} onStart")
-                            }
-                            .onCompletion {
-                                Log.d(
-                                    TAG,
-                                    "load category for ${translate.translation} onCompletion"
-                                )
-                            }
-                            .collect {
-                                translate.category = it
-                                _translationVariantsUIState.send(translate)
-                            }
-                    } else {
-                        _translationVariantsUIState.send(translate)
+                        emit(FetchDataState.FinishLoadingState)
                     }
-                }
-                notSavingTranslations.forEach {
-                    _translationVariantsUIState.send(it)
-                }
-                _clearTranslationsUIState.value = false
-                _loadingUIState.value = false
+                    .collect {
+                        translate.category = it
+                        emit(FetchDataState.DataState(translate))
+                    }
+            } else {
+                emit(FetchDataState.FinishLoadingState)
+                emit(FetchDataState.DataState(translate))
             }
         }
     }
@@ -185,21 +156,19 @@ class AddDictionaryWordViewModel @Inject constructor(
         context: Context?,
         word: String?,
         translations: List<TranslationVariant>
-    ): Boolean {
-        if (context == null) return false
+    ) = flow<FetchDataState<Boolean>> {
+        if (context == null) return@flow
         if (word.isNullOrEmpty()) {
-            viewModelScope.launch {
-                _validateWord.send(context.getString(R.string.field_required))
-            }
-            return false
+            _validateWord.send(context.getString(R.string.field_required))
+            emit(FetchDataState.DataState(false))
+            return@flow
         }
         if (translations.isEmpty()) {
-            viewModelScope.launch {
-                _displayErrorUIState.send(context.getString(R.string.error_empty_translations))
-            }
-            return false
+            emit(FetchDataState.ErrorStateString(context.getString(R.string.error_empty_translations)))
+            emit(FetchDataState.DataState(false))
+            return@flow
         }
-        return true
+        emit(FetchDataState.DataState(true))
     }
 
     fun save(
@@ -207,99 +176,109 @@ class AddDictionaryWordViewModel @Inject constructor(
         wordName: String?,
         typePosition: Int,
         translations: List<TranslationVariant>,
-        phonetic: String?
-    ) {
-        if (context == null) return
-        if (wordName.isNullOrEmpty()) return
-        if (dictionary == null || dictionary?._id.isNullOrEmpty()) return
-        viewModelScope.launch {
-            _loadingUIState.value = true
-            _successCreateWordUIState.value = false
-            if (isEditMode()) {
-                val entity = Word(
-                    _id = editWord!!._id!!,
-                    dictionaryId = dictionary?._id!!,
-                    original = wordName.trim(),
-                    type = typePosition,
-                    phonetic = phonetic,
-                    translates = translations
-                )
-                val wordResult = wordsUseCase.updateWord(entity)
-                if (!wordResult) {
-                    val error = context.getString(R.string.error_update_word)
-                    _displayErrorUIState.send(error)
-                    _loadingUIState.value = false
-                } else {
-                    val shouldDeleteTranslationsIds = arrayListOf<String>()
-                    editWord?.translates?.forEach { translate ->
-                        if (translations.find { it._id == translate._id } == null) {
-                            shouldDeleteTranslationsIds.add(translate._id!!)
-                        }
-                    }
-                    if (shouldDeleteTranslationsIds.isNotEmpty()) {
-                        val resultDeleteTranslations =
-                            getCreateTranslationsUseCase.deleteTranslationsFromWord(
-                                shouldDeleteTranslationsIds,
-                                dictionary!!._id!!,
-                                editWord!!._id!!
-                            )
-                        if (!resultDeleteTranslations.first) {
-                            val error = resultDeleteTranslations.second
-                                ?: context.getString(R.string.error_create_quiz)
-                            _displayErrorUIState.send(error)
-                        }
-                    }
-                    var translationUpdatedSuccess = true
-                    for (tr in translations) {
-                        if (tr._id?.isNullOrEmpty() == false) continue
-                        val translationResult = getCreateTranslationsUseCase.createTranslation(
-                            tr.copyWithNewWordId(editWord!!._id!!), dictionary!!._id!!
-                        )
-                        if (!translationResult.first) {
-                            val error =
-                                translationResult.second
-                                    ?: context.getString(R.string.error_create_word)
-                            _displayErrorUIState.send(error)
-                            translationUpdatedSuccess = false
-                            break
-                        }
-                    }
-                    _loadingUIState.value = false
-                    _successCreateWordUIState.value = translationUpdatedSuccess
-                }
+        phonetic: String?,
+        tags: List<WordTag>
+    ) = flow<FetchDataState<Boolean>> {
+        if (context == null) return@flow
+        if (wordName.isNullOrEmpty()) return@flow
+        if (dictionary == null || dictionary?._id.isNullOrEmpty()) return@flow
+        emit(FetchDataState.StartLoadingState)
+        if (isEditMode()) {
+            val entity = Word(
+                _id = editWord!!._id!!,
+                dictionaryId = dictionary?._id!!,
+                original = wordName.trim(),
+                type = typePosition,
+                phonetic = phonetic,
+                translates = translations,
+                tags = arrayListOf()
+            )
+            val wordResult = wordsUseCase.updateWord(entity)
+            if (!wordResult) {
+                val error = context.getString(R.string.error_update_word)
+                emit(FetchDataState.ErrorStateString(error))
+                emit(FetchDataState.FinishLoadingState)
             } else {
-                val dictionaryId = dictionary?._id!!
-                val entity = Word(
-                    dictionaryId = dictionaryId,
-                    original = wordName.trim(),
-                    type = typePosition,
-                    phonetic = phonetic,
-                    translates = translations
-                )
-                val wordResult = wordsUseCase.createWord(entity)
-                if (!wordResult.first) {
-                    val error = wordResult.second ?: context.getString(R.string.error_create_word)
-                    _displayErrorUIState.send(error)
-                    _loadingUIState.value = false
-                } else {
-                    var translationCreatedSuccess = true
-                    for (tr in translations) {
-                        val translationResult = getCreateTranslationsUseCase.createTranslation(
-                            tr.copyWithNewWordId(wordResult.third ?: ""), dictionaryId
-                        )
-                        if (!translationResult.first) {
-                            val error =
-                                translationResult.second
-                                    ?: context.getString(R.string.error_create_word)
-                            _displayErrorUIState.send(error)
-                            wordsUseCase.deleteWord(entity)
-                            translationCreatedSuccess = false
-                            break
-                        }
+                val shouldDeleteTranslationsIds = arrayListOf<String>()
+                editWord?.translates?.forEach { translate ->
+                    if (translations.find { it._id == translate._id } == null) {
+                        shouldDeleteTranslationsIds.add(translate._id!!)
                     }
-                    _loadingUIState.value = false
-                    _successCreateWordUIState.value = translationCreatedSuccess
                 }
+                if (shouldDeleteTranslationsIds.isNotEmpty()) {
+                    val resultDeleteTranslations =
+                        getCreateTranslationsUseCase.deleteTranslationsFromWord(
+                            shouldDeleteTranslationsIds,
+                            dictionary!!._id!!,
+                            editWord!!._id!!
+                        )
+                    if (!resultDeleteTranslations.first) {
+                        val error = resultDeleteTranslations.second
+                            ?: context.getString(R.string.error_create_quiz)
+                        emit(FetchDataState.ErrorStateString(error))
+                    }
+                }
+                var translationUpdatedSuccess = true
+                for (tr in translations) {
+                    if (tr._id?.isNullOrEmpty() == false) continue
+                    val translationResult = getCreateTranslationsUseCase.createTranslation(
+                        tr.copyWithNewWordId(editWord!!._id!!), dictionary!!._id!!
+                    )
+                    if (!translationResult.first) {
+                        val error =
+                            translationResult.second
+                                ?: context.getString(R.string.error_create_word)
+                        emit(FetchDataState.ErrorStateString(error))
+                        translationUpdatedSuccess = false
+                        break
+                    }
+                }
+                if(tags.isNotEmpty()) {
+                    Log.d(TAG, "add tags ${tags.size}")
+                    val addTagsResult = wordsUseCase.addTagsToWord(dictionary!!._id!!, tags, editWord!!._id!!)
+                    Log.d(TAG, "tags added result ${addTagsResult}")
+                }
+                emit(FetchDataState.FinishLoadingState)
+                emit(FetchDataState.DataState(translationUpdatedSuccess))
+            }
+        } else {
+            val dictionaryId = dictionary?._id!!
+            val entity = Word(
+                dictionaryId = dictionaryId,
+                original = wordName.trim(),
+                type = typePosition,
+                phonetic = phonetic,
+                translates = translations,
+                tags = arrayListOf()
+            )
+            val wordResult = wordsUseCase.createWord(entity)
+            if (!wordResult.first) {
+                val error = wordResult.second ?: context.getString(R.string.error_create_word)
+                emit(FetchDataState.ErrorStateString(error))
+                emit(FetchDataState.FinishLoadingState)
+            } else {
+                var translationCreatedSuccess = true
+                for (tr in translations) {
+                    val translationResult = getCreateTranslationsUseCase.createTranslation(
+                        tr.copyWithNewWordId(wordResult.third ?: ""), dictionaryId
+                    )
+                    if (!translationResult.first) {
+                        val error =
+                            translationResult.second
+                                ?: context.getString(R.string.error_create_word)
+                        emit(FetchDataState.ErrorStateString(error))
+                        wordsUseCase.deleteWord(entity)
+                        translationCreatedSuccess = false
+                        break
+                    }
+                }
+                if(tags.isNotEmpty()) {
+                    Log.d(TAG, "add tags ${tags.size}")
+                    val addTagsResult = wordsUseCase.addTagsToWord(dictionaryId, tags, wordResult.third ?: "")
+                    Log.d(TAG, "tags added result ${addTagsResult}")
+                }
+                emit(FetchDataState.FinishLoadingState)
+                emit(FetchDataState.DataState(translationCreatedSuccess))
             }
         }
     }
@@ -329,5 +308,8 @@ class AddDictionaryWordViewModel @Inject constructor(
             }
         }
     }
+
+    fun getDictionary() = dictionary
+    fun getEditedWord() = editWord
 
 }
