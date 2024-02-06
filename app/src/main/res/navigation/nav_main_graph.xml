@@ -127,6 +127,9 @@
             android:name="my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID"
             android:defaultValue="null"
             app:argType="string" />
+        <action
+            android:id="@+id/action_wordsMultiChooseFragment_to_dictionaryWordsFilterFragment"
+            app:destination="@id/dictionaryWordsFilterFragment" />
     </fragment>
     <fragment
         android:id="@+id/quizDetailTabsFragment"

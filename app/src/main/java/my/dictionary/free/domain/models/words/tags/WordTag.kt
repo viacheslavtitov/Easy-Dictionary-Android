@@ -7,7 +7,7 @@ import kotlinx.parcelize.Parcelize
 data class WordTag(
     val _id: String? = null,
     val userUUID: String, var tag: String
-) : Parcelable, Tag(tag) {
+) : Parcelable, Tag(tag, _id ?: "") {
     companion object {
         fun empty(): WordTag = WordTag(
             _id = null,

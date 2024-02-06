@@ -18,7 +18,8 @@ import my.dictionary.free.view.ext.getColorInt
 
 class DictionaryWordsAdapter(
     private val data: MutableList<Word>,
-    private val filteredData: MutableList<Word>
+    private val filteredData: MutableList<Word>,
+    private val wordTypes: List<String>
 ) :
     RecyclerView.Adapter<DictionaryWordsAdapter.ViewHolder>(), Filterable {
 
@@ -197,11 +198,11 @@ class DictionaryWordsAdapter(
     private fun filterIfNeeds() {
         filterModel?.let { filter ->
             if (filter.tags.isNotEmpty() || filter.categories.isNotEmpty() || filter.types.isNotEmpty()) {
-                val newFilteredData = arrayListOf<Word>()
+                val newFilteredData = mutableSetOf<Word>()
                 (filter.tags as? List<WordTag>)?.let { tags ->
                     if (tags.isNotEmpty()) {
                         val matchWordTag = arrayListOf<Word>()
-                        filteredData.forEach { word ->
+                        data.forEach { word ->
                             val matchTag =
                                 tags.find { wordTag -> word.tags.find { it._id == wordTag._id } != null } != null
                             if (matchTag) {
@@ -214,9 +215,9 @@ class DictionaryWordsAdapter(
                 (filter.categories as? List<CategoryTag>)?.let { categories ->
                     if (categories.isNotEmpty()) {
                         val matchWordTag = arrayListOf<Word>()
-                        filteredData.forEach { word ->
+                        data.forEach { word ->
                             val matchTag =
-                                categories.find { wordTag -> word.tags.find { it.tag == wordTag.tag } != null } != null
+                                categories.find { categoryTag -> word.translates.find { it.categoryId == categoryTag.id } != null } != null
                             if (matchTag) {
                                 matchWordTag.add(word)
                             }
@@ -227,9 +228,11 @@ class DictionaryWordsAdapter(
                 (filter.types as? List<Tag>)?.let { types ->
                     if (types.isNotEmpty()) {
                         val matchWordTag = arrayListOf<Word>()
-                        filteredData.forEach { word ->
+                        for (word in data) {
+                            if (word.type == 0) continue
+                            val wordType = wordTypes[word.type]
                             val matchTag =
-                                types.find { wordTag -> word.tags.find { it.tag == wordTag.tagName } != null } != null
+                                types.find { wordTag -> wordType == wordTag.tagName } != null
                             if (matchTag) {
                                 matchWordTag.add(word)
                             }

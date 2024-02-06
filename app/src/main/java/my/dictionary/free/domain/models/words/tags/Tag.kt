@@ -4,4 +4,4 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-open class Tag(var tagName: String): Parcelable
+open class Tag(val tagName: String, val id: String): Parcelable

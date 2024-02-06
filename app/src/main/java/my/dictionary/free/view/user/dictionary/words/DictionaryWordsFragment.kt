@@ -131,7 +131,13 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     R.color.main_dark
                 )
             }
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
+        val wordTypes = mutableListOf<String>().apply {
+            add(" ")
+            context?.resources?.getStringArray(R.array.word_types)?.toList()?.let {
+                addAll(it)
+            }
+        }
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }
@@ -184,11 +190,6 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
             }
         })
         dictionaryId = arguments?.getString(BUNDLE_DICTIONARY_ID, null)
-        refreshWords()
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         setFragmentResultListener(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT_KEY) { requestKey, bundle ->
             val filterModel: FilterModel? =
                 if (hasTiramisu()) bundle.getParcelable(
@@ -197,6 +198,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 ) else bundle.getParcelable(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT)
             wordsAdapter?.setFilterModel(filterModel)
         }
+        refreshWords()
     }
 
     private fun refreshWords() {

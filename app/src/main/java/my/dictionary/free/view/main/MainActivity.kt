@@ -44,6 +44,7 @@ import my.dictionary.free.domain.models.navigation.AddWordTagsScreen
 import my.dictionary.free.domain.models.navigation.AppNavigation
 import my.dictionary.free.domain.models.navigation.DictionaryChooseScreen
 import my.dictionary.free.domain.models.navigation.DictionaryFilterScreen
+import my.dictionary.free.domain.models.navigation.DictionaryMultiChooseFilterScreen
 import my.dictionary.free.domain.models.navigation.DictionaryWordsScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.models.navigation.EditDictionaryWordScreen
@@ -561,6 +562,23 @@ class MainActivity : AbstractBaseActivity() {
                 }
                 navController.navigate(
                     R.id.action_dictionaryWordsFragment_to_dictionaryWordsFilterFragment,
+                    bundle
+                )
+            }
+
+            is DictionaryMultiChooseFilterScreen -> {
+                val bundle = Bundle().apply {
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_DICTIONARY,
+                        navigation.dictionary
+                    )
+                    putParcelable(
+                        DictionaryWordsFilterFragment.BUNDLE_FILTER,
+                        navigation.filterModel
+                    )
+                }
+                navController.navigate(
+                    R.id.action_wordsMultiChooseFragment_to_dictionaryWordsFilterFragment,
                     bundle
                 )
             }

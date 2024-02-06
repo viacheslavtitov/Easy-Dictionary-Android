@@ -102,8 +102,8 @@ class DictionaryWordsFilterFragment : AbstractBaseFragment() {
         }
         loadCategories(dictionary)
         typesLayout.removeAllViews()
-        context?.resources?.getStringArray(R.array.word_types)?.toList()?.forEach {
-            addType(it)
+        context?.resources?.getStringArray(R.array.word_types)?.toList()?.forEachIndexed { index, value ->
+            addType(value, index.toString())
         }
     }
 
@@ -164,9 +164,9 @@ class DictionaryWordsFilterFragment : AbstractBaseFragment() {
         categoriesLayout.addView(bubbleView)
     }
 
-    private fun addType(type: String) {
+    private fun addType(type: String, id: String) {
         val bubbleView = BubbleView(requireContext())
-        bubbleView.setWordTag(Tag(type))
+        bubbleView.setWordTag(Tag(type, id))
         filterModel?.let { model ->
             if(model.types.isNotEmpty()) {
                 val selected = model.types.find { it.tagName == type } != null
