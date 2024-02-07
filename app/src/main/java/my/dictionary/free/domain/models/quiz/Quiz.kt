@@ -13,6 +13,10 @@ data class Quiz(
     val name: String,
     val timeInSeconds: Int,
     val reversed: Boolean = false,
+    val hidePhonetic: Boolean = false,
+    val showTags: Boolean = false,
+    val showCategories: Boolean = false,
+    val showTypes: Boolean = false,
     val words: MutableList<Word> = mutableListOf(),
     val quizWords: MutableList<QuizWords> = mutableListOf(),
     val histories: MutableList<QuizResult> = mutableListOf()
@@ -24,6 +28,10 @@ data class Quiz(
             userId = "",
             dictionary = null,
             name = "",
+            hidePhonetic = false,
+            showTags = false,
+            showCategories = false,
+            showTypes = false,
             timeInSeconds = DEFAULT_QUIZE_TIME,
             words = mutableListOf()
         )

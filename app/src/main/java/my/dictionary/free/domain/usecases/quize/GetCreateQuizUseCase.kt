@@ -48,6 +48,10 @@ class GetCreateQuizUseCase @Inject constructor(
                 dictionaryId = dictionaryId,
                 name = quiz.name,
                 reversed = quiz.reversed,
+                hidePhonetic = quiz.hidePhonetic,
+                showTags = quiz.showTags,
+                showCategories = quiz.showCategories,
+                showTypes = quiz.showTypes,
                 timeInSeconds = quiz.timeInSeconds
             )
         )
@@ -64,6 +68,10 @@ class GetCreateQuizUseCase @Inject constructor(
                 dictionaryId = dictionaryId,
                 name = quiz.name,
                 reversed = quiz.reversed,
+                hidePhonetic = quiz.hidePhonetic,
+                showTags = quiz.showTags,
+                showCategories = quiz.showCategories,
+                showTypes = quiz.showTypes,
                 timeInSeconds = quiz.timeInSeconds
             )
         )
@@ -92,6 +100,10 @@ class GetCreateQuizUseCase @Inject constructor(
                         dictionary = dictionary,
                         name = quiz.name,
                         reversed = quiz.reversed,
+                        hidePhonetic = quiz.hidePhonetic,
+                        showTags = quiz.showTags,
+                        showCategories = quiz.showCategories,
+                        showTypes = quiz.showTypes,
                         timeInSeconds = quiz.timeInSeconds,
                     )
                 }
@@ -121,6 +133,10 @@ class GetCreateQuizUseCase @Inject constructor(
                         dictionary = dictionary,
                         name = quiz.name,
                         reversed = quiz.reversed,
+                        hidePhonetic = quiz.hidePhonetic,
+                        showTags = quiz.showTags,
+                        showCategories = quiz.showCategories,
+                        showTypes = quiz.showTypes,
                         timeInSeconds = quiz.timeInSeconds,
                     )
                 }

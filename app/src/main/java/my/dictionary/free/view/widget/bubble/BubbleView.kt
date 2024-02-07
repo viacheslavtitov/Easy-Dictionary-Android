@@ -48,6 +48,7 @@ class BubbleView : View {
     private var paddingContainer: Int = 0
     private var rectangleRect = RectF()
     private var selected = false
+    private var isHiden = false
 
     private val textPaint by lazy {
         TextPaint().apply {
@@ -132,7 +133,8 @@ class BubbleView : View {
             } else {
                 drawBackground(canvas, unSelectBackgroundPaint)
             }
-            drawText(canvas, tag)
+            if (!isHiden)
+                drawText(canvas, tag)
         }
     }
 
@@ -163,4 +165,11 @@ class BubbleView : View {
     }
 
     fun selected() = selected
+
+    fun isHide(hide: Boolean) {
+        isHiden = hide
+        invalidate()
+    }
+
+    fun isHide() = isHiden
 }

@@ -13,3 +13,7 @@ fun String.decodeHex(charset: Charset): String {
 fun String.toUnicode(radix: Int = 16): String {
     return this.toLong(radix).toInt().toChar().toString()
 }
+
+fun String.hide(): String {
+    return "*".repeat(this.length)
+}

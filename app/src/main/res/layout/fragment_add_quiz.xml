@@ -110,14 +110,54 @@
                 tools:text="English - Ukrainian" />
 
             <androidx.appcompat.widget.AppCompatCheckBox
-                android:textSize="16dp"
-                android:textColor="@color/main_text"
-                style="@style/Widget.App.CheckBox"
                 android:id="@+id/reverse_dictionary"
+                style="@style/Widget.App.CheckBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="9dp"
-                android:text="@string/reverse_dictionary"/>
+                android:text="@string/reverse_dictionary"
+                android:textColor="@color/main_text"
+                android:textSize="16dp" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/hide_phonetic"
+                style="@style/Widget.App.CheckBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="9dp"
+                android:text="@string/hide_phonetic"
+                android:textColor="@color/main_text"
+                android:textSize="16dp" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/show_tags"
+                style="@style/Widget.App.CheckBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="9dp"
+                android:text="@string/show_tags"
+                android:textColor="@color/main_text"
+                android:textSize="16dp" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/show_categories"
+                style="@style/Widget.App.CheckBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="9dp"
+                android:text="@string/show_categories"
+                android:textColor="@color/main_text"
+                android:textSize="16dp" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/show_types"
+                style="@style/Widget.App.CheckBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="9dp"
+                android:text="@string/show_types"
+                android:textColor="@color/main_text"
+                android:textSize="16dp" />
 
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/add_words"

@@ -66,6 +66,11 @@
     <string name="add_quiz">Add quiz</string>
     <string name="edit_quiz">Edit quiz</string>
     <string name="reverse_dictionary">Reverse dictionary</string>
+    <string name="hide_phonetic">Hide phonetic</string>
+    <string name="show_tags">Display tags</string>
+    <string name="show_categories">Display categories</string>
+    <string name="show_types">Display types</string>
+    <string name="error_delete_quiz">Something was wrong to delete quiz</string>
     <!-- Dictionary -->
     <string name="dictionary">Dictionary</string>
     <string name="add_dictionary">Add dictionary</string>

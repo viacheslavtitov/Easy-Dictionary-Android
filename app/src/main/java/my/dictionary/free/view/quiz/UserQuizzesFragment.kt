@@ -17,9 +17,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,17 +25,16 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.AddUserQuizScreen
-import my.dictionary.free.domain.models.navigation.EditQuizScreenFromDetail
 import my.dictionary.free.domain.models.navigation.EditQuizScreenFromQuizList
 import my.dictionary.free.domain.models.navigation.UserQuizScreen
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.UserQuizzesViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
 import my.dictionary.free.view.widget.ListItemDecoration
@@ -114,7 +111,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
             view.findViewById<SwipeRefreshLayout?>(R.id.swipe_refresh_layout)?.also {
                 it.setOnRefreshListener {
                     Log.d(TAG, "onRefresh")
-                    refreshDictionaries()
+                    refreshQuizzes()
                 }
                 it.setColorSchemeResources(
                     R.color.main,
@@ -131,42 +128,6 @@ class UserQuizzesFragment : AbstractBaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated")
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.clearActionModeUIState.drop(1).collect { clear ->
-                        if (clear) {
-                            actionMode?.finish()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, quizzesRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        swipeRefreshLayout?.isRefreshing = visible
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearQuizzesUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear quizzes")
-                            quizzesAdapter?.clearData()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.quizzesUIState.drop(1).collect { quiz ->
-                        Log.d(TAG, "quiz updated: $quiz")
-                        quizzesAdapter?.add(quiz)
-                    }
-                }
-            }
-        }
 
         addMenuProvider(R.menu.menu_user_quizzes, { menu, mi ->
             run {
@@ -195,12 +156,43 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                 else -> false
             }
         })
-        refreshDictionaries()
+        refreshQuizzes()
     }
 
-    private fun refreshDictionaries() {
-        quizzesAdapter?.clearData()
-        viewModel.loadQuizzes(context)
+    private fun refreshQuizzes() {
+        lifecycleScope.launch {
+            viewModel.loadQuizzes(context).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        quizzesAdapter?.clearData()
+                        swipeRefreshLayout?.isRefreshing = true
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = false
+                        sharedViewModel.loading(false)
+                        actionMode?.finish()
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            quizzesRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        Log.d(TAG, "quiz updated: ${it.data}")
+                        quizzesAdapter?.add(it.data)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, quizzesRecyclerView)
+                    }
+                }
+            }
+        }
     }
 
     private val onQuizzesQueryListener = object : SearchView.OnQueryTextListener {
@@ -261,6 +253,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
 
     private val onItemSwipedListener = object : OnItemSwipedListener {
         override fun onSwiped(position: Int) {
+            Log.d(TAG, "onSwiped=$position")
             quizzesAdapter?.temporaryRemoveItem(position)
             undoRemoveQuizeSnackbar = Snackbar.make(
                 quizzesRecyclerView,
@@ -299,10 +292,42 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                 }
 
                 R.id.menu_delete -> {
-                    viewModel.deleteQuizzes(
-                        context,
-                        quizzesAdapter?.getSelectedQuizzes()
-                    )
+                    lifecycleScope.launch {
+                        viewModel.deleteQuizzes(
+                            context,
+                            quizzesAdapter?.getSelectedQuizzes()
+                        ).collect {
+                            when (it) {
+                                is FetchDataState.StartLoadingState -> {
+                                    swipeRefreshLayout?.isRefreshing = true
+                                    sharedViewModel.loading(true)
+                                }
+
+                                is FetchDataState.FinishLoadingState -> {
+                                    swipeRefreshLayout?.isRefreshing = false
+                                    sharedViewModel.loading(false)
+                                    actionMode?.finish()
+                                    refreshQuizzes()
+                                }
+
+                                is FetchDataState.ErrorState -> {
+                                    displayError(
+                                        it.exception.message
+                                            ?: context?.getString(R.string.unknown_error),
+                                        quizzesRecyclerView
+                                    )
+                                }
+
+                                is FetchDataState.DataState -> {
+                                    //skip
+                                }
+
+                                is FetchDataState.ErrorStateString -> {
+                                    displayError(it.error, quizzesRecyclerView)
+                                }
+                            }
+                        }
+                    }
                     true
                 }
 

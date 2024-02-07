@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DictionaryWordsFilterViewModel @Inject constructor(
-    private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase,
+    private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase
 ) : ViewModel() {
     companion object {
         private val TAG = DictionaryWordsFilterViewModel::class.simpleName
