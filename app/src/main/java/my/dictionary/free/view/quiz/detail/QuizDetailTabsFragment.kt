@@ -7,14 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.EditQuizScreenFromDetail
@@ -22,6 +19,7 @@ import my.dictionary.free.domain.models.navigation.RunQuizScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.detail.QuizDetailTabsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 
 @AndroidEntryPoint
@@ -56,39 +54,6 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated")
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, viewPager!!)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.quizUIState.drop(1).collect { quiz ->
-                        adapter = QuizDetailTabsAdapter(this@QuizDetailTabsFragment, quiz)
-                        viewPager?.adapter = adapter
-                        TabLayoutMediator(tabLayout!!, viewPager!!) { tab, position ->
-                            when (position) {
-                                0 -> {
-                                    tab.text = getString(R.string.quiz)
-                                    tab.setIcon(R.drawable.ic_quiz)
-                                }
-
-                                1 -> {
-                                    tab.text = getString(R.string.history)
-                                    tab.setIcon(R.drawable.ic_quiz_history)
-                                }
-                            }
-                        }.attach()
-                    }
-                }
-            }
-        }
         addMenuProvider(R.menu.menu_quiz_detail, { menu, mi ->
         }, {
             when (it) {
@@ -111,7 +76,52 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
             }
         })
         quizId = arguments?.getString(BUNDLE_QUIZ_ID, null)
-        viewModel.loadQuiz(context, quizId)
+        loadQuiz()
+    }
+
+    private fun loadQuiz() {
+        lifecycleScope.launch {
+            viewModel.loadQuiz(context, quizId).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            viewPager
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        adapter = QuizDetailTabsAdapter(this@QuizDetailTabsFragment, it.data)
+                        viewPager?.adapter = adapter
+                        TabLayoutMediator(tabLayout!!, viewPager!!) { tab, position ->
+                            when (position) {
+                                0 -> {
+                                    tab.text = getString(R.string.quiz)
+                                    tab.setIcon(R.drawable.ic_quiz)
+                                }
+
+                                1 -> {
+                                    tab.text = getString(R.string.history)
+                                    tab.setIcon(R.drawable.ic_quiz_history)
+                                }
+                            }
+                        }.attach()
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, viewPager)
+                    }
+                }
+            }
+        }
     }
 
 }

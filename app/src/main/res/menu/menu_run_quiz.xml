@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/next"
+        android:icon="@drawable/ic_next_word_quiz"
+        android:iconTint="@color/white"
+        android:title="@string/next"
+        app:showAsAction="always" />
+</menu>

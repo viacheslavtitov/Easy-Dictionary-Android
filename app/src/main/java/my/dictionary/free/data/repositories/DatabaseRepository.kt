@@ -338,6 +338,10 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
                             name = map[QuizTable.NAME] as String,
                             reversed = map[QuizTable.REVERSED] as? Boolean ?: false,
+                            hidePhonetic = map[QuizTable.HIDE_PHONETIC] as? Boolean ?: false,
+                            showTags = map[QuizTable.SHOW_TAGS] as? Boolean ?: false,
+                            showCategories = map[QuizTable.SHOW_CATEGORIES] as? Boolean ?: false,
+                            showTypes = map[QuizTable.SHOW_TYPES] as? Boolean ?: false,
                             timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
                         )
                         trySend(quiz)
@@ -377,6 +381,10 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
                             name = map[QuizTable.NAME] as String,
                             reversed = map[QuizTable.REVERSED] as? Boolean ?: false,
+                            hidePhonetic = map[QuizTable.HIDE_PHONETIC] as? Boolean ?: false,
+                            showTags = map[QuizTable.SHOW_TAGS] as? Boolean ?: false,
+                            showCategories = map[QuizTable.SHOW_CATEGORIES] as? Boolean ?: false,
+                            showTypes = map[QuizTable.SHOW_TYPES] as? Boolean ?: false,
                             timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
                         )
                         trySend(quiz)
@@ -419,6 +427,10 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     dictionaryId = quiz.dictionaryId,
                     name = quiz.name,
                     reversed = quiz.reversed,
+                    hidePhonetic = quiz.hidePhonetic,
+                    showTags = quiz.showTags,
+                    showCategories = quiz.showCategories,
+                    showTypes = quiz.showTypes,
                     timeInSeconds = quiz.timeInSeconds
                 )
                 val childUpdates = hashMapOf<String, Any>(
@@ -450,6 +462,11 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
             userChild.child(QuizTable.DICTIONARY_ID).setValue(quiz.dictionaryId).isComplete
             userChild.child(QuizTable.NAME).setValue(quiz.name).isComplete
             userChild.child(QuizTable.TIME_IN_SECONDS).setValue(quiz.timeInSeconds).isComplete
+            userChild.child(QuizTable.REVERSED).setValue(quiz.reversed).isComplete
+            userChild.child(QuizTable.HIDE_PHONETIC).setValue(quiz.hidePhonetic).isComplete
+            userChild.child(QuizTable.SHOW_TAGS).setValue(quiz.showTags).isComplete
+            userChild.child(QuizTable.SHOW_CATEGORIES).setValue(quiz.showCategories).isComplete
+            userChild.child(QuizTable.SHOW_TYPES).setValue(quiz.showTypes).isComplete
             cont.resume(true)
         }
     }

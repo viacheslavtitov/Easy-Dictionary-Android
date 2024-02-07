@@ -126,6 +126,9 @@ class BubbleLayout : ViewGroup {
                 MotionEvent.ACTION_DOWN -> {
                     (findViewByCoordinate(ev.x, ev.y) as? BubbleView)?.let {
                         it.select(!it.selected())
+                        if(it.isHide()) {
+                            it.isHide(false)
+                        }
                     }
                 }
             }
