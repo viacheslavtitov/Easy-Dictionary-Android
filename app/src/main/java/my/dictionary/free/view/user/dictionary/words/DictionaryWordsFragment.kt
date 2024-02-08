@@ -73,6 +73,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
     private var actionMode: ActionMode? = null
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
     private var dictionaryId: String? = null
+    private var filterSearchView: SearchView? = null
 
     private val undoRemoveWordTimer =
         object : CountDownTimer(
@@ -170,6 +171,11 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                         )
                     )
                     searchView.setOnQueryTextListener(onWordsQueryListener)
+                    searchView.setOnCloseListener {
+                        filterSearchView = null
+                        true
+                    }
+                    this.filterSearchView = searchView
                 }
             }
         }, {
@@ -180,8 +186,13 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 }
 
                 R.id.nav_filter -> {
-                    viewModel.getDictionary()?.let {dictionary ->
-                        sharedViewModel.navigateTo(DictionaryFilterScreen(dictionary, wordsAdapter?.getFilteredModel()))
+                    viewModel.getDictionary()?.let { dictionary ->
+                        sharedViewModel.navigateTo(
+                            DictionaryFilterScreen(
+                                dictionary,
+                                wordsAdapter?.getFilteredModel()
+                            )
+                        )
                     }
                     return@addMenuProvider true
                 }
@@ -224,7 +235,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     }
 
                     is FetchDataState.DataState -> {
-                        wordsAdapter?.add(it.data)
+                        wordsAdapter?.add(it.data, filterSearchView?.query?.toString())
                     }
 
                     is FetchDataState.ErrorStateString -> {

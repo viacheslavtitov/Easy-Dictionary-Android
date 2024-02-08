@@ -172,7 +172,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                     }
 
                     is FetchDataState.DataState -> {
-                        wordsAdapter?.add(it.data)
+                        wordsAdapter?.add(it.data, null)
                     }
 
                     is FetchDataState.ErrorStateString -> {
