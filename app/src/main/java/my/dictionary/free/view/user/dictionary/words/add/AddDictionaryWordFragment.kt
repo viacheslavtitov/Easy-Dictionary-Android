@@ -465,7 +465,6 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     private val onTranslationVariantEditListener = object : OnTranslationVariantEditListener {
         override fun onEdit(entity: TranslationVariant) {
-            viewModel.deleteTranslation(entity)
             sharedViewModel.navigateTo(
                 EditTranslationVariantsScreen(
                     textInputEditTextWord.text?.toString(),

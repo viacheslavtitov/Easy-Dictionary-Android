@@ -68,7 +68,16 @@ class TranslationVariantsAdapter(
     }
 
     fun add(translationVariant: TranslationVariant) {
-        data.add(translationVariant)
+        if(translationVariant._id != null && data.find { it._id == translationVariant._id } != null) {
+            val existIndex = data.indexOfFirst {
+                it._id == translationVariant._id
+            }
+            if(existIndex > -1) {
+                data[existIndex] = translationVariant
+            }
+        } else {
+            data.add(translationVariant)
+        }
         this.notifyDataSetChanged()
     }
 

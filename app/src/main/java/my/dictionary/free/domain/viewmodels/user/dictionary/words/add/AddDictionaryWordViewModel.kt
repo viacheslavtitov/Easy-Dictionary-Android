@@ -289,13 +289,31 @@ class AddDictionaryWordViewModel @Inject constructor(
     fun isEditMode() = editWord != null
 
     fun addTranslation(translationVariant: TranslationVariant) {
-        val existIndex = notSavingTranslations.indexOfFirst {
+        var existIndex = notSavingTranslations.indexOfFirst {
             it.translation == translationVariant.translation
         }
         if (existIndex >= 0) {
             notSavingTranslations[existIndex] = translationVariant
         } else {
             notSavingTranslations.add(translationVariant)
+        }
+        if(translationVariant._id != null && editWord != null) {
+            existIndex = editWord!!.translates.indexOfFirst {
+                it._id == translationVariant._id
+            }
+            if (existIndex >= 0) {
+                val updatedTranslation = editWord!!.translates.toMutableList()
+                updatedTranslation[existIndex] = translationVariant
+                editWord = Word(
+                    _id = editWord!!._id,
+                    dictionaryId = editWord!!.dictionaryId,
+                    original = editWord!!.original,
+                    type = editWord!!.type,
+                    phonetic = editWord!!.phonetic,
+                    translates = updatedTranslation,
+                    tags = editWord!!.tags
+                )
+            }
         }
     }
 

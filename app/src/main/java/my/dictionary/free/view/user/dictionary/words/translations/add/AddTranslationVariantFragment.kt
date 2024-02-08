@@ -232,7 +232,7 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
         viewModel.setEditModel(editTranslationVariant)
         if (viewModel.isEditMode()) {
             textInputEditTextExample.setText(viewModel.getExample())
-            translateWordTextView.text = viewModel.getTranslation()
+            textInputEditTextTranslation.setText(viewModel.getTranslation())
         }
         loadCategories()
     }
