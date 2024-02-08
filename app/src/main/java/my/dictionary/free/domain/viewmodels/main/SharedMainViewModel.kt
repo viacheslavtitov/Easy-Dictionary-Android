@@ -1,6 +1,8 @@
 package my.dictionary.free.domain.viewmodels.main
 
 import android.net.Uri
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -25,13 +27,20 @@ import my.dictionary.free.domain.models.navigation.HomeScreen
 import my.dictionary.free.domain.models.users.User
 import my.dictionary.free.domain.usecases.users.GetUpdateUsersUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
+import my.dictionary.free.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class SharedMainViewModel @Inject constructor(
     private val getUpdateUsersUseCase: GetUpdateUsersUseCase,
-    private val preferenceUtils: PreferenceUtils
+    private val preferenceUtils: PreferenceUtils,
+    private val uiStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    companion object {
+        private val TAG = SharedMainViewModel::class.simpleName
+        private const val KEY_STATE_TITLE = "title"
+    }
 
     private val _userEmailValue = Channel<String>()
     val userEmailValue: StateFlow<String> = _userEmailValue.receiveAsFlow()
@@ -62,6 +71,8 @@ class SharedMainViewModel @Inject constructor(
     private val _showActionButtonUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
     val showActionButtonUIState: StateFlow<Boolean> = _showActionButtonUIState.asStateFlow()
+
+    val titleSavedUIState: StateFlow<String> = uiStateHandle.getStateFlow(KEY_STATE_TITLE, "")
 
     private fun updateUserData(user: FirebaseUser) {
         viewModelScope.launch {
@@ -118,6 +129,11 @@ class SharedMainViewModel @Inject constructor(
 
     fun showOrHideActionButton(show: Boolean) {
         _showActionButtonUIState.value = show
+    }
+
+    fun saveTitle(value: String?) {
+        Log.d(TAG, "title save $value")
+        uiStateHandle[KEY_STATE_TITLE] = value
     }
 
 }

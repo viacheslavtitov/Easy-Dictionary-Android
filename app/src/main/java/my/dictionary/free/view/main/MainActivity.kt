@@ -145,46 +145,57 @@ class MainActivity : AbstractBaseActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             sharedViewModel.showOrHideActionButton(false)
             navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+            var newTitle = ""
             when (destination.id) {
                 R.id.userDictionaryFragment -> {
-                    toolbar.setTitle(R.string.my_dictionaries)
+                    newTitle = getString(R.string.my_dictionaries)
+                    toolbar.title = newTitle
                 }
 
                 R.id.addUserDictionaryFragment -> {
-                    toolbar.setTitle(R.string.add_dictionary)
+                    newTitle = getString(R.string.add_dictionary)
+                    toolbar.title = newTitle
                 }
 
                 R.id.languagesFragment -> {
-                    toolbar.setTitle(R.string.add_language)
+                    newTitle = getString(R.string.add_language)
+                    toolbar.title = newTitle
                 }
 
                 R.id.dictionaryWordsFragment -> {
-                    toolbar.setTitle(R.string.words)
+                    newTitle = getString(R.string.words)
+                    toolbar.title = newTitle
                 }
 
                 R.id.addDictionaryWordFragment -> {
-                    toolbar.setTitle(R.string.add_word)
+                    newTitle = getString(R.string.add_word)
+                    toolbar.title = newTitle
                     sharedViewModel.showOrHideActionButton(true)
                 }
 
                 R.id.addTranslationVariant -> {
-                    toolbar.setTitle(R.string.add_translation_variants)
+                    newTitle = getString(R.string.add_translation_variants)
+                    toolbar.title = newTitle
                 }
 
                 R.id.quizDetailTabsFragment -> {
-                    toolbar.setTitle(R.string.quiz)
+                    newTitle = getString(R.string.quiz)
+                    toolbar.title = newTitle
                 }
 
                 R.id.runQuizFragment -> {
-                    toolbar.setTitle(R.string.quiz)
+                    newTitle = getString(R.string.quiz)
+                    toolbar.title = newTitle
                 }
 
                 R.id.addWordTagsFragment -> {
-                    toolbar.setTitle(R.string.add_or_choose_tags)
+                    newTitle = getString(R.string.add_or_choose_tags)
+                    toolbar.title = newTitle
                 }
 
                 R.id.dictionaryWordsFilterFragment -> {
-                    toolbar.setTitle(R.string.filter)
+                    newTitle = getString(R.string.filter)
+                    toolbar.title = newTitle
                 }
 
                 R.id.simpleFragment -> {
@@ -193,6 +204,7 @@ class MainActivity : AbstractBaseActivity() {
                     navDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
                 }
             }
+            sharedViewModel.saveTitle(newTitle)
         }
         navDrawerLayout.addDrawerListener(drawerToggle)
         drawerToggle.isDrawerIndicatorEnabled = false
@@ -282,6 +294,13 @@ class MainActivity : AbstractBaseActivity() {
                         tagActionButton.hide()
                         translationActionButton.hide()
                     }
+                }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                sharedViewModel.titleSavedUIState.collect { value ->
+                    toolbar.setTitle(value)
                 }
             }
         }
@@ -598,5 +617,10 @@ class MainActivity : AbstractBaseActivity() {
             translationActionButton.show()
             extendActionButton.extend()
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
+
+        super.onSaveInstanceState(outState, outPersistentState)
     }
 }

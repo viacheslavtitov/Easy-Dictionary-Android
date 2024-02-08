@@ -2,6 +2,7 @@ package my.dictionary.free.domain.viewmodels.user.dictionary.words.add
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,11 +35,13 @@ class AddDictionaryWordViewModel @Inject constructor(
     private val wordsUseCase: WordsUseCase,
     private val getCreateDictionaryUseCase: GetCreateDictionaryUseCase,
     private val getCreateTranslationsUseCase: GetCreateTranslationsUseCase,
-    private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase
+    private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase,
+    private val uiStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     companion object {
         private val TAG = AddDictionaryWordViewModel::class.simpleName
+        private const val KEY_STATE_TYPE = "type"
     }
 
     private val _validateWord = Channel<String>()
@@ -50,9 +53,7 @@ class AddDictionaryWordViewModel @Inject constructor(
         MutableStateFlow("")
     val nameUIState: StateFlow<String> = _nameUIState.asStateFlow()
 
-    private val _typeUIState: MutableStateFlow<Int> =
-        MutableStateFlow(0)
-    val typeUIState: StateFlow<Int> = _typeUIState.asStateFlow()
+    val typeSavedUIState: StateFlow<Int> = uiStateHandle.getStateFlow(KEY_STATE_TYPE, 0)
 
     private val _phoneticUIState: MutableStateFlow<String> =
         MutableStateFlow("")
@@ -121,7 +122,7 @@ class AddDictionaryWordViewModel @Inject constructor(
             _phoneticUIState.value = it
         }
         _nameUIState.value = editWord!!.original
-        _typeUIState.value = editWord!!.type
+        saveType(editWord!!.type)
         emit(FetchDataState.StartLoadingState)
         for (translate in editWord!!.translates) {
             if (isTranslationExistInTempDeletedList(translate)) continue
@@ -233,9 +234,10 @@ class AddDictionaryWordViewModel @Inject constructor(
                         break
                     }
                 }
-                if(tags.isNotEmpty()) {
+                if (tags.isNotEmpty()) {
                     Log.d(TAG, "add tags ${tags.size}")
-                    val addTagsResult = wordsUseCase.addTagsToWord(dictionary!!._id!!, tags, editWord!!._id!!)
+                    val addTagsResult =
+                        wordsUseCase.addTagsToWord(dictionary!!._id!!, tags, editWord!!._id!!)
                     Log.d(TAG, "tags added result ${addTagsResult}")
                 }
                 emit(FetchDataState.FinishLoadingState)
@@ -272,9 +274,10 @@ class AddDictionaryWordViewModel @Inject constructor(
                         break
                     }
                 }
-                if(tags.isNotEmpty()) {
+                if (tags.isNotEmpty()) {
                     Log.d(TAG, "add tags ${tags.size}")
-                    val addTagsResult = wordsUseCase.addTagsToWord(dictionaryId, tags, wordResult.third ?: "")
+                    val addTagsResult =
+                        wordsUseCase.addTagsToWord(dictionaryId, tags, wordResult.third ?: "")
                     Log.d(TAG, "tags added result ${addTagsResult}")
                 }
                 emit(FetchDataState.FinishLoadingState)
@@ -311,5 +314,9 @@ class AddDictionaryWordViewModel @Inject constructor(
 
     fun getDictionary() = dictionary
     fun getEditedWord() = editWord
+
+    fun saveType(value: Int?) {
+        uiStateHandle[KEY_STATE_TYPE] = value
+    }
 
 }
