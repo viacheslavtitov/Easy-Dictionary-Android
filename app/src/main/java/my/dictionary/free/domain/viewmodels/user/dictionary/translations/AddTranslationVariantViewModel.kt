@@ -124,26 +124,28 @@ class AddTranslationVariantViewModel @Inject constructor(
             return@flow
         }
         Log.d(TAG, "updateTranslation($translation)")
+        val dictionaryId = editModel?.dictionaryId
+        editModel = TranslationVariant(
+            _id = editModel!!._id,
+            wordId = editModel!!.wordId,
+            categoryId = category?._id,
+            translation = translation.trim(),
+            example = example
+        )
+        editModel?.dictionaryId = dictionaryId
         if (isEditMode() && editModel!!._id == null) {
-            editModel = TranslationVariant(
-                _id = editModel!!._id,
-                wordId = editModel!!.wordId,
-                categoryId = category?._id,
-                translation = translation.trim(),
-                example = example
-            )
             emit(FetchDataState.DataState(true))
             return@flow
         }
+        if(editModel!!.dictionaryId?.isEmpty() == true) {
+            emit(FetchDataState.ErrorStateString(context.getString(R.string.error_update_translation)))
+            emit(FetchDataState.DataState(false))
+            return@flow
+        }
         emit(FetchDataState.StartLoadingState)
+
         val result = getCreateTranslationsUseCase.updateTranslation(
-            translation = TranslationVariant(
-                _id = editModel!!._id,
-                wordId = editModel!!.wordId,
-                categoryId = category?._id,
-                translation = translation.trim(),
-                example = example
-            ),
+            editModel!!,
             dictionaryId = editModel!!.dictionaryId ?: ""
         )
         emit(FetchDataState.FinishLoadingState)

@@ -264,22 +264,22 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         if (translation._id.isNullOrEmpty()) {
             return false
         } else return suspendCoroutine { cont ->
-
-            val reference = database.reference
-
-            val userChild =
-                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
-                    .child(dictionaryId)
-                    .child(WordTable._NAME).child(wordId).child(TranslationVariantTable._NAME)
-                    .child(translation._id)
-
-            userChild.child(TranslationVariantTable.CATEGORY_ID)
-                .setValue(translation.categoryId).isComplete
-            userChild.child(TranslationVariantTable.TRANSLATE)
-                .setValue(translation.translate).isComplete
-            userChild.child(TranslationVariantTable.DESCRIPTION)
-                .setValue(translation.description).isComplete
-            cont.resume(true)
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId)
+                .child(WordTable._NAME).child(wordId).child(TranslationVariantTable._NAME)
+                .child(translation._id)
+                .updateChildren(mapOf(
+                    TranslationVariantTable.CATEGORY_ID to translation.categoryId,
+                    TranslationVariantTable.TRANSLATE to translation.translate,
+                    TranslationVariantTable.DESCRIPTION to translation.description
+                )
+                ) { error, reference ->
+                    if (error != null && error.message.isNotEmpty()) {
+                        cont.resume(false)
+                    } else {
+                        cont.resume(true)
+                    }
+                }
         }
     }
 
@@ -1134,7 +1134,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Boolean {
         return suspendCoroutine { cont ->
             val wordChild =
-                database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                database.reference.child(UsersTable._NAME).child(userId)
+                    .child(DictionaryTable._NAME)
                     .child(dictionaryId).child(WordTable._NAME).child(wordId)
             val childAdds = mutableMapOf<String, Any?>()
             tagIds.forEach {
