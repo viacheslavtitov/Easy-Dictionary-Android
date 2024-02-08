@@ -160,18 +160,6 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         refreshDictionaries()
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(TAG, "onCreate")
-        setFragmentResultListener(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT) { requestKey, bundle ->
-            val needUpdate =
-                bundle.getBoolean(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY, false)
-            if (needUpdate) {
-                refreshDictionaries()
-            }
-        }
-    }
-
     private fun refreshDictionaries() {
         lifecycleScope.launch {
             viewModel.loadDictionaries(context).collect {
