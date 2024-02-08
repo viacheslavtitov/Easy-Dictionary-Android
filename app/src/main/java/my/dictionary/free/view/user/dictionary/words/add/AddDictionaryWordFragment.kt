@@ -150,7 +150,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.typeUIState.collectLatest { position ->
+                    viewModel.typeSavedUIState.collectLatest { position ->
                         spinnerChooseWordType.setSelection(position)
                     }
                 }
@@ -487,5 +487,15 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         val bubbleView = BubbleView(requireContext())
         bubbleView.setWordTag(tag)
         tagsLayout.addView(bubbleView)
+    }
+
+    override fun onStop() {
+        viewModel.saveType(spinnerChooseWordType.selectedItemPosition)
+        super.onStop()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        viewModel.saveType(spinnerChooseWordType.selectedItemPosition)
+        super.onSaveInstanceState(outState)
     }
 }
