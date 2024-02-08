@@ -101,7 +101,7 @@ class QuizDetailFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.wordUIState.collect { words ->
                         words.forEach {
-                            wordsAdapter?.add(it)
+                            wordsAdapter?.add(it, null)
                         }
                     }
                 }

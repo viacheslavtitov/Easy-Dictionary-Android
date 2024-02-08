@@ -145,12 +145,16 @@ class DictionaryWordsAdapter(
         this.notifyDataSetChanged()
     }
 
-    fun add(dict: Word) {
+    fun add(dict: Word, query: String?) {
         data.add(dict)
         filteredData.add(dict)
         filterIfNeeds()
         needSortByAlphabet(sort)
-        this.notifyDataSetChanged()
+        if(!query.isNullOrEmpty()) {
+            getFilter().filter(query)
+        } else {
+            this.notifyDataSetChanged()
+        }
     }
 
     fun filterByCategory(categoryId: String?) {

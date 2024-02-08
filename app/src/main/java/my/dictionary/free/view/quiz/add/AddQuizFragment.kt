@@ -366,7 +366,7 @@ class AddQuizFragment : AbstractBaseFragment() {
     private fun fillWords(words: List<Word>) {
         wordsAdapter?.clearData()
         words.forEach {
-            wordsAdapter?.add(it)
+            wordsAdapter?.add(it, null)
         }
     }
 
