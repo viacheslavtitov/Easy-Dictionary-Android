@@ -41,11 +41,6 @@ class QuizDetailViewModel @Inject constructor() : ViewModel() {
         MutableStateFlow("")
     val dictionaryUIState: StateFlow<String> = _dictionaryUIState.asStateFlow()
 
-    val wordUIState: MutableSharedFlow<List<Word>> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_LATEST,
-    )
-
     private var quizModel: Quiz? = null
 
     fun loadQuiz(context: Context?, quiz: Quiz?) {
@@ -64,7 +59,6 @@ class QuizDetailViewModel @Inject constructor() : ViewModel() {
                     "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}"
             }
         }
-        wordUIState.tryEmit(quiz.words)
     }
 
     fun getQuiz() = quizModel

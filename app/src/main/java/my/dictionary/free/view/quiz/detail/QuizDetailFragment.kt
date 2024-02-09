@@ -98,13 +98,6 @@ class QuizDetailFragment : AbstractBaseFragment() {
                         dictionaryTextView?.text = value
                     }
                 }
-                launch {
-                    viewModel.wordUIState.collect { words ->
-                        words.forEach {
-                            wordsAdapter?.add(it, null)
-                        }
-                    }
-                }
             }
         }
         quiz = if (hasTiramisu()) arguments?.getParcelable(
@@ -112,5 +105,9 @@ class QuizDetailFragment : AbstractBaseFragment() {
             Quiz::class.java
         ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
         viewModel.loadQuiz(context, quiz)
+        wordsAdapter?.clearData()
+        quiz?.words?.forEach {
+            wordsAdapter?.add(it, null)
+        }
     }
 }

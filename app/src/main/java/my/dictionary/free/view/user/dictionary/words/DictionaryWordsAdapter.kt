@@ -52,10 +52,15 @@ class DictionaryWordsAdapter(
         val word = filteredData[position]
         val context = viewHolder.itemView.context
         viewHolder.originalTextView.text = word.original
-        val firstTranslatedWord = word.translates.firstOrNull()?.translation ?: ""
-        val translatedText =
-            if (word.translates.size <= 1) "- $firstTranslatedWord" else "- $firstTranslatedWord..."
-        viewHolder.translatedTextView.text = translatedText
+        if (word.translates.size <= 1) {
+            viewHolder.translatedTextView.text = word.translates.firstOrNull()?.translation ?: ""
+        } else {
+            var words = ""
+            word.translates.forEach {
+                words += "${it.translation}\n"
+            }
+            viewHolder.translatedTextView.text = words
+        }
         viewHolder.swipePosition = position
         val selected = selectedWords.firstOrNull { it._id == word._id } != null
         viewHolder.rootView.setBackgroundColor(
