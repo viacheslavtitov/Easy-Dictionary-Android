@@ -44,6 +44,8 @@ class CategorySpinnerAdapter(
 
     fun getItemByPosition(position: Int) = data[position]
 
+    fun getItems() = data
+
     fun findPositionItem(translation: TranslationCategory): Int {
         var resultPosition = 0
         for ((index, value) in data.withIndex()) {

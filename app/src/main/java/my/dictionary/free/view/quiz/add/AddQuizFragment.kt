@@ -32,6 +32,7 @@ import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.add.AddQuizViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.dialogs.DialogBuilders
 import my.dictionary.free.view.dialogs.ValueDialogListener
 import my.dictionary.free.view.ext.addMenuProvider
@@ -63,6 +64,10 @@ class AddQuizFragment : AbstractBaseFragment() {
     private var dictionaryNameTextView: AppCompatTextView? = null
     private var durationValueTextView: AppCompatTextView? = null
     private var reverseDictionary: AppCompatCheckBox? = null
+    private var hidePhonetic: AppCompatCheckBox? = null
+    private var showTags: AppCompatCheckBox? = null
+    private var showCategories: AppCompatCheckBox? = null
+    private var showTypes: AppCompatCheckBox? = null
     private var addDictionaryContainer: View? = null
     private var addDurationContainer: View? = null
 
@@ -83,6 +88,10 @@ class AddQuizFragment : AbstractBaseFragment() {
         addDurationContainer = view.findViewById(R.id.add_duration)
         durationValueTextView = view.findViewById(R.id.duration_value)
         reverseDictionary = view.findViewById(R.id.reverse_dictionary)
+        hidePhonetic = view.findViewById(R.id.hide_phonetic)
+        showTags = view.findViewById(R.id.show_tags)
+        showCategories = view.findViewById(R.id.show_categories)
+        showTypes = view.findViewById(R.id.show_types)
         reverseDictionary?.setOnCheckedChangeListener { compoundButton, checked ->
             fillDictionary()
         }
@@ -116,7 +125,13 @@ class AddQuizFragment : AbstractBaseFragment() {
             ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
         itemTouchHelper.attachToRecyclerView(wordsRecyclerView)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf())
+        val wordTypes = mutableListOf<String>().apply {
+            add(" ")
+            context?.resources?.getStringArray(R.array.word_types)?.toList()?.let {
+                addAll(it)
+            }
+        }
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }
@@ -135,24 +150,7 @@ class AddQuizFragment : AbstractBaseFragment() {
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, wordsRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.successCreateQuizUIState.collect { success ->
-                        if (success) {
-                            findNavController().popBackStack()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.validateName.collect { error ->
+                    viewModel.validateName.drop(1).collect { error ->
                         nameTextInputLayout?.error = error
                     }
                 }
@@ -169,13 +167,6 @@ class AddQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.wordUIState.collect { words ->
-                        if (wordsAdapter?.getWords()?.isEmpty() == true) {
-                            fillWords(words)
-                        }
-                    }
-                }
-                launch {
                     viewModel.nameUIState.collect { name ->
                         nameTextInputEditText?.setText(name)
                     }
@@ -183,6 +174,26 @@ class AddQuizFragment : AbstractBaseFragment() {
                 launch {
                     viewModel.reversedUIState.collect { value ->
                         reverseDictionary?.isChecked = value
+                    }
+                }
+                launch {
+                    viewModel.hidePhoneticUIState.collect { value ->
+                        hidePhonetic?.isChecked = value
+                    }
+                }
+                launch {
+                    viewModel.showTagsUIState.collect { value ->
+                        showTags?.isChecked = value
+                    }
+                }
+                launch {
+                    viewModel.showCategoriesUIState.collect { value ->
+                        showCategories?.isChecked = value
+                    }
+                }
+                launch {
+                    viewModel.showTypesUIState.collect { value ->
+                        showTypes?.isChecked = value
                     }
                 }
             }
@@ -193,23 +204,7 @@ class AddQuizFragment : AbstractBaseFragment() {
                 R.id.save_quiz -> {
                     val name = nameTextInputEditText?.text?.toString()
                     val words = wordsAdapter?.getWords()?.toList() ?: emptyList()
-                    if (viewModel.validate(
-                            context = context,
-                            name = name,
-                            duration = duration,
-                            dictionary = selectedDictionary,
-                            words = words
-                        )
-                    ) {
-                        viewModel.save(
-                            context = context,
-                            name = name,
-                            duration = duration,
-                            dictionary = selectedDictionary,
-                            reversed = reverseDictionary?.isChecked ?: false,
-                            words = words
-                        )
-                    }
+                    saveQuiz(name, words)
                     return@addMenuProvider true
                 }
 
@@ -222,10 +217,101 @@ class AddQuizFragment : AbstractBaseFragment() {
             Quiz::class.java
         ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
         Log.d(TAG, quiz?.toString() ?: "quiz is null")
-        viewModel.setQuiz(quiz)
         val title =
             if (viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
         sharedViewModel.setTitle(title)
+        lifecycleScope.launch {
+            viewModel.setQuiz(quiz).collect {
+                wordsAdapter?.clearData()
+                when (it) {
+                    is FetchDataState.DataState -> {
+                        fillWords(it.data)
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    private fun saveQuiz(name: String?, words: List<Word>) {
+        lifecycleScope.launch {
+            viewModel.validate(
+                context = context,
+                name = name,
+                duration = duration,
+                dictionary = selectedDictionary,
+                words = words
+            ).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            wordsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        Log.d(TAG, "quiz validated ${it.data}")
+                        if (it.data) {
+                            viewModel.save(
+                                context = context,
+                                name = name,
+                                duration = duration,
+                                dictionary = selectedDictionary,
+                                reversed = reverseDictionary?.isChecked ?: false,
+                                hidePhonetic = hidePhonetic?.isChecked ?: false,
+                                showTags = showTags?.isChecked ?: false,
+                                showCategories = showCategories?.isChecked ?: false,
+                                showTypes = showTypes?.isChecked ?: false,
+                                words = words
+                            ).collect {
+                                when (it) {
+                                    is FetchDataState.StartLoadingState -> {
+                                        sharedViewModel.loading(true)
+                                    }
+
+                                    is FetchDataState.FinishLoadingState -> {
+                                        sharedViewModel.loading(false)
+                                    }
+
+                                    is FetchDataState.ErrorState -> {
+                                        displayError(
+                                            it.exception.message
+                                                ?: context?.getString(R.string.unknown_error),
+                                            wordsRecyclerView
+                                        )
+                                    }
+
+                                    is FetchDataState.DataState -> {
+                                        Log.d(TAG, "quiz saved ${it.data}")
+                                        if (it.data) {
+                                            findNavController().popBackStack()
+                                        }
+                                    }
+
+                                    is FetchDataState.ErrorStateString -> {
+                                        displayError(it.error, wordsRecyclerView)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, wordsRecyclerView)
+                    }
+                }
+            }
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -280,7 +366,7 @@ class AddQuizFragment : AbstractBaseFragment() {
     private fun fillWords(words: List<Word>) {
         wordsAdapter?.clearData()
         words.forEach {
-            wordsAdapter?.add(it)
+            wordsAdapter?.add(it, null)
         }
     }
 

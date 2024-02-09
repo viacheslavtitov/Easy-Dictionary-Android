@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -16,7 +15,6 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -27,6 +25,7 @@ import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 
@@ -34,10 +33,6 @@ import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 class AddUserDictionaryFragment : AbstractBaseFragment() {
 
     companion object {
-        const val BUNDLE_DICTIONARY_CREATED_KEY =
-            "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY"
-        const val BUNDLE_DICTIONARY_CREATED_RESULT =
-            "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT"
         const val BUNDLE_DICTIONARY =
             "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY"
     }
@@ -48,6 +43,7 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
     private lateinit var textInputEditTextDialect: TextInputEditText
     private lateinit var langFromBtn: Button
     private lateinit var langToBtn: Button
+    private lateinit var rootView: View
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
     private val viewModel: AddUserDictionaryViewModel by viewModels()
@@ -63,6 +59,7 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         textInputLayoutDialect = view.findViewById(R.id.text_input_dialect)
         textInputEditTextDialect = view.findViewById(R.id.edit_text_dialect)
         langFromBtn = view.findViewById(R.id.btn_lang_from)
+        rootView = view.findViewById(R.id.root)
         langFromBtn.setOnClickListener {
             sharedViewModel.navigateTo(LanguagesScreen(LangType.FROM))
         }
@@ -70,7 +67,6 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         langToBtn.setOnClickListener {
             sharedViewModel.navigateTo(LanguagesScreen(LangType.TO))
         }
-        fillData()
         return view
     }
 
@@ -79,46 +75,20 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        val aboveView = getView() ?: return@collect
-                        displayError(errorMessage, aboveView)
+                    viewModel.dialectSavedUIState.collect { value ->
+                        textInputEditTextDialect.setText(value)
                     }
                 }
                 launch {
-                    viewModel.successCreateDictionaryUIState.collect { success ->
-                        if (success) {
-                            val bundle = Bundle().apply {
-                                putBoolean(BUNDLE_DICTIONARY_CREATED_KEY, true)
-                            }
-                            setFragmentResult(BUNDLE_DICTIONARY_CREATED_RESULT, bundle)
-                            findNavController().popBackStack()
-                        }
+                    viewModel.languageFromSavedUIState.collect { language ->
+                        langFromBtn.text =
+                            language.value.ifEmpty { getString(R.string.select_language_from) }
                     }
                 }
                 launch {
-                    viewModel.langFromUIState.collect { value ->
-                        if(value.isNotEmpty()) {
-                            langFromBtn.text = value
-                        }
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.langToUIState.collect { value ->
-                        if(value.isNotEmpty()) {
-                            langToBtn.text = value
-                        }
-                    }
-                }
-                launch {
-                    viewModel.dialectUIState.collect { value ->
-                        if(value.isNotEmpty()) {
-                            textInputEditTextDialect.setText(value)
-                        }
+                    viewModel.languageToSavedUIState.collect { language ->
+                        langToBtn.text =
+                            language.value.ifEmpty { getString(R.string.select_language_to) }
                     }
                 }
             }
@@ -155,26 +125,55 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
             when (languageType) {
                 LangType.FROM -> {
                     langFromBtn.text = language?.value
-                    viewModel.languageFrom = language
+                    viewModel.saveLangFrom(language)
                 }
 
                 LangType.TO -> {
                     langToBtn.text = language?.value
-                    viewModel.languageTo = language
+                    viewModel.saveLanguageTo(language)
                 }
             }
-            viewModel.dialect = textInputEditTextDialect.text?.toString()
+            viewModel.saveDialect(textInputEditTextDialect.text?.toString())
         }
     }
 
-    private fun fillData() {
-        langFromBtn.text = viewModel.languageFrom?.value ?: getString(R.string.select_language_from)
-        langToBtn.text = viewModel.languageTo?.value ?: getString(R.string.select_language_to)
-        textInputEditTextDialect.setText(viewModel.dialect)
+    private fun createDictionary() {
+        lifecycleScope.launch {
+            val dialect = textInputEditTextDialect.text?.toString()
+            viewModel.createDictionary(context, dialect).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            rootView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        if (it.data) {
+                            findNavController().popBackStack()
+                        }
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, rootView)
+                    }
+                }
+            }
+        }
     }
 
-    private fun createDictionary() {
+    override fun onSaveInstanceState(outState: Bundle) {
         val dialect = textInputEditTextDialect.text?.toString()
-        viewModel.createDictionary(context, dialect)
+        viewModel.saveDialect(dialect)
+        super.onSaveInstanceState(outState)
     }
 }

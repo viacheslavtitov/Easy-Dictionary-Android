@@ -18,9 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -28,7 +26,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
@@ -38,6 +35,7 @@ import my.dictionary.free.domain.models.navigation.EditDictionaryScreen
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment
 import my.dictionary.free.view.widget.ListItemDecoration
@@ -131,42 +129,6 @@ class UserDictionaryFragment : AbstractBaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Log.d(TAG, "onViewCreated")
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.clearActionModeUIState.drop(1).collect { clear ->
-                        if (clear) {
-                            actionMode?.finish()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, dictionariesRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        swipeRefreshLayout?.isRefreshing = visible
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.shouldClearDictionariesUIState.collect { clear ->
-                        if (clear) {
-                            Log.d(TAG, "clear dictionaries")
-                            dictionariesAdapter?.clearData()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.dictionariesUIState.collect { dict ->
-                        Log.d(TAG, "dictionary updated: $dict")
-                        dictionariesAdapter?.add(dict)
-                    }
-                }
-            }
-        }
 
         addMenuProvider(R.menu.menu_user_dictionary, { menu, mi ->
             run {
@@ -198,21 +160,38 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         refreshDictionaries()
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(TAG, "onCreate")
-        setFragmentResultListener(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_RESULT) { requestKey, bundle ->
-            val needUpdate =
-                bundle.getBoolean(AddUserDictionaryFragment.BUNDLE_DICTIONARY_CREATED_KEY, false)
-            if (needUpdate) {
-                refreshDictionaries()
+    private fun refreshDictionaries() {
+        lifecycleScope.launch {
+            viewModel.loadDictionaries(context).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        dictionariesAdapter?.clearData()
+                        swipeRefreshLayout?.isRefreshing = true
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        swipeRefreshLayout?.isRefreshing = false
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message ?: context?.getString(R.string.unknown_error),
+                            dictionariesRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        dictionariesAdapter?.add(it.data)
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, dictionariesRecyclerView)
+                    }
+                }
             }
         }
-    }
-
-    private fun refreshDictionaries() {
-        dictionariesAdapter?.clearData()
-        viewModel.loadDictionaries(context)
     }
 
     private val onDictionariesQueryListener = object : SearchView.OnQueryTextListener {
@@ -311,10 +290,42 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 }
 
                 R.id.menu_delete -> {
-                    viewModel.deleteDictionaries(
-                        context,
-                        dictionariesAdapter?.getSelectedDictionaries()
-                    )
+                    lifecycleScope.launch {
+                        viewModel.deleteDictionaries(
+                            context,
+                            dictionariesAdapter?.getSelectedDictionaries()
+                        ).collect {
+                            when (it) {
+                                is FetchDataState.StartLoadingState -> {
+                                    swipeRefreshLayout?.isRefreshing = true
+                                    sharedViewModel.loading(true)
+                                }
+
+                                is FetchDataState.FinishLoadingState -> {
+                                    swipeRefreshLayout?.isRefreshing = false
+                                    sharedViewModel.loading(false)
+                                    actionMode?.finish()
+                                    refreshDictionaries()
+                                }
+
+                                is FetchDataState.ErrorState -> {
+                                    displayError(
+                                        it.exception.message
+                                            ?: context?.getString(R.string.unknown_error),
+                                        dictionariesRecyclerView
+                                    )
+                                }
+
+                                is FetchDataState.DataState -> {
+                                    //skip
+                                }
+
+                                is FetchDataState.ErrorStateString -> {
+                                    displayError(it.error, dictionariesRecyclerView)
+                                }
+                            }
+                        }
+                    }
                     true
                 }
 

@@ -5,20 +5,21 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.usecases.quize.GetCreateQuizUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
+import my.dictionary.free.view.FetchDataState
 import javax.inject.Inject
 
 @HiltViewModel
@@ -31,104 +32,60 @@ class UserQuizzesViewModel @Inject constructor(
         private val TAG = UserQuizzesViewModel::class.simpleName
     }
 
-    val quizzesUIState: MutableSharedFlow<Quiz> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _quizzesUIState = Channel<Quiz>()
+    val quizzesUIState: StateFlow<Quiz> = _quizzesUIState.receiveAsFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Quiz.empty())
 
-    private val _clearActionModeUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val clearActionModeUIState: StateFlow<Boolean> = _clearActionModeUIState.asStateFlow()
-
-    private val _shouldClearQuizzesUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val shouldClearQuizzesUIState: StateFlow<Boolean> = _shouldClearQuizzesUIState.asStateFlow()
-
-    private val _loadingUIState: MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
-
-    private val _displayErrorUIState: MutableStateFlow<String> =
-        MutableStateFlow("")
-    val displayErrorUIState: StateFlow<String> = _displayErrorUIState.asStateFlow()
-
-    fun loadQuizzes(context: Context?) {
-        if (context == null) return
+    fun loadQuizzes(context: Context?) = flow<FetchDataState<Quiz>> {
+        if (context == null) return@flow
         Log.d(TAG, "loadQuizzes()")
-        viewModelScope.launch {
-            getCreateQuizUseCase.getQuizzes(context)
-                .catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    _displayErrorUIState.value =
-                        it.message ?: context.getString(R.string.unknown_error)
-                }
-                .onStart {
-                    Log.d(TAG, "loadQuizzes onStart")
-                    _shouldClearQuizzesUIState.value = true
-                    _loadingUIState.value = true
-                    quizzesUIState.resetReplayCache()
-                }
-                .onCompletion {
-                    Log.d(TAG, "loadQuizzes onCompletion")
-                    _shouldClearQuizzesUIState.value = false
-                    _loadingUIState.value = false
-                }
-                .collect { quiz ->
-                    Log.d(TAG, "collect quiz $quiz")
-                    loadWords(context, quiz)
-                }
-        }
-    }
-
-    private fun loadWords(context: Context, quiz: Quiz) {
-        Log.d(TAG, "loadWords(${quiz.name})")
-        viewModelScope.launch {
-            getCreateQuizUseCase.getWordsIdsForQuiz(quiz._id ?: "").firstOrNull()
-                ?.forEach { id ->
+        emit(FetchDataState.StartLoadingState)
+        getCreateQuizUseCase.getQuizzes(context)
+            .catch {
+                Log.d(TAG, "catch ${it.message}")
+                emit(FetchDataState.ErrorState(it))
+            }
+            .onCompletion {
+                Log.d(TAG, "loadQuizzes onCompletion")
+                emit(FetchDataState.FinishLoadingState)
+            }
+            .map {
+                Pair(it, getCreateQuizUseCase.getWordsIdsForQuiz(it._id ?: "").firstOrNull())
+            }.collect { pair ->
+                val quiz = pair.first
+                val wordIds = pair.second
+                wordIds?.forEach { wordId ->
                     quiz.dictionary?._id?.let { dictionaryId ->
-                        wordsUseCase.getWordById(dictionaryId, id)
+                        wordsUseCase.getWordById(dictionaryId, wordId)
                             .catch {
                                 Log.d(TAG, "catch ${it.message}")
-                                _displayErrorUIState.value =
-                                    it.message ?: context.getString(R.string.unknown_error)
-                            }
-                            .onStart {
-                                Log.d(TAG, "loadWords onStart")
-                            }
-                            .onCompletion {
-                                Log.d(TAG, "loadWords onCompletion")
+                                emit(FetchDataState.ErrorState(it))
                             }
                             .collect { word ->
                                 Log.d(TAG, "collect word $word, for ${quiz.name}")
                                 quiz.words.add(word)
+                                val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "")
+                                    .firstOrNull() ?: emptyList()
+                                quiz.quizWords.addAll(quizWords)
+                                Log.d(TAG, "emit quiz ${quiz.name}")
                             }
                     }
                 }
-            val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "").firstOrNull() ?: emptyList()
-            quiz.quizWords.addAll((quizWords))
-            Log.d(TAG, "emit quiz ${quiz.name}")
-            quizzesUIState.tryEmit(quiz)
-        }
+                emit(FetchDataState.DataState(quiz))
+            }
     }
 
-    fun deleteQuizzes(context: Context?, list: List<Quiz>?) {
-        if (context == null || list.isNullOrEmpty()) return
+    fun deleteQuizzes(context: Context?, list: List<Quiz>?) = flow<FetchDataState<Nothing>> {
+        if (context == null || list.isNullOrEmpty()) return@flow
         Log.d(TAG, "deleteQuizzes(${list.size})")
-        viewModelScope.launch {
-            _loadingUIState.value = true
-            val result = getCreateQuizUseCase.deleteQuizzes(list)
-            _clearActionModeUIState.value = true
-            _loadingUIState.value = false
-            Log.d(TAG, "delete result is ${result.first}")
-            if (!result.first) {
-                val error =
-                    result.second ?: context.getString(R.string.error_delete_dictionary)
-                _displayErrorUIState.value = error
-            } else {
-                _shouldClearQuizzesUIState.value = true
-            }
-        }.invokeOnCompletion {
-            loadQuizzes(context)
+        emit(FetchDataState.StartLoadingState)
+        val result = getCreateQuizUseCase.deleteQuizzes(list)
+        emit(FetchDataState.FinishLoadingState)
+        Log.d(TAG, "delete result is ${result.first}")
+        if (!result.first) {
+            val error =
+                result.second ?: context.getString(R.string.error_delete_quiz)
+            emit(FetchDataState.ErrorStateString(error))
         }
     }
 }

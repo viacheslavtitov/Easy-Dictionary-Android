@@ -57,6 +57,9 @@
         <action
             android:id="@+id/action_dictionaryWordsFragment_to_addDictionaryWordFragment"
             app:destination="@id/addDictionaryWordFragment" />
+        <action
+            android:id="@+id/action_dictionaryWordsFragment_to_dictionaryWordsFilterFragment"
+            app:destination="@id/dictionaryWordsFilterFragment" />
     </fragment>
 
     <fragment
@@ -71,6 +74,9 @@
         <action
             android:id="@+id/action_addDictionaryWordFragment_to_addTranslationVariant"
             app:destination="@id/addTranslationVariant" />
+        <action
+            android:id="@+id/action_addDictionaryWordFragment_to_addWordTagsFragment"
+            app:destination="@id/addWordTagsFragment" />
     </fragment>
 
     <fragment
@@ -121,6 +127,9 @@
             android:name="my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment.BUNDLE_DICTIONARY_ID"
             android:defaultValue="null"
             app:argType="string" />
+        <action
+            android:id="@+id/action_wordsMultiChooseFragment_to_dictionaryWordsFilterFragment"
+            app:destination="@id/dictionaryWordsFilterFragment" />
     </fragment>
     <fragment
         android:id="@+id/quizDetailTabsFragment"
@@ -147,5 +156,20 @@
             android:name="my.dictionary.free.view.quiz.run.RunQuizFragment.BUNDLE_QUIZ_ID"
             android:defaultValue="null"
             app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/addWordTagsFragment"
+        android:name="my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment"
+        android:label="WordCategoryFragment"
+        tools:layout="@layout/fragment_add_word_tags" />
+    <fragment
+        android:id="@+id/dictionaryWordsFilterFragment"
+        android:name="my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment"
+        android:label="DictionaryWordsFilterFragment"
+        tools:layout="@layout/fragment_dictionary_words_filter" >
+        <argument
+            android:name="my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment.BUNDLE_DICTIONARY"
+            android:defaultValue="@null"
+            app:argType="my.dictionary.free.domain.models.dictionary.Dictionary" />
     </fragment>
 </navigation>

@@ -25,19 +25,28 @@ import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.navigation.AddTagNavigation
+import my.dictionary.free.domain.models.navigation.AddTranslationVariantNavigation
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
+import my.dictionary.free.domain.models.navigation.AddWordTagsScreen
 import my.dictionary.free.domain.models.navigation.EditTranslationVariantsScreen
 import my.dictionary.free.domain.models.words.Word
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.domain.utils.hasTiramisu
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import my.dictionary.free.view.AbstractBaseFragment
+import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.hideKeyboard
+import my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment
+import my.dictionary.free.view.widget.bubble.BubbleLayout
+import my.dictionary.free.view.widget.bubble.BubbleView
 import my.dictionary.free.view.widget.phonetic.OnPhoneticClickListener
 import my.dictionary.free.view.widget.phonetic.PhoneticsView
 
@@ -71,6 +80,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
     private lateinit var spinnerChooseWordType: AppCompatSpinner
     private lateinit var phoneticsView: PhoneticsView
     private lateinit var rootView: ViewGroup
+    private lateinit var tagsLayout: BubbleLayout
 
     private var dictionaryId: String? = null
     private var phonetics: List<String>? = null
@@ -90,15 +100,9 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         spinnerChooseWordType = view.findViewById(R.id.choose_word_type)
         phoneticsView = view.findViewById(R.id.phonetic_view)
         rootView = view.findViewById(R.id.root)
+        tagsLayout = view.findViewById(R.id.bubbles_layout)
+        tagsLayout.setReadOnly(true)
         phoneticsView.setOnClickListener(phoneticClickListener)
-        view.findViewById<View>(R.id.add_variants_container).setOnClickListener {
-            context?.hideKeyboard(textInputEditTextWord)
-            context?.hideKeyboard(textInputEditTextPhonetic)
-            if (!phonetics.isNullOrEmpty()) {
-                togglePhoneticsView(false)
-            }
-            sharedViewModel.navigateTo(AddTranslationVariantsScreen(textInputEditTextWord.text?.toString()))
-        }
         textInputLayoutPhonetic.setEndIconOnClickListener {
             context?.hideKeyboard(textInputEditTextWord)
             context?.hideKeyboard(textInputEditTextPhonetic)
@@ -136,38 +140,8 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.displayErrorUIState.drop(1).collect { errorMessage ->
-                        displayError(errorMessage, translationsRecyclerView)
-                    }
-                }
-                launch {
-                    viewModel.loadingUIState.collect { visible ->
-                        sharedViewModel.loading(visible)
-                    }
-                }
-                launch {
-                    viewModel.clearTranslationsUIState.collect { clear ->
-                        if(clear) {
-                            translationVariantsAdapter.clear()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.validateWord.collect { error ->
+                    viewModel.validateWord.drop(1).collect { error ->
                         textInputLayoutWord.error = error
-                    }
-                }
-                launch {
-                    viewModel.successCreateWordUIState.collect { success ->
-                        if (success) {
-                            findNavController().popBackStack()
-                        }
-                    }
-                }
-                launch {
-                    viewModel.phoneticsUIState.drop(1).collectLatest { phoneticList ->
-                        Log.d(TAG, "phonetics updated: ${phoneticList.size}")
-                        phonetics = phoneticList
                     }
                 }
                 launch {
@@ -176,7 +150,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.typeUIState.collectLatest { position ->
+                    viewModel.typeSavedUIState.collectLatest { position ->
                         spinnerChooseWordType.setSelection(position)
                     }
                 }
@@ -186,8 +160,43 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.translationVariantsUIState.collect { value ->
-                        translationVariantsAdapter.add(value)
+                    sharedViewModel.actionNavigation.drop(1).collect { action ->
+                        when (action) {
+                            is AddTagNavigation -> {
+                                context?.hideKeyboard(textInputEditTextWord)
+                                context?.hideKeyboard(textInputEditTextPhonetic)
+                                if (!phonetics.isNullOrEmpty()) {
+                                    togglePhoneticsView(false)
+                                }
+                                viewModel.getDictionary()?.let { dictionary ->
+                                    val originalWord = textInputEditTextWord.text?.toString()
+                                    val tags = tagsLayout.getTags<WordTag>(false)
+                                    val word = viewModel.getEditedWord() ?: Word(
+                                        _id = null,
+                                        dictionaryId = dictionary._id ?: "",
+                                        original = originalWord ?: "",
+                                        type = 0,
+                                        phonetic = null,
+                                        translates = emptyList(),
+                                        tags = tags
+                                    )
+                                    sharedViewModel.navigateTo(AddWordTagsScreen(word, dictionary))
+                                }
+                            }
+
+                            is AddTranslationVariantNavigation -> {
+                                context?.hideKeyboard(textInputEditTextWord)
+                                context?.hideKeyboard(textInputEditTextPhonetic)
+                                if (!phonetics.isNullOrEmpty()) {
+                                    togglePhoneticsView(false)
+                                }
+                                sharedViewModel.navigateTo(
+                                    AddTranslationVariantsScreen(
+                                        textInputEditTextWord.text?.toString()
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -197,10 +206,40 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 R.id.nav_save_word -> {
                     val word = textInputEditTextWord.text?.toString()
                     val translations = translationVariantsAdapter.getData()
-                    if (viewModel.validate(context, word, translations)) {
-                        val phonetic = textInputEditTextPhonetic.text?.toString()
-                        val typePosition = spinnerChooseWordType.selectedItemPosition
-                        viewModel.save(context, word, typePosition, translations, phonetic)
+                    lifecycleScope.launch {
+                        viewModel.validate(context, word, translations).collect {
+                            when (it) {
+                                is FetchDataState.StartLoadingState -> {
+                                    sharedViewModel.loading(true)
+                                }
+
+                                is FetchDataState.FinishLoadingState -> {
+                                    sharedViewModel.loading(false)
+                                }
+
+                                is FetchDataState.ErrorState -> {
+                                    displayError(
+                                        it.exception.message
+                                            ?: context?.getString(R.string.unknown_error),
+                                        translationsRecyclerView
+                                    )
+                                }
+
+                                is FetchDataState.DataState -> {
+                                    if (it.data) {
+                                        val phonetic = textInputEditTextPhonetic.text?.toString()
+                                        val typePosition =
+                                            spinnerChooseWordType.selectedItemPosition
+                                        val tags = tagsLayout.getTags<WordTag>(false)
+                                        saveWord(word, typePosition, translations, phonetic, tags)
+                                    }
+                                }
+
+                                is FetchDataState.ErrorStateString -> {
+                                    displayError(it.error, translationsRecyclerView)
+                                }
+                            }
+                        }
                     }
                     return@addMenuProvider true
                 }
@@ -216,7 +255,129 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         translationsRecyclerView.layoutManager = LinearLayoutManager(context)
         translationsRecyclerView.adapter = translationVariantsAdapter
         spinnerChooseWordType.adapter = wordTypeAdapter
-        viewModel.loadData(context, dictionaryId, word)
+        loadData(word)
+    }
+
+    private fun loadData(word: Word?) {
+        Log.d(TAG, "loadData(${word?.original})")
+        lifecycleScope.launch {
+            viewModel.loadData(context, dictionaryId, word)
+                .onCompletion {
+                    loadTranslations()
+                }
+                .collect {
+                    when (it) {
+                        is FetchDataState.StartLoadingState -> {
+                            sharedViewModel.loading(true)
+                        }
+
+                        is FetchDataState.FinishLoadingState -> {
+                            sharedViewModel.loading(false)
+                        }
+
+                        is FetchDataState.ErrorState -> {
+                            displayError(
+                                it.exception.message
+                                    ?: context?.getString(R.string.unknown_error),
+                                translationsRecyclerView
+                            )
+                        }
+
+                        is FetchDataState.DataState -> {
+                            val phoneticList = it.data
+                            Log.d(TAG, "phonetics updated: ${phoneticList.size}")
+                            phonetics = phoneticList
+                        }
+
+                        is FetchDataState.ErrorStateString -> {
+                            displayError(it.error, translationsRecyclerView)
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun loadTranslations() {
+        Log.d(TAG, "loadTranslations()")
+        translationVariantsAdapter.clear()
+        lifecycleScope.launch {
+            viewModel.loadWordData()
+                .onCompletion {
+                    viewModel.getEditedWord()?.tags?.let { tags ->
+                        tagsLayout.removeAllViews()
+                        tags.forEach { tag ->
+                            addTag(tag)
+                        }
+                    }
+                }
+                .collect {
+                    when (it) {
+                        is FetchDataState.StartLoadingState -> {
+                            sharedViewModel.loading(true)
+                        }
+
+                        is FetchDataState.FinishLoadingState -> {
+                            sharedViewModel.loading(false)
+                        }
+
+                        is FetchDataState.ErrorState -> {
+                            displayError(
+                                it.exception.message
+                                    ?: context?.getString(R.string.unknown_error),
+                                translationsRecyclerView
+                            )
+                        }
+
+                        is FetchDataState.DataState -> {
+                            translationVariantsAdapter.add(it.data)
+                        }
+
+                        is FetchDataState.ErrorStateString -> {
+                            displayError(it.error, translationsRecyclerView)
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun saveWord(
+        word: String?,
+        typePosition: Int,
+        translations: List<TranslationVariant>,
+        phonetic: String?,
+        tags: List<WordTag>
+    ) {
+        lifecycleScope.launch {
+            viewModel.save(context, word, typePosition, translations, phonetic, tags).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message
+                                ?: context?.getString(R.string.unknown_error),
+                            translationsRecyclerView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        if (it.data) {
+                            findNavController().popBackStack()
+                        }
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, translationsRecyclerView)
+                    }
+                }
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -242,6 +403,20 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 it.category = category
                 translationVariantsAdapter.add(it)
                 viewModel.addTranslation(it)
+            }
+        }
+        setFragmentResultListener(AddWordTagsFragment.BUNDLE_TAGS_RESULT_KEY) { requestKey, bundle ->
+            val tags: ArrayList<WordTag> =
+                bundle.getParcelableArrayList(AddWordTagsFragment.BUNDLE_TAGS_KEY) ?: ArrayList()
+            if (tags.isNotEmpty()) {
+                tagsLayout.removeAllViews()
+            }
+            tags.forEach {
+                addTag(it)
+            }
+            viewModel.getEditedWord()?.tags?.let {
+                it.clear()
+                it.addAll(tags)
             }
         }
     }
@@ -290,7 +465,6 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     private val onTranslationVariantEditListener = object : OnTranslationVariantEditListener {
         override fun onEdit(entity: TranslationVariant) {
-            viewModel.deleteTranslation(entity)
             sharedViewModel.navigateTo(
                 EditTranslationVariantsScreen(
                     textInputEditTextWord.text?.toString(),
@@ -307,4 +481,20 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     private val translationVariantsAdapter =
         TranslationVariantsAdapter(listener = onTranslationVariantEditListener)
+
+    private fun addTag(tag: WordTag) {
+        val bubbleView = BubbleView(requireContext())
+        bubbleView.setWordTag(tag)
+        tagsLayout.addView(bubbleView)
+    }
+
+    override fun onStop() {
+        viewModel.saveType(spinnerChooseWordType.selectedItemPosition)
+        super.onStop()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        viewModel.saveType(spinnerChooseWordType.selectedItemPosition)
+        super.onSaveInstanceState(outState)
+    }
 }

@@ -2,7 +2,9 @@ package my.dictionary.free.domain.models.words
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
+
 @Parcelize
 data class Word(
     val _id: String? = null,
@@ -10,7 +12,8 @@ data class Word(
     val original: String,
     val type: Int,
     val phonetic: String? = null,
-    val translates: List<TranslationVariant>
+    val translates: List<TranslationVariant>,
+    val tags: ArrayList<WordTag>
 ) : Parcelable {
     companion object {
         fun empty() = Word(
@@ -19,20 +22,12 @@ data class Word(
             type = 0,
             original = "",
             phonetic = null,
-            translates = emptyList()
+            translates = emptyList(),
+            tags = arrayListOf()
         )
     }
 
-    fun copyWithNewTranslations(translateList: List<TranslationVariant>) = Word(
-        _id = _id,
-        dictionaryId = dictionaryId,
-        original = original,
-        type = type,
-        phonetic = phonetic,
-        translates = translateList
-    )
-
     override fun toString(): String {
-        return "$original | $phonetic"
+        return "original = $original | phonetic = $phonetic | dictionaryId = $dictionaryId | type = $type | translates = ${translates.size} | tags = ${tags.size}"
     }
 }

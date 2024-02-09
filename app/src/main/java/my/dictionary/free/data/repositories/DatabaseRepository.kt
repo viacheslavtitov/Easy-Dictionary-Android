@@ -19,6 +19,7 @@ import my.dictionary.free.data.models.quiz.QuizWordResultTable
 import my.dictionary.free.data.models.quiz.QuizWordsTable
 import my.dictionary.free.data.models.users.UsersTable
 import my.dictionary.free.data.models.words.WordTable
+import my.dictionary.free.data.models.words.WordTagTable
 import my.dictionary.free.data.models.words.variants.TranslationCategoryTable
 import my.dictionary.free.data.models.words.variants.TranslationVariantTable
 import my.dictionary.free.domain.models.words.Word
@@ -142,7 +143,9 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val dictionaryKey = reference.child(DictionaryTable._NAME).push().key
+            val dictionaryKey =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .push().key
             if (dictionaryKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -191,7 +194,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val categoryKey = reference.child(TranslationCategoryTable._NAME).push().key
+            val categoryKey = reference.child(UsersTable._NAME).child(userId)
+                .child(TranslationCategoryTable._NAME).push().key
             if (categoryKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -222,7 +226,10 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val translationKey = reference.child(TranslationVariantTable._NAME).push().key
+            val translationKey =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(dictionaryId).child(WordTable._NAME).child(translation.wordId)
+                    .child(TranslationVariantTable._NAME).push().key
             if (translationKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -257,22 +264,22 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         if (translation._id.isNullOrEmpty()) {
             return false
         } else return suspendCoroutine { cont ->
-
-            val reference = database.reference
-
-            val userChild =
-                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
-                    .child(dictionaryId)
-                    .child(WordTable._NAME).child(wordId).child(TranslationVariantTable._NAME)
-                    .child(translation._id)
-
-            userChild.child(TranslationVariantTable.CATEGORY_ID)
-                .setValue(translation.categoryId).isComplete
-            userChild.child(TranslationVariantTable.TRANSLATE)
-                .setValue(translation.translate).isComplete
-            userChild.child(TranslationVariantTable.DESCRIPTION)
-                .setValue(translation.description).isComplete
-            cont.resume(true)
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId)
+                .child(WordTable._NAME).child(wordId).child(TranslationVariantTable._NAME)
+                .child(translation._id)
+                .updateChildren(mapOf(
+                    TranslationVariantTable.CATEGORY_ID to translation.categoryId,
+                    TranslationVariantTable.TRANSLATE to translation.translate,
+                    TranslationVariantTable.DESCRIPTION to translation.description
+                )
+                ) { error, reference ->
+                    if (error != null && error.message.isNotEmpty()) {
+                        cont.resume(false)
+                    } else {
+                        cont.resume(true)
+                    }
+                }
         }
     }
 
@@ -331,6 +338,10 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
                             name = map[QuizTable.NAME] as String,
                             reversed = map[QuizTable.REVERSED] as? Boolean ?: false,
+                            hidePhonetic = map[QuizTable.HIDE_PHONETIC] as? Boolean ?: false,
+                            showTags = map[QuizTable.SHOW_TAGS] as? Boolean ?: false,
+                            showCategories = map[QuizTable.SHOW_CATEGORIES] as? Boolean ?: false,
+                            showTypes = map[QuizTable.SHOW_TYPES] as? Boolean ?: false,
                             timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
                         )
                         trySend(quiz)
@@ -370,6 +381,10 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             dictionaryId = map[QuizTable.DICTIONARY_ID] as String,
                             name = map[QuizTable.NAME] as String,
                             reversed = map[QuizTable.REVERSED] as? Boolean ?: false,
+                            hidePhonetic = map[QuizTable.HIDE_PHONETIC] as? Boolean ?: false,
+                            showTags = map[QuizTable.SHOW_TAGS] as? Boolean ?: false,
+                            showCategories = map[QuizTable.SHOW_CATEGORIES] as? Boolean ?: false,
+                            showTypes = map[QuizTable.SHOW_TYPES] as? Boolean ?: false,
                             timeInSeconds = (map[QuizTable.TIME_IN_SECONDS] as Long).toInt()
                         )
                         trySend(quiz)
@@ -400,7 +415,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Triple<Boolean, String?, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val quizKey = reference.child(QuizTable._NAME).push().key
+            val quizKey =
+                reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).push().key
             if (quizKey == null) {
                 cont.resume(Triple(false, null, null))
             }
@@ -411,6 +427,10 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     dictionaryId = quiz.dictionaryId,
                     name = quiz.name,
                     reversed = quiz.reversed,
+                    hidePhonetic = quiz.hidePhonetic,
+                    showTags = quiz.showTags,
+                    showCategories = quiz.showCategories,
+                    showTypes = quiz.showTypes,
                     timeInSeconds = quiz.timeInSeconds
                 )
                 val childUpdates = hashMapOf<String, Any>(
@@ -442,6 +462,11 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
             userChild.child(QuizTable.DICTIONARY_ID).setValue(quiz.dictionaryId).isComplete
             userChild.child(QuizTable.NAME).setValue(quiz.name).isComplete
             userChild.child(QuizTable.TIME_IN_SECONDS).setValue(quiz.timeInSeconds).isComplete
+            userChild.child(QuizTable.REVERSED).setValue(quiz.reversed).isComplete
+            userChild.child(QuizTable.HIDE_PHONETIC).setValue(quiz.hidePhonetic).isComplete
+            userChild.child(QuizTable.SHOW_TAGS).setValue(quiz.showTags).isComplete
+            userChild.child(QuizTable.SHOW_CATEGORIES).setValue(quiz.showCategories).isComplete
+            userChild.child(QuizTable.SHOW_TYPES).setValue(quiz.showTypes).isComplete
             cont.resume(true)
         }
     }
@@ -452,7 +477,9 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val wordKey = reference.child(WordTable._NAME).push().key
+            val wordKey =
+                reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME).child(quizId)
+                    .child(WordTable._NAME).push().key
             if (wordKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -741,7 +768,9 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Triple<Boolean, String?, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val wordKey = reference.child(WordTable._NAME).push().key
+            val wordKey =
+                reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                    .child(word.dictionaryId).child(WordTable._NAME).push().key
             if (wordKey == null) {
                 cont.resume(Triple(false, null, null))
             }
@@ -976,7 +1005,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
     ): Pair<Boolean, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
-            val wordKey = reference.child(QuizWordResultTable._NAME).push().key
+            val wordKey = reference.child(UsersTable._NAME).child(userId).child(QuizTable._NAME)
+                .child(quizWordResult.quizId).child(QuizWordResultTable._NAME).push().key
             if (wordKey == null) {
                 cont.resume(Pair(false, null))
             }
@@ -1062,4 +1092,178 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
             }
         }.flowOn(ioScope)
     }
+
+    suspend fun createDictionaryTag(
+        userId: String,
+        dictionaryId: String,
+        tagName: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val reference = database.reference
+            val tagKey = reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(WordTagTable._NAME)
+                .push().key
+            if (tagKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            tagKey?.let { key ->
+                val table = WordTagTable(
+                    _id = key,
+                    userUUID = userId,
+                    tagName = tagName
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${WordTagTable._NAME}/$key" to table.toMap()
+                )
+                reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, key))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun addTagsToWord(
+        userId: String,
+        tagIds: List<String>,
+        dictionaryId: String,
+        wordId: String
+    ): Boolean {
+        return suspendCoroutine { cont ->
+            val wordChild =
+                database.reference.child(UsersTable._NAME).child(userId)
+                    .child(DictionaryTable._NAME)
+                    .child(dictionaryId).child(WordTable._NAME).child(wordId)
+            val childAdds = mutableMapOf<String, Any?>()
+            tagIds.forEach {
+                Log.d(TAG, "add tag $it")
+                childAdds["/$it"] = null
+            }
+            wordChild.child(WordTagTable._NAME).setValue(tagIds).isComplete
+            cont.resume(true)
+        }
+    }
+
+    suspend fun getTagsForDictionary(
+        userId: String,
+        dictionaryId: String,
+    ): Flow<List<WordTagTable>> {
+        Log.d(TAG, "getTagsForDictionary($dictionaryId)")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+                .child(WordTagTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange tags in dictionary ${snapshot.children.count()}")
+                    val tags = arrayListOf<WordTagTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val category = WordTagTable(
+                            _id = map[WordTagTable._ID] as String?,
+                            userUUID = map[WordTagTable.USER_UUID] as String,
+                            tagName = map[WordTagTable.TAG_NAME] as String
+                        )
+                        tags.add(category)
+                    }
+                    Log.d(TAG, "trySend tags = ${tags.size}")
+                    trySend(tags)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getTagsIdsForWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+    ): Flow<List<String>> {
+        Log.d(TAG, "getCategoriesForWords")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+                .child(WordTable._NAME).child(wordId)
+                .child(WordTagTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val translations = arrayListOf<String>()
+                    snapshot.children.forEach { data ->
+                        val tagId = data.value as String? ?: ""
+                        translations.add(tagId)
+                    }
+                    trySend(translations)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun deleteWordTagFromWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+        tagId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            childRemoves["/${WordTagTable._NAME}/$tagId"] = null
+            database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+                .child(WordTable._NAME).child(wordId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
+    suspend fun deleteWordTagFromDictionary(
+        userId: String,
+        dictionaryId: String,
+        tagId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            childRemoves["/${WordTagTable._NAME}/$tagId"] = null
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId)
+                .updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
 }

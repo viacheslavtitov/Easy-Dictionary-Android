@@ -9,6 +9,7 @@ import android.graphics.drawable.TransitionDrawable
 import android.text.Spannable
 import android.text.style.StyleSpan
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.ColorRes
@@ -21,10 +22,10 @@ fun View.visible(
     durationInMillisecondsAnimation: Long = 0L, animationListener: Animator.AnimatorListener? = null
 ) {
     if (durationInMillisecondsAnimation > 0) {
-        alpha = if(visible) 0f else 1f
+        alpha = if (visible) 0f else 1f
         visibility = View.VISIBLE
         animate()
-            .alpha(if(visible) 1f else 0f)
+            .alpha(if (visible) 1f else 0f)
             .setDuration(durationInMillisecondsAnimation)
             .setListener(animationListener)
     }
@@ -54,9 +55,9 @@ fun ImageView.setImageDrawableWithAnimation(drawable: Drawable, duration: Int = 
 
     val transitionDrawable = TransitionDrawable(
         arrayOf(
-        currentDrawable,
-        drawable
-    )
+            currentDrawable,
+            drawable
+        )
     )
     setImageDrawable(transitionDrawable)
     transitionDrawable.startTransition(duration)
@@ -81,4 +82,14 @@ fun TextView.setBoldText(
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
     }
+}
+
+fun ViewGroup.findViewByCoordinate(x: Float, y: Float): View? {
+    for (i in 0 until childCount) {
+        val child = getChildAt(i)
+        if (child.visibility != ViewGroup.GONE) {
+            if (x >= 0 && y >= 0 && (x >= child.left && x <= child.right) && (y <= child.bottom && y >= child.top)) return child
+        }
+    }
+    return null
 }
