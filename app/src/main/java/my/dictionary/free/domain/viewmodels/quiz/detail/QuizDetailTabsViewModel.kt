@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.usecases.quize.GetCreateQuizUseCase
+import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
 import my.dictionary.free.view.FetchDataState
 import javax.inject.Inject
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class QuizDetailTabsViewModel @Inject constructor(
     private val getCreateQuizUseCase: GetCreateQuizUseCase,
-    private val wordsUseCase: WordsUseCase
+    private val wordsUseCase: WordsUseCase,
+    private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase
 ) : ViewModel() {
     companion object {
         private val TAG = QuizDetailTabsViewModel::class.simpleName
@@ -53,6 +55,11 @@ class QuizDetailTabsViewModel @Inject constructor(
                             }
                             .collect { word ->
                                 Log.d(TAG, "collect word $word, for ${quiz.name}")
+                                for (translation in word.translates) {
+                                    if(translation.categoryId != null) {
+                                        translation.category = getCreateTranslationCategoriesUseCase.getDirectCategoryById(translation.categoryId)
+                                    }
+                                }
                                 quiz.histories.addAll(getCreateQuizUseCase.getHistoriesOfQuiz(quiz))
                                 quiz.words.add(word)
                                 val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "")
