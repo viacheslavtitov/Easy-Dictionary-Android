@@ -113,13 +113,6 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
             ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
         itemTouchHelper.attachToRecyclerView(wordsRecyclerView)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
-        wordsRecyclerView.addOnItemTouchListener(
-            OnListTouchListener(
-                requireContext(),
-                wordsRecyclerView,
-                onWordsClickListener
-            )
-        )
         swipeRefreshLayout =
             view.findViewById<SwipeRefreshLayout?>(R.id.swipe_refresh_layout)?.also {
                 it.setOnRefreshListener {
@@ -138,7 +131,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 addAll(it)
             }
         }
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes, onWordClickListener)
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }
@@ -355,33 +348,25 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         }
     }
 
-    private val onWordsClickListener = object : OnListItemClickListener {
-        override fun onListItemClick(childView: View) {
-            wordsAdapter?.getItemByPosition(
-                wordsRecyclerView.getChildAdapterPosition(childView)
-            )?.let { word ->
-                if (actionMode == null) {
-                    sharedViewModel.navigateTo(EditDictionaryWordScreen(word))
-                } else {
-                    selectWord(word)
-                }
+    private val onWordClickListener = object: OnWordClickListener {
+        override fun onClick(word: Word) {
+            if (actionMode == null) {
+                sharedViewModel.navigateTo(EditDictionaryWordScreen(word))
+            } else {
+                selectWord(word)
             }
         }
 
-        override fun onListItemLongClick(childView: View) {
-            wordsAdapter?.getItemByPosition(
-                wordsRecyclerView.getChildAdapterPosition(childView)
-            )?.let { word ->
-                if (activity != null && activity is AppCompatActivity) {
-                    if (actionMode == null) {
-                        actionMode =
-                            (activity as AppCompatActivity).startSupportActionMode(
-                                actionModeCallBack
-                            )
-                    }
+        override fun onLongClick(word: Word) {
+            if (activity != null && activity is AppCompatActivity) {
+                if (actionMode == null) {
+                    actionMode =
+                        (activity as AppCompatActivity).startSupportActionMode(
+                            actionModeCallBack
+                        )
                 }
-                selectWord(word)
             }
+            selectWord(word)
         }
     }
 

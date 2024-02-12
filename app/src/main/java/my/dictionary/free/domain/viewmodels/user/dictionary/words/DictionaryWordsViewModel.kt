@@ -11,9 +11,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.forEach
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -90,7 +95,13 @@ class DictionaryWordsViewModel @Inject constructor(
                         )
                     }
                 }
-            }.collect {
+            }
+            .collect {
+                for (translation in it.translates) {
+                    if(translation.categoryId != null) {
+                        translation.category = getCreateTranslationCategoriesUseCase.getDirectCategoryById(translation.categoryId)
+                    }
+                }
                 Log.d(
                     TAG,
                     "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
@@ -114,30 +125,6 @@ class DictionaryWordsViewModel @Inject constructor(
                 result.second ?: context.getString(R.string.error_delete_word)
             emit(FetchDataState.ErrorStateString(error))
         }
-    }
-
-    fun loadCategories(context: Context?) = flow<FetchDataState<TranslationCategory>> {
-        if (context == null) {
-            return@flow
-        }
-        Log.d(TAG, "loadCategories()")
-        emit(FetchDataState.StartLoadingState)
-        getCreateTranslationCategoriesUseCase.getCategories()
-            .catch {
-                Log.d(TAG, "catch ${it.message}")
-                emit(FetchDataState.ErrorState(it))
-            }
-            .onCompletion {
-                Log.d(TAG, "onCompletion")
-                emit(FetchDataState.FinishLoadingState)
-            }
-            .collect {
-                Log.d(
-                    TAG,
-                    "category loaded = ${it.categoryName}"
-                )
-                emit(FetchDataState.DataState(it))
-            }
     }
 
     fun getDictionary() = dictionary

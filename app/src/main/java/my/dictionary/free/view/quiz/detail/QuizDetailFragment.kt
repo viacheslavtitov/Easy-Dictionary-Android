@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -41,6 +42,7 @@ class QuizDetailFragment : AbstractBaseFragment() {
     private var nameTextView: AppCompatTextView? = null
     private var durationTextView: AppCompatTextView? = null
     private var dictionaryTextView: AppCompatTextView? = null
+    private var hideOrShowTranslationsCheckBox: AppCompatCheckBox? = null
 
     private var wordsAdapter: DictionaryWordsAdapter? = null
     private var quiz: Quiz? = null
@@ -54,6 +56,7 @@ class QuizDetailFragment : AbstractBaseFragment() {
         nameTextView = view.findViewById(R.id.name)
         durationTextView = view.findViewById(R.id.duration)
         dictionaryTextView = view.findViewById(R.id.dictionary)
+        hideOrShowTranslationsCheckBox = view.findViewById(R.id.hide_translations)
         wordsRecyclerView = view.findViewById(R.id.words_recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(context)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
@@ -99,6 +102,9 @@ class QuizDetailFragment : AbstractBaseFragment() {
                     }
                 }
             }
+        }
+        hideOrShowTranslationsCheckBox?.setOnCheckedChangeListener { buttonView, isChecked ->
+            wordsAdapter?.hideTranslates(isChecked)
         }
         quiz = if (hasTiramisu()) arguments?.getParcelable(
             BUNDLE_QUIZ,

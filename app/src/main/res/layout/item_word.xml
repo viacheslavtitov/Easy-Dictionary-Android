@@ -6,26 +6,53 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="1dp"
     android:gravity="center_vertical"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="16dp">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/original_word"
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/title_container"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:textColor="@color/main_text"
-        android:textStyle="bold"
-        android:textSize="16dp"
-        tools:text="Hello" />
+        android:orientation="horizontal">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/translated_word"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:textColor="@color/main_text"
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/original_word"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:textColor="@color/main_text"
+            android:textSize="16dp"
+            android:textStyle="bold"
+            tools:text="Hello" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/drop_down_image"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_baseline_arrow_drop_down_24"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:paddingLeft="9dp"
-        android:textSize="16dp"
-        tools:text="- Привіт..." />
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/translated_word"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/main_text"
+            android:textSize="16dp"
+            tools:text="- Привіт..." />
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/translated_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.appcompat.widget.LinearLayoutCompat>

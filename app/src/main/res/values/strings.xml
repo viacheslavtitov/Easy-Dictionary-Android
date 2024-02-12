@@ -103,6 +103,8 @@
     <string name="error_update_word">Something was wrong to update word</string>
     <string name="error_update_translation">Something was wrong to update translation</string>
     <string name="error_delete_word">Something was wrong to delete word</string>
+    <string name="hide_translations">Hide all translations</string>
+    <string name="category_color_value" translatable="false"><![CDATA[<font color=\'#00C853\'>%s</font> - <font color=\'#000000\'>%s</font>]]></string>
     <!-- Tags -->
     <string name="add_or_choose_tags">Add or choose tags</string>
     <string name="add_tag">Add tag</string>
