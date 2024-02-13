@@ -162,6 +162,9 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
 
                     is FetchDataState.FinishLoadingState -> {
                         sharedViewModel.loading(false)
+                        editWords?.forEach {
+                            wordsAdapter?.selectWord(it)
+                        }
                     }
 
                     is FetchDataState.ErrorState -> {

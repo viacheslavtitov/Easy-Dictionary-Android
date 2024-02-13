@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -53,6 +54,8 @@ class AddQuizFragment : AbstractBaseFragment() {
         private const val DURATION_MIN = 1
         private const val DURATION_MAX = 60
         const val BUNDLE_QUIZ = "my.dictionary.free.view.quiz.add.AddQuizFragment.BUNDLE_QUIZ"
+        const val BUNDLE_UPDATE_RESULT = "my.dictionary.free.view.quiz.add.AddQuizFragment.BUNDLE_WORDS_RESULT"
+        const val BUNDLE_UPDATE_KEY = "my.dictionary.free.view.quiz.add.AddQuizFragment.BUNDLE_WORDS_KEY"
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -294,6 +297,10 @@ class AddQuizFragment : AbstractBaseFragment() {
                                     is FetchDataState.DataState -> {
                                         Log.d(TAG, "quiz saved ${it.data}")
                                         if (it.data) {
+                                            val bundle = Bundle().apply {
+                                                putBoolean(BUNDLE_UPDATE_KEY, true)
+                                            }
+                                            setFragmentResult(BUNDLE_UPDATE_RESULT, bundle)
                                             findNavController().popBackStack()
                                         }
                                     }
