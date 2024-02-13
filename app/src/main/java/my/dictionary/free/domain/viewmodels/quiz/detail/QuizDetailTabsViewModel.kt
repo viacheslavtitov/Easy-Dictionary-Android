@@ -32,14 +32,11 @@ class QuizDetailTabsViewModel @Inject constructor(
         if (context == null) return@flow
         if (quizId == null) return@flow
         Log.d(TAG, "loadQuiz($quizId)")
+        emit(FetchDataState.StartLoadingState)
         getCreateQuizUseCase.getQuiz(context, quizId)
             .catch {
                 Log.d(TAG, "catch ${it.message}")
                 emit(FetchDataState.ErrorState(it))
-            }
-            .onCompletion {
-                Log.d(TAG, "loadQuizzes onCompletion")
-                emit(FetchDataState.FinishLoadingState)
             }
             .map {
                 Pair(it, getCreateQuizUseCase.getWordsIdsForQuiz(it._id ?: "").firstOrNull())
@@ -71,6 +68,7 @@ class QuizDetailTabsViewModel @Inject constructor(
                 quiz.quizWords.addAll(quizWords)
                 quizModel = quiz
                 emit(FetchDataState.DataState(quiz))
+                emit(FetchDataState.FinishLoadingState)
             }
     }
 
