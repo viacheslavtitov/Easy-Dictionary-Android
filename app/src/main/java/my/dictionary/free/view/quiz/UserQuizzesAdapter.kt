@@ -44,7 +44,7 @@ class UserQuizzesAdapter(
         viewHolder.nameTextView.text = quiz.name
         quiz.dictionary?.let { dictionary ->
             viewHolder.langsTextView.text =
-                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}"
+                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull} (${quiz.quizWords.size})"
         }
         viewHolder.swipePosition = position
         val selected = selectedQuizzes.firstOrNull { it._id == quiz._id } != null

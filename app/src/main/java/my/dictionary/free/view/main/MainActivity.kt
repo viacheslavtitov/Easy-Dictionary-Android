@@ -149,53 +149,47 @@ class MainActivity : AbstractBaseActivity() {
             when (destination.id) {
                 R.id.userDictionaryFragment -> {
                     newTitle = getString(R.string.my_dictionaries)
-                    toolbar.title = newTitle
                 }
 
                 R.id.addUserDictionaryFragment -> {
                     newTitle = getString(R.string.add_dictionary)
-                    toolbar.title = newTitle
                 }
 
                 R.id.languagesFragment -> {
                     newTitle = getString(R.string.add_language)
-                    toolbar.title = newTitle
                 }
 
                 R.id.dictionaryWordsFragment -> {
                     newTitle = getString(R.string.words)
-                    toolbar.title = newTitle
                 }
 
                 R.id.addDictionaryWordFragment -> {
                     newTitle = getString(R.string.add_word)
-                    toolbar.title = newTitle
                     sharedViewModel.showOrHideActionButton(true)
                 }
 
                 R.id.addTranslationVariant -> {
                     newTitle = getString(R.string.add_translation_variants)
-                    toolbar.title = newTitle
                 }
 
                 R.id.quizDetailTabsFragment -> {
                     newTitle = getString(R.string.quiz)
-                    toolbar.title = newTitle
                 }
 
                 R.id.runQuizFragment -> {
                     newTitle = getString(R.string.quiz)
-                    toolbar.title = newTitle
                 }
 
                 R.id.addWordTagsFragment -> {
                     newTitle = getString(R.string.add_or_choose_tags)
-                    toolbar.title = newTitle
                 }
 
                 R.id.dictionaryWordsFilterFragment -> {
                     newTitle = getString(R.string.filter)
-                    toolbar.title = newTitle
+                }
+
+                R.id.userQuizzesFragment -> {
+                    newTitle = getString(R.string.my_quizzes)
                 }
 
                 R.id.simpleFragment -> {

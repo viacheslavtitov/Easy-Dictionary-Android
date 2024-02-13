@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
@@ -74,6 +75,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
     private var dictionaryId: String? = null
     private var filterSearchView: SearchView? = null
+    private var wordsCountTextView: AppCompatTextView? = null
 
     private val undoRemoveWordTimer =
         object : CountDownTimer(
@@ -94,6 +96,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 wordsAdapter?.getRemoveWordByTimer()?.let { word ->
                     deleteWords(listOf(word)) {
                         wordsAdapter?.finallyRemoveItem()
+                        wordsCountChanged()
                     }
                 }
             }
@@ -108,6 +111,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         view.findViewById<RadioGroup>(R.id.sorting_radio_group)
             .setOnCheckedChangeListener(onSortingGroupListener)
         wordsRecyclerView = view.findViewById(R.id.recycler_view)
+        wordsCountTextView = view.findViewById(R.id.words_count_text_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         val itemTouchHelper =
             ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
@@ -201,6 +205,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     FilterModel::class.java
                 ) else bundle.getParcelable(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT)
             wordsAdapter?.setFilterModel(filterModel)
+            wordsCountChanged()
         }
         refreshWords()
     }
@@ -218,6 +223,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     is FetchDataState.FinishLoadingState -> {
                         swipeRefreshLayout?.isRefreshing = false
                         sharedViewModel.loading(false)
+                        wordsCountChanged()
                     }
 
                     is FetchDataState.ErrorState -> {
@@ -246,6 +252,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
 
         override fun onQueryTextChange(newText: String): Boolean {
             wordsAdapter?.filter?.filter(newText)
+            wordsCountChanged()
             return false
         }
 
@@ -255,6 +262,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         override fun onSwiped(position: Int) {
             Log.d(TAG, "swipe item by position $position")
             wordsAdapter?.temporaryRemoveItem(position)
+            wordsCountChanged()
             undoRemoveWordSnackbar = Snackbar.make(
                 wordsRecyclerView,
                 R.string.seconds,
@@ -263,6 +271,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 .setDuration(UNDO_SNACKBAR_DURATION)
                 .setAction(R.string.undo) {
                     wordsAdapter?.undoRemovedItem()
+                    wordsCountChanged()
                 }
             undoRemoveWordSnackbar?.show()
             undoRemoveWordTimer.start()
@@ -400,5 +409,9 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 wordsAdapter?.sortByAlphabet(AlphabetSort.Z_A)
             }
         }
+    }
+
+    private fun wordsCountChanged() {
+        wordsCountTextView?.text = resources.getString(R.string.words_count, wordsAdapter?.itemCount ?: 0)
     }
 }
