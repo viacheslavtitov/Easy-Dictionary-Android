@@ -107,14 +107,6 @@ class RunQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.nextWordUIState.collect { pair ->
-                        val word = pair.first
-                        val reversed = pair.second
-                        Log.d(TAG, "quiz new word: $word")
-                        fillQuiz(word, reversed)
-                    }
-                }
-                launch {
                     viewModel.titleQuizUIState.collect { titlePair ->
                         sharedViewModel.setTitle(
                             getString(
@@ -199,6 +191,12 @@ class RunQuizFragment : AbstractBaseFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
+        viewModel.nextWordUIState.observe(this) { pair ->
+            val word = pair.first
+            val reversed = pair.second
+            Log.d(TAG, "quiz new word: $word")
+            fillQuiz(word, reversed)
+        }
         val quiz = if (hasTiramisu()) arguments?.getParcelable(
             BUNDLE_QUIZ,
             Quiz::class.java
@@ -220,6 +218,16 @@ class RunQuizFragment : AbstractBaseFragment() {
                 }
             }
         }
+    }
+
+    override fun onStop() {
+        quizTimer?.pause()
+        super.onStop()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        quizTimer?.resume()
     }
 
     private fun initTimer(timeInMilliseconds: Int? = DEFAULT_TIMER_SECONDS, wordsCount: Int) {
@@ -248,11 +256,11 @@ class RunQuizFragment : AbstractBaseFragment() {
     private fun fillQuiz(word: Word, reversed: Boolean) {
         val askWordQuiz = if (!reversed) word.original else word.translates?.first()?.translation
         var answerWordCount = 1
-        if(!reversed) {
+        if (!reversed) {
             var tempCount = 1
             word.translates.forEach {
                 var count = it.translation.split(" ").size
-                if(count > tempCount) {
+                if (count > tempCount) {
                     tempCount = count
                 }
             }

@@ -2,6 +2,7 @@ package my.dictionary.free.domain.viewmodels.quiz.run
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,10 +38,9 @@ class RunQuizViewModel @Inject constructor(
         private val TAG = RunQuizViewModel::class.simpleName
     }
 
-    val nextWordUIState: MutableSharedFlow<Pair<Word, Boolean>> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    val nextWordUIState: MutableLiveData<Pair<Word, Boolean>> by lazy {
+        MutableLiveData()
+    }
 
     private val _validationErrorUIState = Channel<String>()
     val validationErrorUIState: StateFlow<String> = _validationErrorUIState.receiveAsFlow()
@@ -97,7 +97,7 @@ class RunQuizViewModel @Inject constructor(
             if (currentStep >= 0 && currentStep < it.size) {
                 currentWord = it[currentStep]
                 val pair = Pair(currentWord!!, reversed)
-                nextWordUIState.tryEmit(pair)
+                nextWordUIState.value = pair
                 _titleQuizUIState.value = Pair(currentStep + 1, it.size)
             } else {
                 val countWords = result.size
