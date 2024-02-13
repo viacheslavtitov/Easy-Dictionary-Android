@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
@@ -16,11 +17,13 @@ import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.navigation.EditQuizScreenFromDetail
 import my.dictionary.free.domain.models.navigation.RunQuizScreen
+import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.quiz.detail.QuizDetailTabsViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
+import my.dictionary.free.view.quiz.add.AddQuizFragment
 
 @AndroidEntryPoint
 class QuizDetailTabsFragment : AbstractBaseFragment() {
@@ -77,6 +80,16 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
         })
         quizId = arguments?.getString(BUNDLE_QUIZ_ID, null)
         loadQuiz()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setFragmentResultListener(AddQuizFragment.BUNDLE_UPDATE_RESULT) { requestKey, bundle ->
+            val needUpdate = bundle.getBoolean(AddQuizFragment.BUNDLE_UPDATE_KEY, false)
+            if(needUpdate) {
+                loadQuiz()
+            }
+        }
     }
 
     private fun loadQuiz() {
