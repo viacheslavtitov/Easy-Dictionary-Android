@@ -59,11 +59,6 @@ class SharedMainViewModel @Inject constructor(
     val actionNavigation: StateFlow<ActionNavigation> = _actionNavigation.receiveAsFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), AddTagNavigation())
 
-    val toolbarTitleUIState: MutableSharedFlow<String> = MutableSharedFlow(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
-
     private val _loadingUIState: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
     val loadingUIState: StateFlow<Boolean> = _loadingUIState.asStateFlow()
@@ -120,7 +115,7 @@ class SharedMainViewModel @Inject constructor(
     }
 
     fun setTitle(title: String) {
-        toolbarTitleUIState.tryEmit(title)
+        saveTitle(title)
     }
 
     fun loading(loading: Boolean) {
