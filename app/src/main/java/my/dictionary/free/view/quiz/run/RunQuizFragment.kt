@@ -47,6 +47,7 @@ class RunQuizFragment : AbstractBaseFragment() {
         private val TAG = RunQuizFragment::class.simpleName
         const val BUNDLE_QUIZ =
             "my.dictionary.free.view.quiz.run.RunQuizFragment.BUNDLE_QUIZ"
+        private val DEFAULT_TIMER_SECONDS: Int = 10
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -203,27 +204,6 @@ class RunQuizFragment : AbstractBaseFragment() {
             Quiz::class.java
         ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
         Log.d(TAG, quiz?.toString() ?: "quiz is null")
-        quiz?.let {
-            Log.d(TAG, "millisInFuture = ${it.timeInSeconds.toLong()}")
-            quizTimer?.cancel()
-            quizTimer = object : QuizTimer(
-                millisInFuture = it.timeInSeconds.toLong() * 1000L
-            ) {
-                @SuppressLint("RestrictedApi", "SetTextI18n")
-                override fun onTick(millisUntilFinished: Long) {
-                    super.onTick(millisUntilFinished)
-                    Log.d(TAG, "change timer $millisUntilFinished")
-                    val seconds = millisUntilFinished / 1000
-                    timeTextView?.text = "$seconds"
-                }
-
-                override fun onFinish() {
-                    super.onFinish()
-                    Log.d(TAG, "timer is finished")
-                    timeTextView?.text = getString(R.string.fail_time_over)
-                }
-            }
-        }
         wordTypes = context?.resources?.getStringArray(R.array.word_types)?.toList()
         lifecycleScope.launch {
             viewModel.setQuiz(quiz).collect {
@@ -242,11 +222,46 @@ class RunQuizFragment : AbstractBaseFragment() {
         }
     }
 
+    private fun initTimer(timeInMilliseconds: Int? = DEFAULT_TIMER_SECONDS, wordsCount: Int) {
+        Log.d(TAG, "millisInFuture = $timeInMilliseconds and words count $wordsCount")
+        quizTimer?.cancel()
+        quizTimer = object : QuizTimer(
+            millisInFuture = (((timeInMilliseconds?.toLong())
+                ?: DEFAULT_TIMER_SECONDS.toLong()) * 1000L) * wordsCount
+        ) {
+            @SuppressLint("RestrictedApi", "SetTextI18n")
+            override fun onTick(millisUntilFinished: Long) {
+                super.onTick(millisUntilFinished)
+                Log.d(TAG, "change timer $millisUntilFinished")
+                val seconds = millisUntilFinished / 1000
+                timeTextView?.text = "$seconds"
+            }
+
+            override fun onFinish() {
+                super.onFinish()
+                Log.d(TAG, "timer is finished")
+                timeTextView?.text = getString(R.string.fail_time_over)
+            }
+        }
+    }
+
     private fun fillQuiz(word: Word, reversed: Boolean) {
+        val askWordQuiz = if (!reversed) word.original else word.translates?.first()?.translation
+        var answerWordCount = 1
+        if(!reversed) {
+            var tempCount = 1
+            word.translates.forEach {
+                var count = it.translation.split(" ").size
+                if(count > tempCount) {
+                    tempCount = count
+                }
+            }
+            answerWordCount = tempCount
+        }
         answerInputLayout?.error = ""
         answerEditText?.setText("")
         timeTextView?.text = ""
-        wordTextView?.text = if (!reversed) word.original else word.translates?.first()?.translation
+        wordTextView?.text = askWordQuiz
         val visiblePhonetic = !word.phonetic.isNullOrEmpty() && !reversed
         phoneticTextView?.visible(visiblePhonetic, View.GONE)
         if (visiblePhonetic) {
@@ -260,6 +275,7 @@ class RunQuizFragment : AbstractBaseFragment() {
             }
 
         }
+        initTimer(viewModel.getQuiz()?.timeInSeconds, answerWordCount)
         fillTags(word)
         fillCategories(word)
         fillTypes(word)

@@ -51,7 +51,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:text="@string/set_duration"
+                    android:text="@string/set_duration_per_word"
                     android:textColor="@color/main_text"
                     android:textSize="16dp" />
 
