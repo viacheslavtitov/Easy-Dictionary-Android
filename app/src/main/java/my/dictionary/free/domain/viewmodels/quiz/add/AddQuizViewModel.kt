@@ -296,6 +296,8 @@ class AddQuizViewModel @Inject constructor(
             _showCategoriesUIState.value = quiz.showCategories
             _showTypesUIState.value = quiz.showTypes
             emit(FetchDataState.DataState(quiz.words))
+        } else {
+            emit(FetchDataState.FinishLoadingState)
         }
     }
 }

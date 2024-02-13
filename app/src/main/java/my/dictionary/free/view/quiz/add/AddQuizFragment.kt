@@ -15,7 +15,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
@@ -39,12 +38,10 @@ import my.dictionary.free.view.dialogs.ValueDialogListener
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.findAndDismissDialog
 import my.dictionary.free.view.ext.visible
-import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
 import my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
 import my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment
 import my.dictionary.free.view.widget.ListItemDecoration
-import my.dictionary.free.view.widget.OnItemSwipedListener
 
 @AndroidEntryPoint
 class AddQuizFragment : AbstractBaseFragment() {
@@ -124,9 +121,6 @@ class AddQuizFragment : AbstractBaseFragment() {
         }
         wordsRecyclerView = view.findViewById(R.id.words_recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(context)
-        val itemTouchHelper =
-            ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
-        itemTouchHelper.attachToRecyclerView(wordsRecyclerView)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
         val wordTypes = mutableListOf<String>().apply {
             add(" ")
@@ -137,14 +131,6 @@ class AddQuizFragment : AbstractBaseFragment() {
         wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
         return view
-    }
-
-    private val onItemSwipedListener = object : OnItemSwipedListener {
-        override fun onSwiped(position: Int) {
-            Log.d(TAG, "swipe item by position $position")
-            wordsAdapter?.temporaryRemoveItem(position)
-            wordsAdapter?.finallyRemoveItem()
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -220,11 +206,11 @@ class AddQuizFragment : AbstractBaseFragment() {
             Quiz::class.java
         ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
         Log.d(TAG, quiz?.toString() ?: "quiz is null")
-        val title =
-            if (viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
-        sharedViewModel.setTitle(title)
         lifecycleScope.launch {
             viewModel.setQuiz(quiz).collect {
+                val title =
+                    if (viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
+                sharedViewModel.setTitle(title)
                 wordsAdapter?.clearData()
                 when (it) {
                     is FetchDataState.DataState -> {
