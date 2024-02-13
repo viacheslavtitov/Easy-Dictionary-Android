@@ -85,6 +85,7 @@
     <string name="search_hint">English</string>
     <!-- Words -->
     <string name="words">Words</string>
+    <string name="words_count">Words %d</string>
     <string name="add_word">Add word</string>
     <string name="error_load_data">Something was wrong to load data</string>
     <string name="tap_your_word">Tap to add your word here</string>

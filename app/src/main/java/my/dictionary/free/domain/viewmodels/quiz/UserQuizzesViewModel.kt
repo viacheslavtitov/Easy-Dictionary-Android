@@ -32,10 +32,6 @@ class UserQuizzesViewModel @Inject constructor(
         private val TAG = UserQuizzesViewModel::class.simpleName
     }
 
-    private val _quizzesUIState = Channel<Quiz>()
-    val quizzesUIState: StateFlow<Quiz> = _quizzesUIState.receiveAsFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Quiz.empty())
-
     fun loadQuizzes(context: Context?) = flow<FetchDataState<Quiz>> {
         if (context == null) return@flow
         Log.d(TAG, "loadQuizzes()")
@@ -64,13 +60,13 @@ class UserQuizzesViewModel @Inject constructor(
                             .collect { word ->
                                 Log.d(TAG, "collect word $word, for ${quiz.name}")
                                 quiz.words.add(word)
-                                val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "")
-                                    .firstOrNull() ?: emptyList()
-                                quiz.quizWords.addAll(quizWords)
                                 Log.d(TAG, "emit quiz ${quiz.name}")
                             }
                     }
                 }
+                val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "")
+                    .firstOrNull() ?: emptyList()
+                quiz.quizWords.addAll(quizWords)
                 emit(FetchDataState.DataState(quiz))
             }
     }

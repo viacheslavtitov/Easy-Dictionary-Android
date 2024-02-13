@@ -26,6 +26,16 @@
             android:layout_height="wrap_content" />
     </RadioGroup>
 
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/words_count_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:padding="9dp"
+        android:text="@string/words"
+        android:textColor="@color/main_text"
+        android:textSize="16dp" />
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
