@@ -42,7 +42,7 @@
     <!-- Quiz -->
     <string name="my_quizzes">My quizzes</string>
     <string name="set_dictionary">Set dictionary</string>
-    <string name="set_duration">Set duration</string>
+    <string name="set_duration_per_word">Set duration for word</string>
     <string name="duration">Duration</string>
     <string name="seconds_value">%d seconds</string>
     <string name="seconds_dialog_description">Choose time (seconds) for each word</string>

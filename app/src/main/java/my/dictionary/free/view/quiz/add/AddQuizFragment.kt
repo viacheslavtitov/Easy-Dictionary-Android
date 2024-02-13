@@ -375,7 +375,7 @@ class AddQuizFragment : AbstractBaseFragment() {
             .cancelButtonTitle(getString(R.string.cancel))
             .minValue(DURATION_MIN)
             .maxValue(DURATION_MAX)
-            .title(getString(R.string.set_duration))
+            .title(getString(R.string.set_duration_per_word))
             .description(getString(R.string.seconds_dialog_description))
             .iconRes(R.drawable.ic_baseline_time_24)
             .okButtonTitle(getString(R.string.set))
