@@ -2,9 +2,11 @@ package my.dictionary.free.domain.usecases.quize
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import my.dictionary.free.data.models.quiz.QuizResultTable
 import my.dictionary.free.data.models.quiz.QuizTable
@@ -32,6 +34,8 @@ class GetCreateQuizUseCase @Inject constructor(
     companion object {
         private val TAG = GetCreateQuizUseCase::class.simpleName
     }
+
+    private val ioScope = Dispatchers.IO
 
     suspend fun createQuiz(quiz: Quiz): Triple<Boolean, String?, String?> {
         val userId =
@@ -139,7 +143,7 @@ class GetCreateQuizUseCase @Inject constructor(
                         showTypes = quiz.showTypes,
                         timeInSeconds = quiz.timeInSeconds,
                     )
-                }
+                }.flowOn(ioScope)
         }
     }
 
@@ -182,7 +186,7 @@ class GetCreateQuizUseCase @Inject constructor(
                 return@map quizWord.map {
                     it.wordId
                 }
-            }
+            }.flowOn(ioScope)
         }
     }
 
@@ -199,7 +203,7 @@ class GetCreateQuizUseCase @Inject constructor(
                         wordId = it.wordId,
                     )
                 }
-            }
+            }.flowOn(ioScope)
         }
     }
 
