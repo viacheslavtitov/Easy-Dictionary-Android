@@ -75,6 +75,18 @@
                 android:textSize="80dp"
                 tools:text="10" />
 
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/result_image"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center"
+                app:tint="@color/yellow_700"
+                android:visibility="gone"
+                android:gravity="center"
+                android:src="@drawable/ic_emoji_happy"
+                android:textSize="80dp"
+                tools:visibility="visible" />
+
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/tags_container"
                 android:layout_width="match_parent"

@@ -20,9 +20,8 @@ import my.dictionary.free.domain.models.words.tags.CategoryTag
 import my.dictionary.free.domain.models.words.tags.Tag
 import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
-import my.dictionary.free.view.ext.dp
 import my.dictionary.free.view.ext.getColorInt
-import my.dictionary.free.view.ext.hide
+import my.dictionary.free.view.ext.hideWithoutSpace
 import my.dictionary.free.view.ext.visible
 
 class DictionaryWordsAdapter(
@@ -31,6 +30,7 @@ class DictionaryWordsAdapter(
     private val wordTypes: List<String>,
     private val onWordClickListener: OnWordClickListener? = null,
     private var expandTranslations: Boolean = false,
+    private var displayPhonetic: Boolean = false,
     private var hideTranslations: Boolean = false
 ) :
     RecyclerView.Adapter<DictionaryWordsAdapter.ViewHolder>(), Filterable {
@@ -44,18 +44,18 @@ class DictionaryWordsAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var swipePosition: Int = 0
         val originalTextView: AppCompatTextView
-        val translatedTextView: AppCompatTextView
         val dropDownImage: AppCompatImageView
         val rootView: View
-        val titleContainer: View
+        val translatedTextView: AppCompatTextView
+        val phoneticTextView: AppCompatTextView
         val translatedContainer: LinearLayoutCompat
 
         init {
             originalTextView = view.findViewById(R.id.original_word)
-            translatedTextView = view.findViewById(R.id.translated_word)
             dropDownImage = view.findViewById(R.id.drop_down_image)
             rootView = view.findViewById(R.id.root)
-            titleContainer = view.findViewById(R.id.title_container)
+            translatedTextView = view.findViewById(R.id.translated_word)
+            phoneticTextView = view.findViewById(R.id.phonetic)
             translatedContainer = view.findViewById(R.id.translated_container)
         }
     }
@@ -89,29 +89,37 @@ class DictionaryWordsAdapter(
         }
     }
 
-    private fun fillAllTranslations(viewHolder: ViewHolder, context: Context, word: Word, hideTranslations: Boolean) {
+    private fun fillAllTranslations(
+        viewHolder: ViewHolder,
+        context: Context,
+        word: Word,
+        hideTranslations: Boolean
+    ) {
         viewHolder.translatedContainer.removeAllViews()
-        fillTranslationValue(context, viewHolder.translatedTextView, word.translates.first(), hideTranslations)
+        fillTranslationValue(
+            context,
+            word.translates.first(),
+            viewHolder.translatedTextView,
+            hideTranslations
+        )
         if (word.translates.size <= 1) {
             viewHolder.dropDownImage.visible(false, View.GONE)
-            viewHolder.titleContainer.setOnClickListener(null)
+            viewHolder.dropDownImage.setOnClickListener(null)
         } else {
             viewHolder.dropDownImage.visible(true)
             word.translates.forEachIndexed { index, translate ->
                 if (index != 0) {
-                    val addTranslationTextView = AppCompatTextView(viewHolder.rootView.context)
-                    val params = LinearLayoutCompat.LayoutParams(
-                        LinearLayoutCompat.LayoutParams.MATCH_PARENT,
-                        LinearLayoutCompat.LayoutParams.WRAP_CONTENT
+                    viewHolder.translatedContainer.addView(
+                        fillTranslationValue(
+                            context,
+                            translate,
+                            null,
+                            hideTranslations
+                        )
                     )
-                    addTranslationTextView.layoutParams = params
-                    addTranslationTextView.textSize = 6.dp.toFloat()
-                    addTranslationTextView.setTextColor(context.getColorInt(R.color.main_text))
-                    fillTranslationValue(context, addTranslationTextView, translate, hideTranslations)
-                    viewHolder.translatedContainer.addView(addTranslationTextView)
                 }
             }
-            viewHolder.titleContainer.setOnClickListener {
+            viewHolder.dropDownImage.setOnClickListener {
                 viewHolder.translatedContainer.visible(
                     viewHolder.translatedContainer.visibility != View.VISIBLE,
                     View.GONE
@@ -126,25 +134,31 @@ class DictionaryWordsAdapter(
                 if (viewHolder.translatedContainer.visibility == View.VISIBLE)
                     R.drawable.ic_baseline_arrow_drop_up_24 else R.drawable.ic_baseline_arrow_drop_down_24
             )
-            viewHolder.titleContainer.setOnLongClickListener {
-                onWordClickListener?.onLongClick(word)
-                true
-            }
         }
-        if(onWordClickListener == null) {
+        if (onWordClickListener == null) {
             viewHolder.rootView.setOnClickListener {
                 fillAllTranslations(viewHolder, context, word, false)
             }
+        }
+        if(word.phonetic?.isNotEmpty() == true) {
+            viewHolder.phoneticTextView.visible(true)
+            viewHolder.phoneticTextView.text = "[${word.phonetic}]"
+        } else {
+            viewHolder.phoneticTextView.visible(false, View.GONE)
         }
     }
 
     private fun fillTranslationValue(
         context: Context,
-        textView: AppCompatTextView,
         translation: TranslationVariant,
+        translatedTextView: AppCompatTextView? = null,
         hideTranslations: Boolean
-    ) {
-        val value = if(hideTranslations) translation.translation.hide() else translation.translation
+    ): View {
+        val textView = translatedTextView
+            ?: LayoutInflater.from(context)
+                .inflate(R.layout.item_word_translation, null, false) as AppCompatTextView
+        val value =
+            if (hideTranslations) translation.translation.hideWithoutSpace() else translation.translation
         if (translation.category != null) {
             textView.setText(
                 Html.fromHtml(
@@ -158,6 +172,7 @@ class DictionaryWordsAdapter(
         } else {
             textView.text = "- $value"
         }
+        return textView
     }
 
     override fun getItemCount() = filteredData.size
