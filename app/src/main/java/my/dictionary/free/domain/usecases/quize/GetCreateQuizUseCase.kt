@@ -20,6 +20,7 @@ import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
 import my.dictionary.free.domain.utils.hasOreo
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -148,7 +149,7 @@ class GetCreateQuizUseCase @Inject constructor(
     }
 
     suspend fun getHistoriesOfQuiz(quiz: Quiz): List<QuizResult> {
-        Log.d(TAG, "getQuiz ${quiz._id}")
+        Log.d(TAG, "getHistoriesOfQuiz ${quiz._id}")
         val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
         if (userId.isNullOrEmpty()) {
             return arrayListOf()
@@ -156,9 +157,9 @@ class GetCreateQuizUseCase @Inject constructor(
             return databaseRepository.getHistoriesOfQuiz(userId, quiz._id ?: "").firstOrNull()
                 ?.map {
                     val dateTime = if (hasOreo()) {
-                        DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(it.unixDateTimeStamp))
+                        DateFormat.getDateInstance().format(Date.from(Instant.ofEpochMilli(it.unixDateTimeStamp)))
                     } else {
-                        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                        val sdf = SimpleDateFormat("yyyy-MM-dd")
                         val date = Date(it.unixDateTimeStamp)
                         sdf.format(date)
                     }
