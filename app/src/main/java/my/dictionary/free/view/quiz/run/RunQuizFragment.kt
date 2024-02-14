@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -40,6 +41,7 @@ import my.dictionary.free.view.ext.hide
 import my.dictionary.free.view.ext.hideKeyboard
 import my.dictionary.free.view.ext.setTint
 import my.dictionary.free.view.ext.visible
+import my.dictionary.free.view.quiz.add.AddQuizFragment
 import my.dictionary.free.view.widget.bubble.BubbleLayout
 import my.dictionary.free.view.widget.bubble.BubbleView
 
@@ -184,6 +186,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                     is FetchDataState.DataState -> {
                         Log.d(TAG, "quiz result save: ${it.data}")
                         if (it.data) {
+                            val bundle = Bundle().apply {
+                                putBoolean(AddQuizFragment.BUNDLE_UPDATE_KEY, true)
+                            }
+                            setFragmentResult(AddQuizFragment.BUNDLE_UPDATE_RESULT, bundle)
                             findNavController().popBackStack()
                         }
                     }

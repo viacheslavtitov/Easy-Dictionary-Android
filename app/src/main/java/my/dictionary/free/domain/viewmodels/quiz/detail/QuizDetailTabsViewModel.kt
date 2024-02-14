@@ -57,12 +57,12 @@ class QuizDetailTabsViewModel @Inject constructor(
                                         translation.category = getCreateTranslationCategoriesUseCase.getDirectCategoryById(translation.categoryId)
                                     }
                                 }
-                                quiz.histories.addAll(getCreateQuizUseCase.getHistoriesOfQuiz(quiz))
                                 quiz.words.add(word)
                                 Log.d(TAG, "emit quiz ${quiz.name}")
                             }
                     }
                 }
+                quiz.histories.addAll(getCreateQuizUseCase.getHistoriesOfQuiz(quiz))
                 val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "")
                     .firstOrNull() ?: emptyList()
                 quiz.quizWords.addAll(quizWords)
