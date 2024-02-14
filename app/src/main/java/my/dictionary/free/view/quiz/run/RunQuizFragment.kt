@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -37,6 +38,7 @@ import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.hide
 import my.dictionary.free.view.ext.hideKeyboard
+import my.dictionary.free.view.ext.setTint
 import my.dictionary.free.view.ext.visible
 import my.dictionary.free.view.widget.bubble.BubbleLayout
 import my.dictionary.free.view.widget.bubble.BubbleView
@@ -58,6 +60,7 @@ class RunQuizFragment : AbstractBaseFragment() {
     private var wordTextView: AppCompatTextView? = null
     private var phoneticTextView: AppCompatTextView? = null
     private var timeTextView: AppCompatTextView? = null
+    private var resultImageView: AppCompatImageView? = null
     private var btnNext: MenuItem? = null
     private var rootView: View? = null
     private var tagsContainer: View? = null
@@ -82,6 +85,7 @@ class RunQuizFragment : AbstractBaseFragment() {
         phoneticTextView = view.findViewById(R.id.phonetic)
         timeTextView = view.findViewById(R.id.time)
         rootView = view.findViewById(R.id.root)
+        resultImageView = view.findViewById(R.id.result_image)
         tagsContainer = view.findViewById(R.id.tags_container)
         categoriesContainer = view.findViewById(R.id.categories_container)
         typesContainer = view.findViewById(R.id.types_container)
@@ -129,6 +133,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                             phoneticTextView?.text = ""
                             answerEditText?.setText("")
                             timeTextView?.text = ""
+                            timeTextView?.visible(false, View.GONE)
+                            resultImageView?.setImageResource(R.drawable.ic_emoji_smile)
+                            resultImageView?.setTint(R.color.yellow_700)
+                            resultImageView?.visible(true)
                             btnNext?.setIcon(R.drawable.ic_baseline_save_24)
                         }
                     }
@@ -248,7 +256,10 @@ class RunQuizFragment : AbstractBaseFragment() {
             override fun onFinish() {
                 super.onFinish()
                 Log.d(TAG, "timer is finished")
-                timeTextView?.text = getString(R.string.fail_time_over)
+                timeTextView?.visible(false, View.GONE)
+                resultImageView?.setImageResource(R.drawable.ic_emoji_bad)
+                resultImageView?.setTint(R.color.gray_400)
+                resultImageView?.visible(true)
             }
         }
     }
@@ -269,6 +280,8 @@ class RunQuizFragment : AbstractBaseFragment() {
         answerInputLayout?.error = ""
         answerEditText?.setText("")
         timeTextView?.text = ""
+        timeTextView?.visible(true)
+        resultImageView?.visible(false, View.GONE)
         wordTextView?.text = askWordQuiz
         val visiblePhonetic = !word.phonetic.isNullOrEmpty() && !reversed
         phoneticTextView?.visible(visiblePhonetic, View.GONE)
@@ -359,7 +372,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                 when (it) {
                     is FetchDataState.DataState -> {
                         if (it.data) {
-                            timeTextView?.text = getString(R.string.success)
+                            timeTextView?.visible(false, View.GONE)
+                            resultImageView?.setImageResource(R.drawable.ic_emoji_happy)
+                            resultImageView?.setTint(R.color.yellow_700)
+                            resultImageView?.visible(true)
                             Log.d(TAG, "answer is $answer")
                             viewModel.nextWord(answer)
                         } else {
@@ -409,7 +425,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                             is FetchDataState.DataState -> {
                                 if (it.data) {
                                     context?.hideKeyboard(answerEditText)
-                                    timeTextView?.text = getString(R.string.success)
+                                    timeTextView?.visible(false, View.GONE)
+                                    resultImageView?.setImageResource(R.drawable.ic_emoji_happy)
+                                    resultImageView?.setTint(R.color.yellow_700)
+                                    resultImageView?.visible(true)
                                     quizTimer?.cancel()
                                 }
                             }
