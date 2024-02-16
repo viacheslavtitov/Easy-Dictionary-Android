@@ -1,6 +1,7 @@
 package my.dictionary.free.view.user.dictionary.add
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,12 +13,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
+import my.dictionary.free.domain.models.dictionary.VerbTense
 import my.dictionary.free.domain.models.language.LangType
 import my.dictionary.free.domain.models.language.Language
 import my.dictionary.free.domain.models.navigation.LanguagesScreen
@@ -26,13 +30,17 @@ import my.dictionary.free.domain.viewmodels.main.SharedMainViewModel
 import my.dictionary.free.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
 import my.dictionary.free.view.AbstractBaseFragment
 import my.dictionary.free.view.FetchDataState
+import my.dictionary.free.view.dialogs.DialogBuilders
+import my.dictionary.free.view.dialogs.InputDialogListener
 import my.dictionary.free.view.ext.addMenuProvider
+import my.dictionary.free.view.ext.findAndDismissDialog
 import my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment
 
 @AndroidEntryPoint
 class AddUserDictionaryFragment : AbstractBaseFragment() {
 
     companion object {
+        private val TAG = AddUserDictionaryFragment::class.simpleName
         const val BUNDLE_DICTIONARY =
             "my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment.BUNDLE_DICTIONARY"
     }
@@ -44,9 +52,12 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
     private lateinit var langFromBtn: Button
     private lateinit var langToBtn: Button
     private lateinit var rootView: View
+    private lateinit var verbTensesRecyclerView: RecyclerView
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
     private val viewModel: AddUserDictionaryViewModel by viewModels()
+
+    private var verbTensesAdapter: VerbTensesAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,9 +70,38 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         textInputLayoutDialect = view.findViewById(R.id.text_input_dialect)
         textInputEditTextDialect = view.findViewById(R.id.edit_text_dialect)
         langFromBtn = view.findViewById(R.id.btn_lang_from)
+        verbTensesRecyclerView = view.findViewById(R.id.verb_tenses_recycler_view)
         rootView = view.findViewById(R.id.root)
+        verbTensesAdapter = VerbTensesAdapter(arrayListOf(), onVerbTenseEditListener)
+        verbTensesRecyclerView.layoutManager = LinearLayoutManager(context)
+        verbTensesRecyclerView.adapter = verbTensesAdapter
         langFromBtn.setOnClickListener {
             sharedViewModel.navigateTo(LanguagesScreen(LangType.FROM))
+        }
+        view.findViewById<View>(R.id.btn_add_verb_time).setOnClickListener {
+            val dialog = DialogBuilders.InputDialogBuilder
+                .cancelButtonTitle(getString(R.string.cancel))
+                .title(getString(R.string.add_tense))
+                .okButtonTitle(getString(R.string.ok))
+                .listener(object : InputDialogListener {
+                    var tenseName: String? = null
+                    override fun onTextChanged(newText: String?) {
+                        tenseName = newText
+                    }
+
+                    override fun onCancelClicked() {
+                    }
+
+                    override fun onOkButtonClicked() {
+                        tenseName?.let {
+                            if (it.isNotEmpty()) {
+                                addTense(VerbTense(null, it))
+                            }
+                        }
+                    }
+                }).build()
+            childFragmentManager.findAndDismissDialog("InputDialog")
+            dialog.show(childFragmentManager, "InputDialog")
         }
         langToBtn = view.findViewById(R.id.btn_lang_to)
         langToBtn.setOnClickListener {
@@ -91,6 +131,14 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                             language.value.ifEmpty { getString(R.string.select_language_to) }
                     }
                 }
+                launch {
+                    viewModel.tensesSavedUIState.collect { tenses ->
+                        if(tenses.isNotEmpty()) verbTensesAdapter?.clear()
+                        tenses.forEach {
+                            verbTensesAdapter?.add(it)
+                        }
+                    }
+                }
             }
         }
         addMenuProvider(R.menu.menu_add_user_dictionary, { menu, mi -> }, {
@@ -103,7 +151,6 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                 else -> false
             }
         })
-
         val dictionary = if (hasTiramisu()) arguments?.getParcelable(
             BUNDLE_DICTIONARY,
             Dictionary::class.java
@@ -140,7 +187,8 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
     private fun createDictionary() {
         lifecycleScope.launch {
             val dialect = textInputEditTextDialect.text?.toString()
-            viewModel.createDictionary(context, dialect).collect {
+            val tenses = verbTensesAdapter?.getData() ?: arrayListOf()
+            viewModel.createDictionary(context, dialect, tenses).collect {
                 when (it) {
                     is FetchDataState.StartLoadingState -> {
                         sharedViewModel.loading(true)
@@ -171,9 +219,22 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    override fun onStop() {
         val dialect = textInputEditTextDialect.text?.toString()
         viewModel.saveDialect(dialect)
-        super.onSaveInstanceState(outState)
+        viewModel.saveVerbTenses(verbTensesAdapter?.getData() ?: emptyList())
+        super.onStop()
+    }
+
+    private val onVerbTenseEditListener = object : OnVerbTenseEditListener {
+
+        override fun onDelete(entity: VerbTense) {
+            Log.d(TAG, "tense ${entity.name} was deleted")
+        }
+
+    }
+
+    private fun addTense(entity: VerbTense) {
+        verbTensesAdapter?.add(entity)
     }
 }

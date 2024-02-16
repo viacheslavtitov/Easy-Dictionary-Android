@@ -77,6 +77,9 @@
     <string name="dialect">Dialect</string>
     <string name="select_language_from">Select language from</string>
     <string name="select_language_to">Select language to</string>
+    <string name="add_verb_time">Add verb tenses</string>
+    <string name="add_verb_time_descriptional">It\'s optionally. You may add tenses of verbs and include them into your quizzes</string>
+    <string name="add_tense">Add tense</string>
     <string name="error_delete_dictionary">Something was wrong to delete dictionary</string>
     <string name="error_create_dictionary">Something was wrong to create dictionary</string>
     <string name="error_update_dictionary">Something was wrong to update dictionary</string>
