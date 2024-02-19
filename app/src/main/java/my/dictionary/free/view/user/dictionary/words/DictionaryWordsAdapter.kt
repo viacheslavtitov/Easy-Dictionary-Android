@@ -70,7 +70,11 @@ class DictionaryWordsAdapter(
         val word = filteredData[position]
         val context = viewHolder.itemView.context
         viewHolder.swipePosition = position
-        viewHolder.originalTextView.text = word.original
+        var original = word.original
+        word.tenses.forEach {
+            original += " / ${it.value}"
+        }
+        viewHolder.originalTextView.text = original
         fillAllTranslations(viewHolder, context, word, hideTranslations)
         val selected = selectedWords.firstOrNull { it._id == word._id } != null
         viewHolder.rootView.setBackgroundColor(

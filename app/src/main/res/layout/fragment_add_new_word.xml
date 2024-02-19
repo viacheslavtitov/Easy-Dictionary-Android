@@ -43,6 +43,13 @@
                         tools:ignore="SpeakableTextPresentCheck" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:id="@+id/verb_tense_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="9dp"
+                    android:orientation="vertical" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/text_input_phonetic"
                     style="@style/Widget.TextInputLayout.OutlinedBox"
@@ -95,7 +102,7 @@
                 <my.dictionary.free.view.widget.bubble.BubbleLayout
                     android:id="@+id/bubbles_layout"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content" />
 
                 <androidx.appcompat.widget.AppCompatTextView
                     android:layout_width="match_parent"
