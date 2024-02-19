@@ -11,6 +11,7 @@ data class Dictionary(
     val dictionaryFrom: DictionaryItem,
     val dictionaryTo: DictionaryItem,
     val dialect: String? = null,
+    val tenses: MutableList<VerbTense> = mutableListOf(),
     val tags: MutableList<WordTag> = mutableListOf()
 ) : Parcelable {
     companion object {
@@ -20,14 +21,16 @@ data class Dictionary(
             dictionaryFrom = DictionaryItem.empty(),
             dictionaryTo = DictionaryItem.empty(),
             dialect = null,
+            tenses = mutableListOf(),
             tags = mutableListOf()
         )
     }
 
     override fun toString(): String {
-        return "id = $_id | userUUID = $userUUID | from = ${dictionaryFrom.lang} | to = ${dictionaryTo.lang} | dialect = $dialect | tags = ${tags.size}"
+        return "id = $_id | userUUID = $userUUID | from = ${dictionaryFrom.lang} | to = ${dictionaryTo.lang} | dialect = $dialect | tags = ${tags.size} | tenses = ${tenses.size}"
     }
 }
+
 @Parcelize
 data class DictionaryItem(
     val lang: String,
@@ -46,6 +49,7 @@ data class DictionaryItem(
         return "$langFull"
     }
 }
+
 @Parcelize
 data class Flags(
     val png: String,

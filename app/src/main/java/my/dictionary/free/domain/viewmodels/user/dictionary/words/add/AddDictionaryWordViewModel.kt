@@ -23,6 +23,7 @@ import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
+import my.dictionary.free.domain.models.words.verb_tense.WordVerbTense
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationsUseCase
@@ -42,6 +43,7 @@ class AddDictionaryWordViewModel @Inject constructor(
     companion object {
         private val TAG = AddDictionaryWordViewModel::class.simpleName
         private const val KEY_STATE_TYPE = "type"
+        private const val KEY_STATE_VERB_TENSES = "verb_tenses"
     }
 
     private val _validateWord = Channel<String>()
@@ -54,6 +56,9 @@ class AddDictionaryWordViewModel @Inject constructor(
     val nameUIState: StateFlow<String> = _nameUIState.asStateFlow()
 
     val typeSavedUIState: StateFlow<Int> = uiStateHandle.getStateFlow(KEY_STATE_TYPE, 0)
+
+    val tensesSavedUIState: StateFlow<List<Pair<String, String>>> =
+        uiStateHandle.getStateFlow(KEY_STATE_VERB_TENSES, emptyList())
 
     private val _phoneticUIState: MutableStateFlow<String> =
         MutableStateFlow("")
@@ -123,6 +128,7 @@ class AddDictionaryWordViewModel @Inject constructor(
         }
         _nameUIState.value = editWord!!.original
         saveType(editWord!!.type)
+        saveTenses(editWord?.tenses?.map { Pair(it.tenseId, it.value) })
         emit(FetchDataState.StartLoadingState)
         for (translate in editWord!!.translates) {
             if (isTranslationExistInTempDeletedList(translate)) continue
@@ -178,7 +184,8 @@ class AddDictionaryWordViewModel @Inject constructor(
         typePosition: Int,
         translations: List<TranslationVariant>,
         phonetic: String?,
-        tags: List<WordTag>
+        tags: List<WordTag>,
+        tenses: List<Pair<String, String>>
     ) = flow<FetchDataState<Boolean>> {
         if (context == null) return@flow
         if (wordName.isNullOrEmpty()) return@flow
@@ -192,7 +199,8 @@ class AddDictionaryWordViewModel @Inject constructor(
                 type = typePosition,
                 phonetic = phonetic,
                 translates = translations,
-                tags = arrayListOf()
+                tags = arrayListOf(),
+                tenses = arrayListOf()
             )
             val wordResult = wordsUseCase.updateWord(entity)
             if (!wordResult) {
@@ -238,7 +246,28 @@ class AddDictionaryWordViewModel @Inject constructor(
                     Log.d(TAG, "add tags ${tags.size}")
                     val addTagsResult =
                         wordsUseCase.addTagsToWord(dictionary!!._id!!, tags, editWord!!._id!!)
-                    Log.d(TAG, "tags added result ${addTagsResult}")
+                    Log.d(TAG, "tags added result $addTagsResult")
+                }
+                editWord?.tenses?.forEach {
+                    Log.d(TAG, "remove verb tense ${it.value}")
+                    val result =
+                        wordsUseCase.deleteVerbTense(
+                            dictionary!!._id!!,
+                            editWord!!._id!!,
+                            it._id ?: ""
+                        )
+                    Log.d(TAG, "remove verb tense result $result")
+                }
+                tenses.forEach {
+                    Log.d(TAG, "add verb tense ${it.first} ${it.second}")
+                    val result =
+                        wordsUseCase.addTensesToWord(
+                            dictionary!!._id!!,
+                            editWord!!._id!!,
+                            it.first,
+                            it.second
+                        )
+                    Log.d(TAG, "add verb tense result $result")
                 }
                 emit(FetchDataState.FinishLoadingState)
                 emit(FetchDataState.DataState(translationUpdatedSuccess))
@@ -251,7 +280,8 @@ class AddDictionaryWordViewModel @Inject constructor(
                 type = typePosition,
                 phonetic = phonetic,
                 translates = translations,
-                tags = arrayListOf()
+                tags = arrayListOf(),
+                tenses = arrayListOf()
             )
             val wordResult = wordsUseCase.createWord(entity)
             if (!wordResult.first) {
@@ -259,6 +289,19 @@ class AddDictionaryWordViewModel @Inject constructor(
                 emit(FetchDataState.ErrorStateString(error))
                 emit(FetchDataState.FinishLoadingState)
             } else {
+                val convertedTenses = arrayListOf<WordVerbTense>()
+                tenses.forEach {
+                    val tenseId = it.first
+                    val value = it.second
+                    convertedTenses.add(
+                        WordVerbTense(
+                            _id = null,
+                            tenseId = tenseId,
+                            wordId = wordResult.third ?: "",
+                            value = value
+                        )
+                    )
+                }
                 var translationCreatedSuccess = true
                 for (tr in translations) {
                     val translationResult = getCreateTranslationsUseCase.createTranslation(
@@ -278,7 +321,23 @@ class AddDictionaryWordViewModel @Inject constructor(
                     Log.d(TAG, "add tags ${tags.size}")
                     val addTagsResult =
                         wordsUseCase.addTagsToWord(dictionaryId, tags, wordResult.third ?: "")
-                    Log.d(TAG, "tags added result ${addTagsResult}")
+                    Log.d(TAG, "tags added result $addTagsResult")
+                }
+                if (convertedTenses.isNotEmpty()) {
+                    Log.d(TAG, "add tenses ${convertedTenses.size}")
+                    convertedTenses.forEach {
+                        val addTensesResult =
+                            wordsUseCase.addTensesToWord(
+                                dictionaryId,
+                                it.wordId,
+                                it.tenseId,
+                                it.value
+                            )
+                        Log.d(
+                            TAG,
+                            "tense {${it.value} added result ${addTensesResult.first} ${addTensesResult.second}"
+                        )
+                    }
                 }
                 emit(FetchDataState.FinishLoadingState)
                 emit(FetchDataState.DataState(translationCreatedSuccess))
@@ -297,7 +356,7 @@ class AddDictionaryWordViewModel @Inject constructor(
         } else {
             notSavingTranslations.add(translationVariant)
         }
-        if(translationVariant._id != null && editWord != null) {
+        if (translationVariant._id != null && editWord != null) {
             existIndex = editWord!!.translates.indexOfFirst {
                 it._id == translationVariant._id
             }
@@ -311,7 +370,8 @@ class AddDictionaryWordViewModel @Inject constructor(
                     type = editWord!!.type,
                     phonetic = editWord!!.phonetic,
                     translates = updatedTranslation,
-                    tags = editWord!!.tags
+                    tags = editWord!!.tags,
+                    tenses = editWord!!.tenses
                 )
             }
         }
@@ -335,6 +395,35 @@ class AddDictionaryWordViewModel @Inject constructor(
 
     fun saveType(value: Int?) {
         uiStateHandle[KEY_STATE_TYPE] = value
+//        getEditedWord()?.let {
+//            editWord = Word(
+//                _id = it._id,
+//                dictionaryId = it.dictionaryId,
+//                type = value ?: 0,
+//                original = it.original,
+//                phonetic = it.phonetic,
+//                translates = it.translates,
+//                tags = it.tags,
+//                tenses = it.tenses
+//            )
+//        }
+    }
+
+    fun saveTenses(value: List<Pair<String, String>>?) {
+        uiStateHandle[KEY_STATE_VERB_TENSES] = value
+        getEditedWord()?.let { word ->
+            word.tenses.clear()
+            value?.forEach {
+                word.tenses.add(
+                    WordVerbTense(
+                        _id = null,
+                        tenseId = it.first,
+                        wordId = word._id ?: "",
+                        value = it.second,
+                    )
+                )
+            }
+        }
     }
 
 }

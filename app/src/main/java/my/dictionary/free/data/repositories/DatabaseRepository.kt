@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import my.dictionary.free.BuildConfig
 import my.dictionary.free.data.models.dictionary.DictionaryTable
+import my.dictionary.free.data.models.dictionary.VerbTenseTable
 import my.dictionary.free.data.models.quiz.QuizResultTable
 import my.dictionary.free.data.models.quiz.QuizTable
 import my.dictionary.free.data.models.quiz.QuizWordResultTable
@@ -22,6 +23,7 @@ import my.dictionary.free.data.models.words.WordTable
 import my.dictionary.free.data.models.words.WordTagTable
 import my.dictionary.free.data.models.words.variants.TranslationCategoryTable
 import my.dictionary.free.data.models.words.variants.TranslationVariantTable
+import my.dictionary.free.data.models.words.verb_tense.WordVerbTenseTable
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.utils.PreferenceUtils
 import javax.inject.Inject
@@ -107,7 +109,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }
     }
 
-    suspend fun updateUser(user: UsersTable, preferenceUtils: PreferenceUtils): Boolean {
+    private suspend fun updateUser(user: UsersTable, preferenceUtils: PreferenceUtils): Boolean {
         return suspendCoroutine { cont ->
             val reference = database.reference
             if (user._id == null) {
@@ -137,17 +139,73 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         return insertUser(user, preferenceUtils)
     }
 
+    suspend fun addVerbTenseToDictionary(
+        userId: String,
+        dictionaryId: String,
+        tenseName: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val verbKey =
+                database.reference.child(UsersTable._NAME).child(userId)
+                    .child(DictionaryTable._NAME).child(dictionaryId).child(VerbTenseTable.NAME)
+                    .push().key
+            if (verbKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            verbKey?.let { key ->
+                val table = VerbTenseTable(
+                    _id = key,
+                    name = tenseName
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${VerbTenseTable._NAME}/$key" to table.toMap()
+                )
+                database.reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun deleteVerbTenseFromDictionary(
+        userId: String,
+        dictionaryId: String, verbTenseIds: List<String>
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            verbTenseIds.forEach {
+                if (it.isNotEmpty()) {
+                    Log.d(TAG, "delete verb tense by id = $it from dictionary id $dictionaryId")
+                    childRemoves["/${VerbTenseTable._NAME}/$it"] = null
+                }
+            }
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId).updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
     suspend fun createDictionary(
         userId: String,
         dictionary: DictionaryTable
-    ): Pair<Boolean, String?> {
+    ): Pair<String?, String?> {
         return suspendCoroutine { cont ->
             val reference = database.reference
             val dictionaryKey =
                 reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
                     .push().key
             if (dictionaryKey == null) {
-                cont.resume(Pair(false, null))
+                cont.resume(Pair(null, null))
             }
             dictionaryKey?.let { key ->
                 val table = DictionaryTable(
@@ -155,17 +213,18 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     userUUID = dictionary.userUUID,
                     langFrom = dictionary.langFrom,
                     langTo = dictionary.langTo,
-                    dialect = dictionary.dialect
+                    dialect = dictionary.dialect,
+                    tenses = dictionary.tenses
                 )
                 val childUpdates = hashMapOf<String, Any>(
                     "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/$key" to table.toMap()
                 )
                 reference.updateChildren(childUpdates).addOnSuccessListener {
-                    cont.resume(Pair(true, null))
+                    cont.resume(Pair(key, null))
                 }.addOnFailureListener {
-                    cont.resume(Pair(false, it.message))
+                    cont.resume(Pair(null, it.message))
                 }.addOnCanceledListener {
-                    cont.resume(Pair(false, null))
+                    cont.resume(Pair(null, null))
                 }
             }
         }
@@ -268,11 +327,12 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                 .child(dictionaryId)
                 .child(WordTable._NAME).child(wordId).child(TranslationVariantTable._NAME)
                 .child(translation._id)
-                .updateChildren(mapOf(
-                    TranslationVariantTable.CATEGORY_ID to translation.categoryId,
-                    TranslationVariantTable.TRANSLATE to translation.translate,
-                    TranslationVariantTable.DESCRIPTION to translation.description
-                )
+                .updateChildren(
+                    mapOf(
+                        TranslationVariantTable.CATEGORY_ID to translation.categoryId,
+                        TranslationVariantTable.TRANSLATE to translation.translate,
+                        TranslationVariantTable.DESCRIPTION to translation.description
+                    )
                 ) { error, reference ->
                     if (error != null && error.message.isNotEmpty()) {
                         cont.resume(false)
@@ -300,10 +360,48 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             userUUID = map[DictionaryTable.USER_UUID] as String,
                             langFrom = map[DictionaryTable.LANG_FROM] as String,
                             langTo = map[DictionaryTable.LANG_TO] as String,
-                            dialect = map[DictionaryTable.DIALECT] as String
+                            dialect = map[DictionaryTable.DIALECT] as String,
+                            tenses = mutableListOf()
                         )
                         trySend(dictionary)
                     }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getVerbTensesByDictionaryId(
+        userId: String,
+        dictionaryId: String,
+    ): Flow<List<VerbTenseTable>> {
+        Log.d(TAG, "getVerbTensesByDictionaryId $dictionaryId")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(VerbTenseTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val result = arrayListOf<VerbTenseTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val verbTable = VerbTenseTable(
+                            _id = map[VerbTenseTable._ID] as String?,
+                            name = map[VerbTenseTable.NAME] as String,
+                        )
+                        result.add(verbTable)
+                    }
+                    trySend(result)
                     close()
                 }
 
@@ -653,7 +751,8 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                             userUUID = map[DictionaryTable.USER_UUID] as String,
                             langFrom = map[DictionaryTable.LANG_FROM] as String,
                             langTo = map[DictionaryTable.LANG_TO] as String,
-                            dialect = map[DictionaryTable.DIALECT] as String
+                            dialect = map[DictionaryTable.DIALECT] as String,
+                            tenses = mutableListOf()
                         )
                         trySend(dictionary)
                     } catch (ex: ClassCastException) {
@@ -1192,7 +1291,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         dictionaryId: String,
         wordId: String,
     ): Flow<List<String>> {
-        Log.d(TAG, "getCategoriesForWords")
+        Log.d(TAG, "getTagsIdsForWord")
         return callbackFlow {
             val reference = database.reference.child(UsersTable._NAME).child(userId)
                 .child(DictionaryTable._NAME).child(dictionaryId)
@@ -1255,6 +1354,109 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
             childRemoves["/${WordTagTable._NAME}/$tagId"] = null
             database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
                 .child(dictionaryId)
+                .updateChildren(childRemoves)
+                .addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+        }
+    }
+
+    suspend fun addVerbTenseToWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+        tenseId: String,
+        tenseValue: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val verbKey =
+                database.reference.child(UsersTable._NAME).child(userId)
+                    .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
+                    .child(wordId)
+                    .child(WordVerbTenseTable._NAME)
+                    .push().key
+            if (verbKey == null) {
+                cont.resume(Pair(false, null))
+            }
+            verbKey?.let { key ->
+                val table = WordVerbTenseTable(
+                    _id = key,
+                    tenseId = tenseId,
+                    wordId = wordId,
+                    value = tenseValue
+                )
+                val childUpdates = hashMapOf<String, Any>(
+                    "/${UsersTable._NAME}/${userId}/${DictionaryTable._NAME}/${dictionaryId}/${WordTable._NAME}/${wordId}/${WordVerbTenseTable._NAME}//$key" to table.toMap()
+                )
+                database.reference.updateChildren(childUpdates).addOnSuccessListener {
+                    cont.resume(Pair(true, null))
+                }.addOnFailureListener {
+                    cont.resume(Pair(false, it.message))
+                }.addOnCanceledListener {
+                    cont.resume(Pair(false, null))
+                }
+            }
+        }
+    }
+
+    suspend fun getVerbTenseForWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+    ): Flow<List<WordVerbTenseTable>> {
+        Log.d(TAG, "getVerbTenseForWord")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId)
+                .child(WordTable._NAME).child(wordId)
+                .child(WordVerbTenseTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val tags = arrayListOf<WordVerbTenseTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val category = WordVerbTenseTable(
+                            _id = map[WordVerbTenseTable._ID] as String,
+                            tenseId = map[WordVerbTenseTable.TENSE_ID] as String,
+                            wordId = map[WordVerbTenseTable.WORD_ID] as String,
+                            value = map[WordVerbTenseTable.VALUE] as String,
+                        )
+                        tags.add(category)
+                    }
+                    Log.d(TAG, "trySend tags = ${tags.size}")
+                    trySend(tags)
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun deleteVerbTenseFromWord(
+        userId: String,
+        dictionaryId: String,
+        wordId: String,
+        wordTenseId: String
+    ): Pair<Boolean, String?> {
+        return suspendCoroutine { cont ->
+            val childRemoves = mutableMapOf<String, Any?>()
+            childRemoves["/${VerbTenseTable._NAME}/$wordTenseId"] = null
+            database.reference.child(UsersTable._NAME).child(userId).child(DictionaryTable._NAME)
+                .child(dictionaryId).child(WordTable._NAME).child(wordId)
                 .updateChildren(childRemoves)
                 .addOnSuccessListener {
                     cont.resume(Pair(true, null))

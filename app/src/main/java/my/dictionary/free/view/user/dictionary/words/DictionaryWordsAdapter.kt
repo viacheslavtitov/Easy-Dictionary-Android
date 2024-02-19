@@ -69,9 +69,13 @@ class DictionaryWordsAdapter(
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val word = filteredData[position]
         val context = viewHolder.itemView.context
-        viewHolder.originalTextView.text = word.original
-        fillAllTranslations(viewHolder, context, word, hideTranslations)
         viewHolder.swipePosition = position
+        var original = word.original
+        word.tenses.forEach {
+            original += " / ${it.value}"
+        }
+        viewHolder.originalTextView.text = original
+        fillAllTranslations(viewHolder, context, word, hideTranslations)
         val selected = selectedWords.firstOrNull { it._id == word._id } != null
         viewHolder.rootView.setBackgroundColor(
             if (selected) context.getColorInt(R.color.gray_300) else context.getColorInt(
@@ -140,7 +144,7 @@ class DictionaryWordsAdapter(
                 fillAllTranslations(viewHolder, context, word, false)
             }
         }
-        if(word.phonetic?.isNotEmpty() == true) {
+        if(word.phonetic?.isNotEmpty() == true && displayPhonetic) {
             viewHolder.phoneticTextView.visible(true)
             viewHolder.phoneticTextView.text = "[${word.phonetic}]"
         } else {

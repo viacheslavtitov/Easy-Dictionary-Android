@@ -8,10 +8,12 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import my.dictionary.free.data.models.dictionary.DictionaryTable
+import my.dictionary.free.data.models.dictionary.VerbTenseTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.dictionary.DictionaryItem
 import my.dictionary.free.domain.models.dictionary.Flags
+import my.dictionary.free.domain.models.dictionary.VerbTense
 import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
@@ -26,9 +28,9 @@ class GetCreateDictionaryUseCase @Inject constructor(
         private val TAG = GetCreateDictionaryUseCase::class.simpleName
     }
 
-    suspend fun createDictionary(dictionary: Dictionary): Pair<Boolean, String?> {
+    suspend fun createDictionary(dictionary: Dictionary): Pair<String?, String?> {
         val userId =
-            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(null, null)
         return databaseRepository.createDictionary(
             userId = userId,
             dictionary = DictionaryTable(
@@ -36,8 +38,37 @@ class GetCreateDictionaryUseCase @Inject constructor(
                 userUUID = dictionary.userUUID,
                 langFrom = dictionary.dictionaryFrom.lang,
                 langTo = dictionary.dictionaryTo.lang,
-                dialect = dictionary.dialect
+                dialect = dictionary.dialect,
+                tenses = dictionary.tenses.toList().map {
+                    VerbTenseTable(it._id, it.name)
+                }
             )
+        )
+    }
+
+    suspend fun addVerbTenseToDictionary(
+        dictionaryId: String,
+        tenseName: String
+    ): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.addVerbTenseToDictionary(
+            userId = userId,
+            dictionaryId = dictionaryId,
+            tenseName = tenseName
+        )
+    }
+
+    suspend fun deleteVerbTenseFromDictionary(
+        dictionaryId: String,
+        tenses: List<VerbTense>
+    ): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.deleteVerbTenseFromDictionary(
+            userId = userId,
+            dictionaryId = dictionaryId,
+            verbTenseIds = tenses.map { it._id ?: "" }
         )
     }
 
@@ -51,7 +82,10 @@ class GetCreateDictionaryUseCase @Inject constructor(
                 userUUID = dictionary.userUUID,
                 langFrom = dictionary.dictionaryFrom.lang,
                 langTo = dictionary.dictionaryTo.lang,
-                dialect = dictionary.dialect
+                dialect = dictionary.dialect,
+                tenses = dictionary.tenses.toList().map {
+                    VerbTenseTable(it._id, it.name)
+                }
             )
         )
     }
@@ -105,6 +139,24 @@ class GetCreateDictionaryUseCase @Inject constructor(
                         )
                     }
                     return@map dictionary
+                }.map {
+                    Pair(
+                        it,
+                        databaseRepository.getVerbTensesByDictionaryId(userId, it._id ?: "")
+                            .firstOrNull()
+                    )
+                }.map { pair ->
+                    val dictionary = pair.first
+                    val tenses = pair.second
+                    tenses?.forEach {
+                        dictionary.tenses.add(
+                            VerbTense(
+                                _id = it._id,
+                                name = it.name
+                            )
+                        )
+                    }
+                    return@map dictionary
                 }
         }
     }
@@ -117,18 +169,22 @@ class GetCreateDictionaryUseCase @Inject constructor(
             val allLanguages = languagesUseCase.getLanguages(context)
             return combine(
                 databaseRepository.getDictionaryById(userId, dictionaryId),
-                databaseRepository.getTagsForDictionary(userId, dictionaryId)
-            ) { dict, tags ->
+                databaseRepository.getTagsForDictionary(userId, dictionaryId),
+                databaseRepository.getVerbTensesByDictionaryId(userId, dictionaryId),
+            ) { dict, tags, verbs ->
                 val foundLanguageFrom = allLanguages.find { it.key == dict.langFrom }
                 val foundLanguageTo = allLanguages.find { it.key == dict.langTo }
-                val convertedTags = mutableListOf<WordTag>()
-                tags.forEach {
-                    convertedTags.add(
-                        WordTag(
-                            _id = it._id,
-                            userUUID = userId,
-                            tag = it.tagName
-                        )
+                val convertedTags = tags.map {
+                    WordTag(
+                        _id = it._id,
+                        userUUID = userId,
+                        tag = it.tagName
+                    )
+                }
+                val convertedVerbs = verbs.map {
+                    VerbTense(
+                        _id = it._id,
+                        name = it.name
                     )
                 }
                 return@combine Dictionary(
@@ -151,7 +207,8 @@ class GetCreateDictionaryUseCase @Inject constructor(
                         )
                     ),
                     dialect = dict.dialect,
-                    tags = convertedTags
+                    tags = convertedTags.toMutableList(),
+                    tenses = convertedVerbs.toMutableList()
                 )
             }
         }

@@ -68,7 +68,11 @@ class QuizDetailFragment : AbstractBaseFragment() {
                 addAll(it)
             }
         }
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes, null ,
+            expandTranslations = true,
+            displayPhonetic = true,
+            hideTranslations = false
+        )
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }
