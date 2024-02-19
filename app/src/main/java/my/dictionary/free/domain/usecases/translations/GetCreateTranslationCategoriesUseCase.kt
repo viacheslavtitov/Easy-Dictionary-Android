@@ -2,6 +2,7 @@ package my.dictionary.free.domain.usecases.translations
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import my.dictionary.free.data.models.words.variants.TranslationCategoryTable
 import my.dictionary.free.data.repositories.DatabaseRepository
@@ -58,6 +59,22 @@ class GetCreateTranslationCategoriesUseCase @Inject constructor(
                         categoryName = cat.categoryName,
                     )
                 }
+        }
+    }
+
+    suspend fun getDirectCategoryById(categoryId: String): TranslationCategory? {
+        val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
+        if (userId.isNullOrEmpty()) {
+            return null
+        } else {
+            return databaseRepository.getCategoryById(userId, categoryId)
+                .map { cat ->
+                    return@map TranslationCategory(
+                        _id = cat._id,
+                        userUUID = cat.userUUID,
+                        categoryName = cat.categoryName,
+                    )
+                }.firstOrNull()
         }
     }
 }

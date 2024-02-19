@@ -9,8 +9,10 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -37,7 +39,9 @@ import my.dictionary.free.view.FetchDataState
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.hide
 import my.dictionary.free.view.ext.hideKeyboard
+import my.dictionary.free.view.ext.setTint
 import my.dictionary.free.view.ext.visible
+import my.dictionary.free.view.quiz.add.AddQuizFragment
 import my.dictionary.free.view.widget.bubble.BubbleLayout
 import my.dictionary.free.view.widget.bubble.BubbleView
 
@@ -47,6 +51,7 @@ class RunQuizFragment : AbstractBaseFragment() {
         private val TAG = RunQuizFragment::class.simpleName
         const val BUNDLE_QUIZ =
             "my.dictionary.free.view.quiz.run.RunQuizFragment.BUNDLE_QUIZ"
+        private val DEFAULT_TIMER_SECONDS: Int = 10
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -57,6 +62,7 @@ class RunQuizFragment : AbstractBaseFragment() {
     private var wordTextView: AppCompatTextView? = null
     private var phoneticTextView: AppCompatTextView? = null
     private var timeTextView: AppCompatTextView? = null
+    private var resultImageView: AppCompatImageView? = null
     private var btnNext: MenuItem? = null
     private var rootView: View? = null
     private var tagsContainer: View? = null
@@ -81,6 +87,7 @@ class RunQuizFragment : AbstractBaseFragment() {
         phoneticTextView = view.findViewById(R.id.phonetic)
         timeTextView = view.findViewById(R.id.time)
         rootView = view.findViewById(R.id.root)
+        resultImageView = view.findViewById(R.id.result_image)
         tagsContainer = view.findViewById(R.id.tags_container)
         categoriesContainer = view.findViewById(R.id.categories_container)
         typesContainer = view.findViewById(R.id.types_container)
@@ -106,14 +113,6 @@ class RunQuizFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    viewModel.nextWordUIState.collect { pair ->
-                        val word = pair.first
-                        val reversed = pair.second
-                        Log.d(TAG, "quiz new word: $word")
-                        fillQuiz(word, reversed)
-                    }
-                }
-                launch {
                     viewModel.titleQuizUIState.collect { titlePair ->
                         sharedViewModel.setTitle(
                             getString(
@@ -136,6 +135,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                             phoneticTextView?.text = ""
                             answerEditText?.setText("")
                             timeTextView?.text = ""
+                            timeTextView?.visible(false, View.GONE)
+                            resultImageView?.setImageResource(R.drawable.ic_emoji_smile)
+                            resultImageView?.setTint(R.color.yellow_700)
+                            resultImageView?.visible(true)
                             btnNext?.setIcon(R.drawable.ic_baseline_save_24)
                         }
                     }
@@ -183,6 +186,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                     is FetchDataState.DataState -> {
                         Log.d(TAG, "quiz result save: ${it.data}")
                         if (it.data) {
+                            val bundle = Bundle().apply {
+                                putBoolean(AddQuizFragment.BUNDLE_UPDATE_KEY, true)
+                            }
+                            setFragmentResult(AddQuizFragment.BUNDLE_UPDATE_RESULT, bundle)
                             findNavController().popBackStack()
                         }
                     }
@@ -198,32 +205,17 @@ class RunQuizFragment : AbstractBaseFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
+        viewModel.nextWordUIState.observe(this) { pair ->
+            val word = pair.first
+            val reversed = pair.second
+            Log.d(TAG, "quiz new word: $word")
+            fillQuiz(word, reversed)
+        }
         val quiz = if (hasTiramisu()) arguments?.getParcelable(
             BUNDLE_QUIZ,
             Quiz::class.java
         ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
         Log.d(TAG, quiz?.toString() ?: "quiz is null")
-        quiz?.let {
-            Log.d(TAG, "millisInFuture = ${it.timeInSeconds.toLong()}")
-            quizTimer?.cancel()
-            quizTimer = object : QuizTimer(
-                millisInFuture = it.timeInSeconds.toLong() * 1000L
-            ) {
-                @SuppressLint("RestrictedApi", "SetTextI18n")
-                override fun onTick(millisUntilFinished: Long) {
-                    super.onTick(millisUntilFinished)
-                    Log.d(TAG, "change timer $millisUntilFinished")
-                    val seconds = millisUntilFinished / 1000
-                    timeTextView?.text = "$seconds"
-                }
-
-                override fun onFinish() {
-                    super.onFinish()
-                    Log.d(TAG, "timer is finished")
-                    timeTextView?.text = getString(R.string.fail_time_over)
-                }
-            }
-        }
         wordTypes = context?.resources?.getStringArray(R.array.word_types)?.toList()
         lifecycleScope.launch {
             viewModel.setQuiz(quiz).collect {
@@ -242,11 +234,61 @@ class RunQuizFragment : AbstractBaseFragment() {
         }
     }
 
+    override fun onStop() {
+        quizTimer?.pause()
+        super.onStop()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        quizTimer?.resume()
+    }
+
+    private fun initTimer(timeInMilliseconds: Int? = DEFAULT_TIMER_SECONDS, wordsCount: Int) {
+        Log.d(TAG, "millisInFuture = $timeInMilliseconds and words count $wordsCount")
+        quizTimer?.cancel()
+        quizTimer = object : QuizTimer(
+            millisInFuture = (((timeInMilliseconds?.toLong())
+                ?: DEFAULT_TIMER_SECONDS.toLong()) * 1000L) * wordsCount
+        ) {
+            @SuppressLint("RestrictedApi", "SetTextI18n")
+            override fun onTick(millisUntilFinished: Long) {
+                super.onTick(millisUntilFinished)
+                Log.d(TAG, "change timer $millisUntilFinished")
+                val seconds = millisUntilFinished / 1000
+                timeTextView?.text = "$seconds"
+            }
+
+            override fun onFinish() {
+                super.onFinish()
+                Log.d(TAG, "timer is finished")
+                timeTextView?.visible(false, View.GONE)
+                resultImageView?.setImageResource(R.drawable.ic_emoji_bad)
+                resultImageView?.setTint(R.color.gray_400)
+                resultImageView?.visible(true)
+            }
+        }
+    }
+
     private fun fillQuiz(word: Word, reversed: Boolean) {
+        val askWordQuiz = if (!reversed) word.original else word.translates?.first()?.translation
+        var answerWordCount = 1
+        if (!reversed) {
+            var tempCount = 1
+            word.translates.forEach {
+                var count = it.translation.split(" ").size
+                if (count > tempCount) {
+                    tempCount = count
+                }
+            }
+            answerWordCount = tempCount
+        }
         answerInputLayout?.error = ""
         answerEditText?.setText("")
         timeTextView?.text = ""
-        wordTextView?.text = if (!reversed) word.original else word.translates?.first()?.translation
+        timeTextView?.visible(true)
+        resultImageView?.visible(false, View.GONE)
+        wordTextView?.text = askWordQuiz
         val visiblePhonetic = !word.phonetic.isNullOrEmpty() && !reversed
         phoneticTextView?.visible(visiblePhonetic, View.GONE)
         if (visiblePhonetic) {
@@ -260,6 +302,7 @@ class RunQuizFragment : AbstractBaseFragment() {
             }
 
         }
+        initTimer(viewModel.getQuiz()?.timeInSeconds, answerWordCount)
         fillTags(word)
         fillCategories(word)
         fillTypes(word)
@@ -335,7 +378,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                 when (it) {
                     is FetchDataState.DataState -> {
                         if (it.data) {
-                            timeTextView?.text = getString(R.string.success)
+                            timeTextView?.visible(false, View.GONE)
+                            resultImageView?.setImageResource(R.drawable.ic_emoji_happy)
+                            resultImageView?.setTint(R.color.yellow_700)
+                            resultImageView?.visible(true)
                             Log.d(TAG, "answer is $answer")
                             viewModel.nextWord(answer)
                         } else {
@@ -385,7 +431,10 @@ class RunQuizFragment : AbstractBaseFragment() {
                             is FetchDataState.DataState -> {
                                 if (it.data) {
                                     context?.hideKeyboard(answerEditText)
-                                    timeTextView?.text = getString(R.string.success)
+                                    timeTextView?.visible(false, View.GONE)
+                                    resultImageView?.setImageResource(R.drawable.ic_emoji_happy)
+                                    resultImageView?.setTint(R.color.yellow_700)
+                                    resultImageView?.visible(true)
                                     quizTimer?.cancel()
                                 }
                             }

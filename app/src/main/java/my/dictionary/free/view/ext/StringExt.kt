@@ -17,3 +17,11 @@ fun String.toUnicode(radix: Int = 16): String {
 fun String.hide(): String {
     return "*".repeat(this.length)
 }
+
+fun String.hideWithoutSpace(): String {
+    var result = ""
+    this.forEach {
+        result += if(it.equals(' ', true)) it else "*"
+    }
+    return result
+}

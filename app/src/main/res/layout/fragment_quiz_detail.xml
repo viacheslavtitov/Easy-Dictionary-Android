@@ -99,14 +99,32 @@
                     tools:text="English - Ukrainian" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <androidx.appcompat.widget.AppCompatTextView
+            <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:text="@string/words"
                 android:layout_margin="6dp"
-                android:textColor="@color/main_text"
-                android:textSize="16dp" />
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/words_count_text_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1"
+                    android:text="@string/words"
+                    android:textColor="@color/main_text"
+                    android:textSize="16dp" />
+
+                <androidx.appcompat.widget.AppCompatCheckBox
+                    android:id="@+id/hide_translations"
+                    style="@style/Widget.App.CheckBox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/hide_translations"
+                    android:textColor="@color/main_text"
+                    android:textSize="16dp" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/words_recycler_view"

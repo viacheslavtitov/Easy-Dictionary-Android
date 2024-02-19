@@ -1,11 +1,16 @@
 package my.dictionary.free.view.user.dictionary.words
 
+import android.content.Context
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Filter
 import android.widget.Filterable
+import android.widget.TextView
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.recyclerview.widget.RecyclerView
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.AlphabetSort
@@ -14,12 +19,19 @@ import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.tags.CategoryTag
 import my.dictionary.free.domain.models.words.tags.Tag
 import my.dictionary.free.domain.models.words.tags.WordTag
+import my.dictionary.free.domain.models.words.variants.TranslationVariant
 import my.dictionary.free.view.ext.getColorInt
+import my.dictionary.free.view.ext.hideWithoutSpace
+import my.dictionary.free.view.ext.visible
 
 class DictionaryWordsAdapter(
     private val data: MutableList<Word>,
     private val filteredData: MutableList<Word>,
-    private val wordTypes: List<String>
+    private val wordTypes: List<String>,
+    private val onWordClickListener: OnWordClickListener? = null,
+    private var expandTranslations: Boolean = false,
+    private var displayPhonetic: Boolean = false,
+    private var hideTranslations: Boolean = false
 ) :
     RecyclerView.Adapter<DictionaryWordsAdapter.ViewHolder>(), Filterable {
 
@@ -32,13 +44,19 @@ class DictionaryWordsAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var swipePosition: Int = 0
         val originalTextView: AppCompatTextView
-        val translatedTextView: AppCompatTextView
+        val dropDownImage: AppCompatImageView
         val rootView: View
+        val translatedTextView: AppCompatTextView
+        val phoneticTextView: AppCompatTextView
+        val translatedContainer: LinearLayoutCompat
 
         init {
             originalTextView = view.findViewById(R.id.original_word)
-            translatedTextView = view.findViewById(R.id.translated_word)
+            dropDownImage = view.findViewById(R.id.drop_down_image)
             rootView = view.findViewById(R.id.root)
+            translatedTextView = view.findViewById(R.id.translated_word)
+            phoneticTextView = view.findViewById(R.id.phonetic)
+            translatedContainer = view.findViewById(R.id.translated_container)
         }
     }
 
@@ -51,23 +69,114 @@ class DictionaryWordsAdapter(
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val word = filteredData[position]
         val context = viewHolder.itemView.context
-        viewHolder.originalTextView.text = word.original
-        if (word.translates.size <= 1) {
-            viewHolder.translatedTextView.text = word.translates.firstOrNull()?.translation ?: ""
-        } else {
-            var words = ""
-            word.translates.forEach {
-                words += "${it.translation}\n"
-            }
-            viewHolder.translatedTextView.text = words
-        }
         viewHolder.swipePosition = position
+        var original = word.original
+        word.tenses.forEach {
+            original += " / ${it.value}"
+        }
+        viewHolder.originalTextView.text = original
+        fillAllTranslations(viewHolder, context, word, hideTranslations)
         val selected = selectedWords.firstOrNull { it._id == word._id } != null
         viewHolder.rootView.setBackgroundColor(
             if (selected) context.getColorInt(R.color.gray_300) else context.getColorInt(
                 R.color.gray_200
             )
         )
+        onWordClickListener?.let { listener ->
+            viewHolder.rootView.setOnClickListener {
+                listener.onClick(word)
+            }
+            viewHolder.rootView.setOnLongClickListener {
+                listener.onLongClick(word)
+                true
+            }
+        }
+    }
+
+    private fun fillAllTranslations(
+        viewHolder: ViewHolder,
+        context: Context,
+        word: Word,
+        hideTranslations: Boolean
+    ) {
+        viewHolder.translatedContainer.removeAllViews()
+        fillTranslationValue(
+            context,
+            word.translates.first(),
+            viewHolder.translatedTextView,
+            hideTranslations
+        )
+        if (word.translates.size <= 1) {
+            viewHolder.dropDownImage.visible(false, View.GONE)
+            viewHolder.dropDownImage.setOnClickListener(null)
+        } else {
+            viewHolder.dropDownImage.visible(true)
+            word.translates.forEachIndexed { index, translate ->
+                if (index != 0) {
+                    viewHolder.translatedContainer.addView(
+                        fillTranslationValue(
+                            context,
+                            translate,
+                            null,
+                            hideTranslations
+                        )
+                    )
+                }
+            }
+            viewHolder.dropDownImage.setOnClickListener {
+                viewHolder.translatedContainer.visible(
+                    viewHolder.translatedContainer.visibility != View.VISIBLE,
+                    View.GONE
+                )
+                viewHolder.dropDownImage.setImageResource(
+                    if (viewHolder.translatedContainer.visibility == View.VISIBLE)
+                        R.drawable.ic_baseline_arrow_drop_up_24 else R.drawable.ic_baseline_arrow_drop_down_24
+                )
+            }
+            viewHolder.translatedContainer.visible(expandTranslations, View.GONE)
+            viewHolder.dropDownImage.setImageResource(
+                if (viewHolder.translatedContainer.visibility == View.VISIBLE)
+                    R.drawable.ic_baseline_arrow_drop_up_24 else R.drawable.ic_baseline_arrow_drop_down_24
+            )
+        }
+        if (onWordClickListener == null) {
+            viewHolder.rootView.setOnClickListener {
+                fillAllTranslations(viewHolder, context, word, false)
+            }
+        }
+        if(word.phonetic?.isNotEmpty() == true && displayPhonetic) {
+            viewHolder.phoneticTextView.visible(true)
+            viewHolder.phoneticTextView.text = "[${word.phonetic}]"
+        } else {
+            viewHolder.phoneticTextView.visible(false, View.GONE)
+        }
+    }
+
+    private fun fillTranslationValue(
+        context: Context,
+        translation: TranslationVariant,
+        translatedTextView: AppCompatTextView? = null,
+        hideTranslations: Boolean
+    ): View {
+        val textView = translatedTextView
+            ?: LayoutInflater.from(context)
+                .inflate(R.layout.item_word_translation, null, false) as AppCompatTextView
+        val value =
+            if (hideTranslations) translation.translation.hideWithoutSpace() else translation.translation
+        if (translation.category != null) {
+            textView.setText(
+                Html.fromHtml(
+                    context.getString(
+                        R.string.category_color_value,
+                        translation.category!!.categoryName,
+                        value
+                    ), Html.FROM_HTML_MODE_LEGACY
+                ), TextView.BufferType.SPANNABLE
+            )
+        } else {
+            textView.text = "- $value"
+        }
+        return textView
     }
 
     override fun getItemCount() = filteredData.size
@@ -155,7 +264,7 @@ class DictionaryWordsAdapter(
         filteredData.add(dict)
         filterIfNeeds()
         needSortByAlphabet(sort)
-        if(!query.isNullOrEmpty()) {
+        if (!query.isNullOrEmpty()) {
             getFilter().filter(query)
         } else {
             this.notifyDataSetChanged()
@@ -253,6 +362,16 @@ class DictionaryWordsAdapter(
                 filteredData.addAll(newFilteredData)
             }
         }
+    }
+
+    fun expandTranslates(expand: Boolean) {
+        expandTranslations = expand
+        this.notifyDataSetChanged()
+    }
+
+    fun hideTranslates(hide: Boolean) {
+        hideTranslations = hide
+        this.notifyDataSetChanged()
     }
 
     override fun getFilter(): Filter {

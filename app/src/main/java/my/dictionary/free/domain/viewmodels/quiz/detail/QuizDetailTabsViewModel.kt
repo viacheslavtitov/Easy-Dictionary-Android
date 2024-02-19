@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import my.dictionary.free.domain.models.quiz.Quiz
 import my.dictionary.free.domain.usecases.quize.GetCreateQuizUseCase
+import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
 import my.dictionary.free.view.FetchDataState
 import javax.inject.Inject
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class QuizDetailTabsViewModel @Inject constructor(
     private val getCreateQuizUseCase: GetCreateQuizUseCase,
-    private val wordsUseCase: WordsUseCase
+    private val wordsUseCase: WordsUseCase,
+    private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase
 ) : ViewModel() {
     companion object {
         private val TAG = QuizDetailTabsViewModel::class.simpleName
@@ -30,14 +32,11 @@ class QuizDetailTabsViewModel @Inject constructor(
         if (context == null) return@flow
         if (quizId == null) return@flow
         Log.d(TAG, "loadQuiz($quizId)")
+        emit(FetchDataState.StartLoadingState)
         getCreateQuizUseCase.getQuiz(context, quizId)
             .catch {
                 Log.d(TAG, "catch ${it.message}")
                 emit(FetchDataState.ErrorState(it))
-            }
-            .onCompletion {
-                Log.d(TAG, "loadQuizzes onCompletion")
-                emit(FetchDataState.FinishLoadingState)
             }
             .map {
                 Pair(it, getCreateQuizUseCase.getWordsIdsForQuiz(it._id ?: "").firstOrNull())
@@ -53,17 +52,23 @@ class QuizDetailTabsViewModel @Inject constructor(
                             }
                             .collect { word ->
                                 Log.d(TAG, "collect word $word, for ${quiz.name}")
-                                quiz.histories.addAll(getCreateQuizUseCase.getHistoriesOfQuiz(quiz))
+                                for (translation in word.translates) {
+                                    if(translation.categoryId != null) {
+                                        translation.category = getCreateTranslationCategoriesUseCase.getDirectCategoryById(translation.categoryId)
+                                    }
+                                }
                                 quiz.words.add(word)
-                                val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "")
-                                    .firstOrNull() ?: emptyList()
-                                quiz.quizWords.addAll(quizWords)
                                 Log.d(TAG, "emit quiz ${quiz.name}")
                             }
                     }
                 }
+                quiz.histories.addAll(getCreateQuizUseCase.getHistoriesOfQuiz(quiz))
+                val quizWords = getCreateQuizUseCase.getWordsInQuiz(quiz._id ?: "")
+                    .firstOrNull() ?: emptyList()
+                quiz.quizWords.addAll(quizWords)
                 quizModel = quiz
                 emit(FetchDataState.DataState(quiz))
+                emit(FetchDataState.FinishLoadingState)
             }
     }
 

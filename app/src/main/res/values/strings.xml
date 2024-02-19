@@ -42,7 +42,7 @@
     <!-- Quiz -->
     <string name="my_quizzes">My quizzes</string>
     <string name="set_dictionary">Set dictionary</string>
-    <string name="set_duration">Set duration</string>
+    <string name="set_duration_per_word">Set duration for word</string>
     <string name="duration">Duration</string>
     <string name="seconds_value">%d seconds</string>
     <string name="seconds_dialog_description">Choose time (seconds) for each word</string>
@@ -77,6 +77,9 @@
     <string name="dialect">Dialect</string>
     <string name="select_language_from">Select language from</string>
     <string name="select_language_to">Select language to</string>
+    <string name="add_verb_time">Add verb tenses</string>
+    <string name="add_verb_time_descriptional">It\'s optionally. You may add tenses of verbs and include them into your quizzes</string>
+    <string name="add_tense">Add tense</string>
     <string name="error_delete_dictionary">Something was wrong to delete dictionary</string>
     <string name="error_create_dictionary">Something was wrong to create dictionary</string>
     <string name="error_update_dictionary">Something was wrong to update dictionary</string>
@@ -85,6 +88,7 @@
     <string name="search_hint">English</string>
     <!-- Words -->
     <string name="words">Words</string>
+    <string name="words_count">Words %d</string>
     <string name="add_word">Add word</string>
     <string name="error_load_data">Something was wrong to load data</string>
     <string name="tap_your_word">Tap to add your word here</string>
@@ -103,6 +107,8 @@
     <string name="error_update_word">Something was wrong to update word</string>
     <string name="error_update_translation">Something was wrong to update translation</string>
     <string name="error_delete_word">Something was wrong to delete word</string>
+    <string name="hide_translations">Hide all translations</string>
+    <string name="category_color_value" translatable="false"><![CDATA[<font color=\'#00C853\'>%s</font> - <font color=\'#000000\'>%s</font>]]></string>
     <!-- Tags -->
     <string name="add_or_choose_tags">Add or choose tags</string>
     <string name="add_tag">Add tag</string>

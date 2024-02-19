@@ -16,6 +16,7 @@ import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.models.words.tags.WordTag
 import my.dictionary.free.domain.models.words.variants.TranslationVariant
+import my.dictionary.free.domain.models.words.verb_tense.WordVerbTense
 import my.dictionary.free.domain.utils.PreferenceUtils
 import my.dictionary.free.view.ext.toUnicode
 import java.io.IOException
@@ -65,6 +66,12 @@ class WordsUseCase @Inject constructor(
         return databaseRepository.deleteWord(userId, word.dictionaryId, word._id!!)
     }
 
+    suspend fun deleteVerbTense(dictionaryId: String, wordId: String, wordTenseId: String): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.deleteVerbTenseFromWord(userId, dictionaryId, wordId, wordTenseId)
+    }
+
     suspend fun deleteWords(dictionaryId: String, words: List<Word>): Pair<Boolean, String?> {
         val userId =
             preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
@@ -79,6 +86,21 @@ class WordsUseCase @Inject constructor(
         val requestTagIds = mutableListOf<String>()
         tags.forEach { if (it._id != null) requestTagIds.add(it._id) }
         return databaseRepository.addTagsToWord(userId, requestTagIds, dictionaryId, wordId)
+    }
+
+    suspend fun addTensesToWord(
+        dictionaryId: String, wordId: String, tenseId: String,
+        tenseValue: String
+    ): Pair<Boolean, String?> {
+        val userId =
+            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
+        return databaseRepository.addVerbTenseToWord(
+            userId,
+            dictionaryId,
+            wordId,
+            tenseId,
+            tenseValue
+        )
     }
 
     suspend fun getWordsByDictionaryId(dictionaryId: String): Flow<Word> {
@@ -122,6 +144,11 @@ class WordsUseCase @Inject constructor(
                 dictionaryId,
                 wordTable._id ?: ""
             ),
+            databaseRepository.getVerbTenseForWord(
+                userId,
+                dictionaryId,
+                wordTable._id ?: ""
+            ),
             databaseRepository.getTagsIdsForWord(
                 userId,
                 dictionaryId,
@@ -131,9 +158,10 @@ class WordsUseCase @Inject constructor(
                 userId,
                 dictionaryId
             )
-        ) { table, translations, tagIds, allTags ->
+        ) { table, translations, tenses, tagIds, allTags ->
             val convertedTranslations: MutableList<TranslationVariant> = mutableListOf()
             val convertedTags: ArrayList<WordTag> = arrayListOf()
+            val convertedTenses: ArrayList<WordVerbTense> = arrayListOf()
             translations.forEach {
                 convertedTranslations.add(
                     TranslationVariant(
@@ -142,6 +170,16 @@ class WordsUseCase @Inject constructor(
                         categoryId = it.categoryId,
                         example = it.description,
                         translation = it.translate
+                    )
+                )
+            }
+            tenses.forEach {
+                convertedTenses.add(
+                    WordVerbTense(
+                        _id = it._id,
+                        wordId = it.wordId,
+                        tenseId = it.tenseId,
+                        value = it.value
                     )
                 )
             }
@@ -163,7 +201,8 @@ class WordsUseCase @Inject constructor(
                 phonetic = table.phonetic,
                 type = table.type,
                 translates = convertedTranslations,
-                tags = convertedTags
+                tags = convertedTags,
+                tenses = convertedTenses
             )
         }
     }

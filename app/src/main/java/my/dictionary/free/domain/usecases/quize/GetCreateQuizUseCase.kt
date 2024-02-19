@@ -2,9 +2,11 @@ package my.dictionary.free.domain.usecases.quize
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import my.dictionary.free.data.models.quiz.QuizResultTable
 import my.dictionary.free.data.models.quiz.QuizTable
@@ -18,6 +20,7 @@ import my.dictionary.free.domain.models.words.Word
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.utils.PreferenceUtils
 import my.dictionary.free.domain.utils.hasOreo
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -32,6 +35,8 @@ class GetCreateQuizUseCase @Inject constructor(
     companion object {
         private val TAG = GetCreateQuizUseCase::class.simpleName
     }
+
+    private val ioScope = Dispatchers.IO
 
     suspend fun createQuiz(quiz: Quiz): Triple<Boolean, String?, String?> {
         val userId =
@@ -139,12 +144,12 @@ class GetCreateQuizUseCase @Inject constructor(
                         showTypes = quiz.showTypes,
                         timeInSeconds = quiz.timeInSeconds,
                     )
-                }
+                }.flowOn(ioScope)
         }
     }
 
     suspend fun getHistoriesOfQuiz(quiz: Quiz): List<QuizResult> {
-        Log.d(TAG, "getQuiz ${quiz._id}")
+        Log.d(TAG, "getHistoriesOfQuiz ${quiz._id}")
         val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
         if (userId.isNullOrEmpty()) {
             return arrayListOf()
@@ -152,9 +157,9 @@ class GetCreateQuizUseCase @Inject constructor(
             return databaseRepository.getHistoriesOfQuiz(userId, quiz._id ?: "").firstOrNull()
                 ?.map {
                     val dateTime = if (hasOreo()) {
-                        DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(it.unixDateTimeStamp))
+                        DateFormat.getDateInstance().format(Date.from(Instant.ofEpochMilli(it.unixDateTimeStamp)))
                     } else {
-                        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                        val sdf = SimpleDateFormat("yyyy-MM-dd")
                         val date = Date(it.unixDateTimeStamp)
                         sdf.format(date)
                     }
@@ -182,7 +187,7 @@ class GetCreateQuizUseCase @Inject constructor(
                 return@map quizWord.map {
                     it.wordId
                 }
-            }
+            }.flowOn(ioScope)
         }
     }
 
@@ -199,7 +204,7 @@ class GetCreateQuizUseCase @Inject constructor(
                         wordId = it.wordId,
                     )
                 }
-            }
+            }.flowOn(ioScope)
         }
     }
 

@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
@@ -74,6 +75,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
     private var dictionaryId: String? = null
     private var filterSearchView: SearchView? = null
+    private var wordsCountTextView: AppCompatTextView? = null
 
     private val undoRemoveWordTimer =
         object : CountDownTimer(
@@ -94,6 +96,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 wordsAdapter?.getRemoveWordByTimer()?.let { word ->
                     deleteWords(listOf(word)) {
                         wordsAdapter?.finallyRemoveItem()
+                        wordsCountChanged()
                     }
                 }
             }
@@ -108,18 +111,12 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         view.findViewById<RadioGroup>(R.id.sorting_radio_group)
             .setOnCheckedChangeListener(onSortingGroupListener)
         wordsRecyclerView = view.findViewById(R.id.recycler_view)
+        wordsCountTextView = view.findViewById(R.id.words_count_text_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         val itemTouchHelper =
             ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
         itemTouchHelper.attachToRecyclerView(wordsRecyclerView)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
-        wordsRecyclerView.addOnItemTouchListener(
-            OnListTouchListener(
-                requireContext(),
-                wordsRecyclerView,
-                onWordsClickListener
-            )
-        )
         swipeRefreshLayout =
             view.findViewById<SwipeRefreshLayout?>(R.id.swipe_refresh_layout)?.also {
                 it.setOnRefreshListener {
@@ -138,7 +135,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 addAll(it)
             }
         }
-        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
+        wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes, onWordClickListener)
         wordsRecyclerView.adapter = wordsAdapter
         return view
     }
@@ -208,6 +205,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     FilterModel::class.java
                 ) else bundle.getParcelable(DictionaryWordsFilterFragment.BUNDLE_FILTER_RESULT)
             wordsAdapter?.setFilterModel(filterModel)
+            wordsCountChanged()
         }
         refreshWords()
     }
@@ -225,6 +223,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                     is FetchDataState.FinishLoadingState -> {
                         swipeRefreshLayout?.isRefreshing = false
                         sharedViewModel.loading(false)
+                        wordsCountChanged()
                     }
 
                     is FetchDataState.ErrorState -> {
@@ -253,6 +252,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
 
         override fun onQueryTextChange(newText: String): Boolean {
             wordsAdapter?.filter?.filter(newText)
+            wordsCountChanged()
             return false
         }
 
@@ -262,6 +262,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         override fun onSwiped(position: Int) {
             Log.d(TAG, "swipe item by position $position")
             wordsAdapter?.temporaryRemoveItem(position)
+            wordsCountChanged()
             undoRemoveWordSnackbar = Snackbar.make(
                 wordsRecyclerView,
                 R.string.seconds,
@@ -270,6 +271,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 .setDuration(UNDO_SNACKBAR_DURATION)
                 .setAction(R.string.undo) {
                     wordsAdapter?.undoRemovedItem()
+                    wordsCountChanged()
                 }
             undoRemoveWordSnackbar?.show()
             undoRemoveWordTimer.start()
@@ -355,33 +357,25 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         }
     }
 
-    private val onWordsClickListener = object : OnListItemClickListener {
-        override fun onListItemClick(childView: View) {
-            wordsAdapter?.getItemByPosition(
-                wordsRecyclerView.getChildAdapterPosition(childView)
-            )?.let { word ->
-                if (actionMode == null) {
-                    sharedViewModel.navigateTo(EditDictionaryWordScreen(word))
-                } else {
-                    selectWord(word)
-                }
+    private val onWordClickListener = object: OnWordClickListener {
+        override fun onClick(word: Word) {
+            if (actionMode == null) {
+                sharedViewModel.navigateTo(EditDictionaryWordScreen(word))
+            } else {
+                selectWord(word)
             }
         }
 
-        override fun onListItemLongClick(childView: View) {
-            wordsAdapter?.getItemByPosition(
-                wordsRecyclerView.getChildAdapterPosition(childView)
-            )?.let { word ->
-                if (activity != null && activity is AppCompatActivity) {
-                    if (actionMode == null) {
-                        actionMode =
-                            (activity as AppCompatActivity).startSupportActionMode(
-                                actionModeCallBack
-                            )
-                    }
+        override fun onLongClick(word: Word) {
+            if (activity != null && activity is AppCompatActivity) {
+                if (actionMode == null) {
+                    actionMode =
+                        (activity as AppCompatActivity).startSupportActionMode(
+                            actionModeCallBack
+                        )
                 }
-                selectWord(word)
             }
+            selectWord(word)
         }
     }
 
@@ -415,5 +409,9 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 wordsAdapter?.sortByAlphabet(AlphabetSort.Z_A)
             }
         }
+    }
+
+    private fun wordsCountChanged() {
+        wordsCountTextView?.text = resources.getString(R.string.words_count, wordsAdapter?.itemCount ?: 0)
     }
 }

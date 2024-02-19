@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnFocusChangeListener
 import android.view.ViewGroup
+import android.widget.AdapterView
 import androidx.appcompat.widget.AppCompatSpinner
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import my.dictionary.free.R
+import my.dictionary.free.domain.models.dictionary.VerbTense
 import my.dictionary.free.domain.models.navigation.AddTagNavigation
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantNavigation
 import my.dictionary.free.domain.models.navigation.AddTranslationVariantsScreen
@@ -67,6 +69,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         const val BUNDLE_WORD =
             "my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment.BUNDLE_WORD"
         private const val PHONETICS_ANIMATION_TIME: Long = 400
+        private const val VERB_POSITION: Int = 2
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -80,6 +83,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
     private lateinit var spinnerChooseWordType: AppCompatSpinner
     private lateinit var phoneticsView: PhoneticsView
     private lateinit var rootView: ViewGroup
+    private lateinit var verbTenseContainer: ViewGroup
     private lateinit var tagsLayout: BubbleLayout
 
     private var dictionaryId: String? = null
@@ -100,6 +104,7 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         spinnerChooseWordType = view.findViewById(R.id.choose_word_type)
         phoneticsView = view.findViewById(R.id.phonetic_view)
         rootView = view.findViewById(R.id.root)
+        verbTenseContainer = view.findViewById(R.id.verb_tense_container)
         tagsLayout = view.findViewById(R.id.bubbles_layout)
         tagsLayout.setReadOnly(true)
         phoneticsView.setOnClickListener(phoneticClickListener)
@@ -151,7 +156,17 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.typeSavedUIState.collectLatest { position ->
+                        Log.d(TAG, "type catch $position")
                         spinnerChooseWordType.setSelection(position)
+                    }
+                }
+                launch {
+                    viewModel.tensesSavedUIState.collectLatest { tenses ->
+                        Log.d(TAG, "tenses catch ${tenses.size}")
+                        Log.d(TAG, "views created ${verbTenseContainer.childCount}")
+                        tenses.forEach {
+                            fillVerbTenses(it.first, it.second)
+                        }
                     }
                 }
                 launch {
@@ -178,7 +193,8 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                                         type = 0,
                                         phonetic = null,
                                         translates = emptyList(),
-                                        tags = tags
+                                        tags = tags,
+                                        tenses = arrayListOf()
                                     )
                                     sharedViewModel.navigateTo(AddWordTagsScreen(word, dictionary))
                                 }
@@ -231,7 +247,13 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                                         val typePosition =
                                             spinnerChooseWordType.selectedItemPosition
                                         val tags = tagsLayout.getTags<WordTag>(false)
-                                        saveWord(word, typePosition, translations, phonetic, tags)
+                                        saveWord(
+                                            word,
+                                            typePosition,
+                                            translations,
+                                            phonetic,
+                                            tags,
+                                            getVerbTenses().filter { it.second.isNotEmpty() })
                                     }
                                 }
 
@@ -255,7 +277,10 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         translationsRecyclerView.layoutManager = LinearLayoutManager(context)
         translationsRecyclerView.adapter = translationVariantsAdapter
         spinnerChooseWordType.adapter = wordTypeAdapter
-        loadData(word)
+        spinnerChooseWordType.onItemSelectedListener = onWordTypeListener
+        if(viewModel.getEditedWord() == null) {
+            loadData(word)
+        }
     }
 
     private fun loadData(word: Word?) {
@@ -345,38 +370,40 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
         typePosition: Int,
         translations: List<TranslationVariant>,
         phonetic: String?,
-        tags: List<WordTag>
+        tags: List<WordTag>,
+        tenses: List<Pair<String, String>>
     ) {
         lifecycleScope.launch {
-            viewModel.save(context, word, typePosition, translations, phonetic, tags).collect {
-                when (it) {
-                    is FetchDataState.StartLoadingState -> {
-                        sharedViewModel.loading(true)
-                    }
+            viewModel.save(context, word, typePosition, translations, phonetic, tags, tenses)
+                .collect {
+                    when (it) {
+                        is FetchDataState.StartLoadingState -> {
+                            sharedViewModel.loading(true)
+                        }
 
-                    is FetchDataState.FinishLoadingState -> {
-                        sharedViewModel.loading(false)
-                    }
+                        is FetchDataState.FinishLoadingState -> {
+                            sharedViewModel.loading(false)
+                        }
 
-                    is FetchDataState.ErrorState -> {
-                        displayError(
-                            it.exception.message
-                                ?: context?.getString(R.string.unknown_error),
-                            translationsRecyclerView
-                        )
-                    }
+                        is FetchDataState.ErrorState -> {
+                            displayError(
+                                it.exception.message
+                                    ?: context?.getString(R.string.unknown_error),
+                                translationsRecyclerView
+                            )
+                        }
 
-                    is FetchDataState.DataState -> {
-                        if (it.data) {
-                            findNavController().popBackStack()
+                        is FetchDataState.DataState -> {
+                            if (it.data) {
+                                findNavController().popBackStack()
+                            }
+                        }
+
+                        is FetchDataState.ErrorStateString -> {
+                            displayError(it.error, translationsRecyclerView)
                         }
                     }
-
-                    is FetchDataState.ErrorStateString -> {
-                        displayError(it.error, translationsRecyclerView)
-                    }
                 }
-            }
         }
     }
 
@@ -490,11 +517,76 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     override fun onStop() {
         viewModel.saveType(spinnerChooseWordType.selectedItemPosition)
+        viewModel.saveTenses(getVerbTenses())
         super.onStop()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         viewModel.saveType(spinnerChooseWordType.selectedItemPosition)
+        viewModel.saveTenses(getVerbTenses())
         super.onSaveInstanceState(outState)
+    }
+
+    private val onWordTypeListener = object : AdapterView.OnItemSelectedListener {
+        override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+            Log.d(TAG, "word type position was changed $position")
+            if (position == VERB_POSITION) {
+                verbTenseContainer.removeAllViews()
+                viewModel.getDictionary()?.tenses?.forEach {
+                    addVerbTense(it)
+                }
+                viewModel.getEditedWord()?.tenses?.forEach {
+                    fillVerbTenses(it.tenseId, it.value)
+                }
+            } else {
+                verbTenseContainer.removeAllViews()
+            }
+        }
+
+        override fun onNothingSelected(parent: AdapterView<*>?) {
+
+        }
+    }
+
+    private fun addVerbTense(verbTense: VerbTense) {
+        context?.let {
+            Log.d(TAG, "addVerbTense($verbTense")
+            val view = LayoutInflater.from(it)
+                .inflate(R.layout.item_add_word_verb_tense, null) as TextInputLayout
+            view.findViewById<TextInputEditText>(R.id.verb_tense_edit_text)?.let { editText ->
+//                editText.hint = verbTense.name
+            }
+            view.hint = verbTense.name
+            view.tag = verbTense._id
+            verbTenseContainer.addView(view)
+        }
+    }
+
+    private fun fillVerbTenses(tenseId: String, value: String) {
+        Log.d(TAG, "trying to add edited verb $value")
+        for (i in 0 until verbTenseContainer.childCount) {
+            val child = verbTenseContainer.getChildAt(i)
+            val viewId = child.tag as? String ?: ""
+            if (viewId == tenseId) {
+                child.findViewById<TextInputEditText>(R.id.verb_tense_edit_text).setText(value)
+                break
+            }
+        }
+    }
+
+    private fun getVerbTenses(): List<Pair<String, String>> {
+        val tenses = arrayListOf<Pair<String, String>>()
+        for (i in 0 until verbTenseContainer.childCount) {
+            val child = verbTenseContainer.getChildAt(i)
+            val value =
+                child.findViewById<TextInputEditText>(R.id.verb_tense_edit_text).text.toString()
+            tenses.add(
+                Pair(
+                    child.tag as? String ?: "",
+                    value.trim()
+                )
+            )
+        }
+        return tenses
     }
 }

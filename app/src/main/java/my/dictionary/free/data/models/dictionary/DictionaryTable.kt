@@ -7,6 +7,7 @@ class DictionaryTable(
     val userUUID: String,
     val langFrom: String,
     val langTo: String,
+    val tenses: List<VerbTenseTable>,
     val dialect: String? = null
 ) {
     companion object {

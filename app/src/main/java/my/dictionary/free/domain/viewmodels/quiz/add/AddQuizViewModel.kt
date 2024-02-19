@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.quiz.Quiz
@@ -142,9 +141,15 @@ class AddQuizViewModel @Inject constructor(
             )
             if (updatedQuiz) {
                 val shouldDeleteWordsIds = arrayListOf<String>()
-                editQuiz?.quizWords?.forEach { word ->
-                    if (words.find { it._id == word.wordId } != null) {
-                        shouldDeleteWordsIds.add(word._id!!)
+                editQuiz?.quizWords?.forEach { oldWord ->
+                    var exist = false
+                    words.forEach { newWord ->
+                        if (newWord._id == oldWord.wordId) {
+                            exist = true
+                        }
+                    }
+                    if (!exist) {
+                        shouldDeleteWordsIds.add(oldWord._id!!)
                     }
                 }
                 val resultDeleteWords = getCreateQuizUseCase.deleteWordsFromQuiz(
@@ -156,6 +161,19 @@ class AddQuizViewModel @Inject constructor(
                         ?: context.getString(R.string.error_create_quiz)
                     emit(FetchDataState.ErrorStateString(error))
                 } else {
+                    val newWords = arrayListOf<Word>()
+                    words.forEach { word ->
+                        var exist = false
+                        shouldDeleteWordsIds.forEach { id ->
+                            if (id == word._id) {
+                                exist = true
+                            }
+                        }
+                        if (!exist && editQuiz!!.words.find { it._id == word._id } == null) {
+                            newWords.add(word)
+                        }
+                    }
+
                     val resultToAddWords = addWordsToQuiz(
                         editQuiz!!._id!!,
                         name,
@@ -166,7 +184,7 @@ class AddQuizViewModel @Inject constructor(
                         showCategories,
                         showTypes,
                         dictionary,
-                        words
+                        newWords
                     )
                     if (!resultToAddWords) {
                         val error = context.getString(R.string.error_create_word)
@@ -196,10 +214,10 @@ class AddQuizViewModel @Inject constructor(
                     words = words.toMutableList()
                 )
             )
-            emit(FetchDataState.FinishLoadingState)
             if (!quizResult.first) {
                 val error = quizResult.second ?: context.getString(R.string.error_create_quiz)
                 emit(FetchDataState.ErrorStateString(error))
+                emit(FetchDataState.FinishLoadingState)
             } else {
                 val quizId = quizResult.third ?: ""
                 val resultToAddWords =
@@ -278,6 +296,8 @@ class AddQuizViewModel @Inject constructor(
             _showCategoriesUIState.value = quiz.showCategories
             _showTypesUIState.value = quiz.showTypes
             emit(FetchDataState.DataState(quiz.words))
+        } else {
+            emit(FetchDataState.FinishLoadingState)
         }
     }
 }

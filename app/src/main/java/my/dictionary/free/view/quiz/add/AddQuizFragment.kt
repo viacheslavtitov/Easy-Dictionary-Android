@@ -8,13 +8,13 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
@@ -38,12 +38,10 @@ import my.dictionary.free.view.dialogs.ValueDialogListener
 import my.dictionary.free.view.ext.addMenuProvider
 import my.dictionary.free.view.ext.findAndDismissDialog
 import my.dictionary.free.view.ext.visible
-import my.dictionary.free.view.user.dictionary.SwipeDictionaryItem
 import my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment
 import my.dictionary.free.view.user.dictionary.words.DictionaryWordsAdapter
 import my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment
 import my.dictionary.free.view.widget.ListItemDecoration
-import my.dictionary.free.view.widget.OnItemSwipedListener
 
 @AndroidEntryPoint
 class AddQuizFragment : AbstractBaseFragment() {
@@ -53,6 +51,8 @@ class AddQuizFragment : AbstractBaseFragment() {
         private const val DURATION_MIN = 1
         private const val DURATION_MAX = 60
         const val BUNDLE_QUIZ = "my.dictionary.free.view.quiz.add.AddQuizFragment.BUNDLE_QUIZ"
+        const val BUNDLE_UPDATE_RESULT = "my.dictionary.free.view.quiz.add.AddQuizFragment.BUNDLE_WORDS_RESULT"
+        const val BUNDLE_UPDATE_KEY = "my.dictionary.free.view.quiz.add.AddQuizFragment.BUNDLE_WORDS_KEY"
     }
 
     private val sharedViewModel: SharedMainViewModel by activityViewModels()
@@ -121,9 +121,6 @@ class AddQuizFragment : AbstractBaseFragment() {
         }
         wordsRecyclerView = view.findViewById(R.id.words_recycler_view)
         wordsRecyclerView.layoutManager = LinearLayoutManager(context)
-        val itemTouchHelper =
-            ItemTouchHelper(SwipeDictionaryItem(requireContext(), onItemSwipedListener))
-        itemTouchHelper.attachToRecyclerView(wordsRecyclerView)
         wordsRecyclerView.addItemDecoration(ListItemDecoration(context = requireContext()))
         val wordTypes = mutableListOf<String>().apply {
             add(" ")
@@ -134,14 +131,6 @@ class AddQuizFragment : AbstractBaseFragment() {
         wordsAdapter = DictionaryWordsAdapter(mutableListOf(), mutableListOf(), wordTypes)
         wordsRecyclerView.adapter = wordsAdapter
         return view
-    }
-
-    private val onItemSwipedListener = object : OnItemSwipedListener {
-        override fun onSwiped(position: Int) {
-            Log.d(TAG, "swipe item by position $position")
-            wordsAdapter?.temporaryRemoveItem(position)
-            wordsAdapter?.finallyRemoveItem()
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -217,11 +206,11 @@ class AddQuizFragment : AbstractBaseFragment() {
             Quiz::class.java
         ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
         Log.d(TAG, quiz?.toString() ?: "quiz is null")
-        val title =
-            if (viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
-        sharedViewModel.setTitle(title)
         lifecycleScope.launch {
             viewModel.setQuiz(quiz).collect {
+                val title =
+                    if (viewModel.isEditMode()) getString(R.string.edit_quiz) else getString(R.string.add_quiz)
+                sharedViewModel.setTitle(title)
                 wordsAdapter?.clearData()
                 when (it) {
                     is FetchDataState.DataState -> {
@@ -294,6 +283,10 @@ class AddQuizFragment : AbstractBaseFragment() {
                                     is FetchDataState.DataState -> {
                                         Log.d(TAG, "quiz saved ${it.data}")
                                         if (it.data) {
+                                            val bundle = Bundle().apply {
+                                                putBoolean(BUNDLE_UPDATE_KEY, true)
+                                            }
+                                            setFragmentResult(BUNDLE_UPDATE_RESULT, bundle)
                                             findNavController().popBackStack()
                                         }
                                     }
@@ -375,7 +368,7 @@ class AddQuizFragment : AbstractBaseFragment() {
             .cancelButtonTitle(getString(R.string.cancel))
             .minValue(DURATION_MIN)
             .maxValue(DURATION_MAX)
-            .title(getString(R.string.set_duration))
+            .title(getString(R.string.set_duration_per_word))
             .description(getString(R.string.seconds_dialog_description))
             .iconRes(R.drawable.ic_baseline_time_24)
             .okButtonTitle(getString(R.string.set))
