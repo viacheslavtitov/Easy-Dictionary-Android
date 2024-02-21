@@ -1,13 +1,18 @@
 package my.dictionary.free.data.models.words
 
 import com.google.firebase.database.Exclude
+import my.dictionary.free.data.models.words.variants.TranslationVariantTable
+import my.dictionary.free.data.models.words.verb_tense.WordVerbTenseTable
 
 data class WordTable(
     val _id: String? = null,
     val dictionaryId: String,
     val original: String,
     val type: Int,
-    val phonetic: String? = null
+    val phonetic: String? = null,
+    val wordTagsIds: ArrayList<String> = arrayListOf(),
+    val translations: ArrayList<TranslationVariantTable> = arrayListOf(),
+    val verbTenses: ArrayList<WordVerbTenseTable> = arrayListOf()
 ) {
     companion object {
         const val _NAME = "word"

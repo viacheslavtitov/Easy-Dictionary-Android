@@ -922,7 +922,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         dictionaryId: String,
         wordId: String
     ): Flow<List<TranslationVariantTable>> {
-        Log.d(TAG, "getTranslationVariantByWordId")
+        Log.d(TAG, "getTranslationVariantByWordId $wordId")
         return callbackFlow {
             val reference = database.reference.child(UsersTable._NAME).child(userId)
                 .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
@@ -996,15 +996,128 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     Log.d(TAG, "onDataChange ${snapshot.children.count()}")
                     snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
+                        val wordTags = arrayListOf<String>()
+                        val translations = arrayListOf<TranslationVariantTable>()
+                        val tenses = arrayListOf<WordVerbTenseTable>()
+                        map[WordVerbTenseTable._NAME]?.let {
+                            (it as? ArrayList<String>)?.let { tags ->
+                                wordTags.addAll(tags)
+                            }
+                        }
+                        (map[TranslationVariantTable._NAME] as? HashMap<*, *>)?.let { translation ->
+                            translation.keys.forEach { key ->
+                                val obj = translation[key] as Map<*, *>
+                                val translateVariant = TranslationVariantTable(
+                                    _id = obj[TranslationVariantTable._ID] as String?,
+                                    translate = obj[TranslationVariantTable.TRANSLATE] as String,
+                                    description = obj[TranslationVariantTable.DESCRIPTION] as String?,
+                                    wordId = obj[TranslationVariantTable.WORD_ID] as String,
+                                    categoryId = obj[TranslationVariantTable.CATEGORY_ID] as String?,
+                                )
+                                translations.add(translateVariant)
+                            }
+                        }
+                        (map[WordVerbTenseTable._NAME] as? HashMap<*, *>)?.let { verbTenses ->
+                            verbTenses.keys.forEach { key ->
+                                val obj = verbTenses[key] as Map<*, *>
+                                val tense = WordVerbTenseTable(
+                                    _id = obj[WordVerbTenseTable._ID] as String,
+                                    tenseId = obj[WordVerbTenseTable.TENSE_ID] as String,
+                                    wordId = obj[WordVerbTenseTable.WORD_ID] as String,
+                                    value = obj[WordVerbTenseTable.VALUE] as String,
+                                )
+                                tenses.add(tense)
+                            }
+                        }
                         val word = WordTable(
                             _id = map[WordTable._ID] as String?,
                             dictionaryId = map[WordTable.DICTIONARY_ID] as String,
                             original = map[WordTable.ORIGINAL] as String,
                             type = (map[WordTable.TYPE] as? Long)?.toInt() ?: 0,
-                            phonetic = map[WordTable.PHONETIC] as String
+                            phonetic = map[WordTable.PHONETIC] as String,
+                            wordTagsIds = wordTags,
+                            translations = translations,
+                            verbTenses = tenses
                         )
                         trySend(word)
                     }
+                    close()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.d(TAG, "onCancelled")
+                    cancel()
+                }
+            }
+            reference.addValueEventListener(valueEventListener)
+            awaitClose {
+                Log.d(TAG, "awaitClose")
+                reference.removeEventListener(valueEventListener)
+            }
+        }.flowOn(ioScope)
+    }
+
+    suspend fun getWordsByDictionaryTestId(
+        userId: String,
+        dictionaryId: String,
+    ): Flow<List<WordTable>> {
+        Log.d(TAG, "getWordsByDictionaryId")
+        return callbackFlow {
+            val reference = database.reference.child(UsersTable._NAME).child(userId)
+                .child(DictionaryTable._NAME).child(dictionaryId).child(WordTable._NAME)
+            val valueEventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+                    val result = arrayListOf<WordTable>()
+                    snapshot.children.forEach { data ->
+                        val map = data.value as HashMap<*, *>
+                        val wordTags = arrayListOf<String>()
+                        val translations = arrayListOf<TranslationVariantTable>()
+                        val tenses = arrayListOf<WordVerbTenseTable>()
+                        map[WordVerbTenseTable._NAME]?.let {
+                            (it as? ArrayList<String>)?.let { tags ->
+                                wordTags.addAll(tags)
+                            }
+                        }
+                        (map[TranslationVariantTable._NAME] as? HashMap<*, *>)?.let { translation ->
+                            translation.keys.forEach { key ->
+                                val obj = translation[key] as Map<*, *>
+                                val translateVariant = TranslationVariantTable(
+                                    _id = obj[TranslationVariantTable._ID] as String?,
+                                    translate = obj[TranslationVariantTable.TRANSLATE] as String,
+                                    description = obj[TranslationVariantTable.DESCRIPTION] as String?,
+                                    wordId = obj[TranslationVariantTable.WORD_ID] as String,
+                                    categoryId = obj[TranslationVariantTable.CATEGORY_ID] as String?,
+                                )
+                                translations.add(translateVariant)
+                            }
+                        }
+                        (map[WordVerbTenseTable._NAME] as? HashMap<*, *>)?.let { verbTenses ->
+                            verbTenses.keys.forEach { key ->
+                                val obj = verbTenses[key] as Map<*, *>
+                                val tense = WordVerbTenseTable(
+                                    _id = obj[WordVerbTenseTable._ID] as String,
+                                    tenseId = obj[WordVerbTenseTable.TENSE_ID] as String,
+                                    wordId = obj[WordVerbTenseTable.WORD_ID] as String,
+                                    value = obj[WordVerbTenseTable.VALUE] as String,
+                                )
+                                tenses.add(tense)
+                            }
+                        }
+                        result.add(
+                            WordTable(
+                                _id = map[WordTable._ID] as String?,
+                                dictionaryId = map[WordTable.DICTIONARY_ID] as String,
+                                original = map[WordTable.ORIGINAL] as String,
+                                type = (map[WordTable.TYPE] as? Long)?.toInt() ?: 0,
+                                phonetic = map[WordTable.PHONETIC] as String,
+                                wordTagsIds = wordTags,
+                                translations = translations,
+                                verbTenses = tenses
+                            )
+                        )
+                    }
+                    trySend(result)
                     close()
                 }
 
@@ -1036,12 +1149,48 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     Log.d(TAG, "onDataChange ${snapshot.children.count()}")
                     try {
                         val map = snapshot.value as HashMap<*, *>
+                        val wordTags = arrayListOf<String>()
+                        val translations = arrayListOf<TranslationVariantTable>()
+                        val tenses = arrayListOf<WordVerbTenseTable>()
+                        map[WordVerbTenseTable._NAME]?.let {
+                            (it as? ArrayList<String>)?.let { tags ->
+                                wordTags.addAll(tags)
+                            }
+                        }
+                        (map[TranslationVariantTable._NAME] as? HashMap<*, *>)?.let { translation ->
+                            translation.keys.forEach { key ->
+                                val obj = translation[key] as Map<*, *>
+                                val translateVariant = TranslationVariantTable(
+                                    _id = obj[TranslationVariantTable._ID] as String?,
+                                    translate = obj[TranslationVariantTable.TRANSLATE] as String,
+                                    description = obj[TranslationVariantTable.DESCRIPTION] as String?,
+                                    wordId = obj[TranslationVariantTable.WORD_ID] as String,
+                                    categoryId = obj[TranslationVariantTable.CATEGORY_ID] as String?,
+                                )
+                                translations.add(translateVariant)
+                            }
+                        }
+                        (map[WordVerbTenseTable._NAME] as? HashMap<*, *>)?.let { verbTenses ->
+                            verbTenses.keys.forEach { key ->
+                                val obj = verbTenses[key] as Map<*, *>
+                                val tense = WordVerbTenseTable(
+                                    _id = obj[WordVerbTenseTable._ID] as String,
+                                    tenseId = obj[WordVerbTenseTable.TENSE_ID] as String,
+                                    wordId = obj[WordVerbTenseTable.WORD_ID] as String,
+                                    value = obj[WordVerbTenseTable.VALUE] as String,
+                                )
+                                tenses.add(tense)
+                            }
+                        }
                         val word = WordTable(
                             _id = map[WordTable._ID] as String?,
                             dictionaryId = map[WordTable.DICTIONARY_ID] as String,
                             original = map[WordTable.ORIGINAL] as String,
                             type = (map[WordTable.TYPE] as? Long)?.toInt() ?: 0,
-                            phonetic = map[WordTable.PHONETIC] as String
+                            phonetic = map[WordTable.PHONETIC] as String,
+                            wordTagsIds = wordTags,
+                            translations = translations,
+                            verbTenses = tenses
                         )
                         trySend(word)
                     } catch (ex: ClassCastException) {
@@ -1261,12 +1410,12 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                     val tags = arrayListOf<WordTagTable>()
                     snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
-                        val category = WordTagTable(
+                        val tag = WordTagTable(
                             _id = map[WordTagTable._ID] as String?,
                             userUUID = map[WordTagTable.USER_UUID] as String,
                             tagName = map[WordTagTable.TAG_NAME] as String
                         )
-                        tags.add(category)
+                        tags.add(tag)
                     }
                     Log.d(TAG, "trySend tags = ${tags.size}")
                     trySend(tags)
@@ -1286,41 +1435,41 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         }.flowOn(ioScope)
     }
 
-    suspend fun getTagsIdsForWord(
-        userId: String,
-        dictionaryId: String,
-        wordId: String,
-    ): Flow<List<String>> {
-        Log.d(TAG, "getTagsIdsForWord")
-        return callbackFlow {
-            val reference = database.reference.child(UsersTable._NAME).child(userId)
-                .child(DictionaryTable._NAME).child(dictionaryId)
-                .child(WordTable._NAME).child(wordId)
-                .child(WordTagTable._NAME)
-            val valueEventListener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
-                    val translations = arrayListOf<String>()
-                    snapshot.children.forEach { data ->
-                        val tagId = data.value as String? ?: ""
-                        translations.add(tagId)
-                    }
-                    trySend(translations)
-                    close()
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.d(TAG, "onCancelled")
-                    cancel()
-                }
-            }
-            reference.addValueEventListener(valueEventListener)
-            awaitClose {
-                Log.d(TAG, "awaitClose")
-                reference.removeEventListener(valueEventListener)
-            }
-        }.flowOn(ioScope)
-    }
+//    suspend fun getTagsIdsForWord(
+//        userId: String,
+//        dictionaryId: String,
+//        wordId: String,
+//    ): Flow<List<String>> {
+//        Log.d(TAG, "getTagsIdsForWord $wordId")
+//        return callbackFlow {
+//            val reference = database.reference.child(UsersTable._NAME).child(userId)
+//                .child(DictionaryTable._NAME).child(dictionaryId)
+//                .child(WordTable._NAME).child(wordId)
+//                .child(WordTagTable._NAME)
+//            val valueEventListener = object : ValueEventListener {
+//                override fun onDataChange(snapshot: DataSnapshot) {
+//                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
+//                    val tags = arrayListOf<String>()
+//                    snapshot.children.forEach { data ->
+//                        val tagId = data.value as String? ?: ""
+//                        tags.add(tagId)
+//                    }
+//                    trySend(tags)
+//                    close()
+//                }
+//
+//                override fun onCancelled(error: DatabaseError) {
+//                    Log.e(TAG, "onCancelled ${error.message}")
+//                    cancel()
+//                }
+//            }
+//            reference.addValueEventListener(valueEventListener)
+//            awaitClose {
+//                Log.d(TAG, "awaitClose")
+//                reference.removeEventListener(valueEventListener)
+//            }
+//        }.flowOn(ioScope)
+//    }
 
     suspend fun deleteWordTagFromWord(
         userId: String,
@@ -1408,7 +1557,7 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
         dictionaryId: String,
         wordId: String,
     ): Flow<List<WordVerbTenseTable>> {
-        Log.d(TAG, "getVerbTenseForWord")
+        Log.d(TAG, "getVerbTenseForWord $wordId")
         return callbackFlow {
             val reference = database.reference.child(UsersTable._NAME).child(userId)
                 .child(DictionaryTable._NAME).child(dictionaryId)
@@ -1416,20 +1565,20 @@ class DatabaseRepository @Inject constructor(private val database: FirebaseDatab
                 .child(WordVerbTenseTable._NAME)
             val valueEventListener = object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d(TAG, "onDataChange ${snapshot.children.count()}")
-                    val tags = arrayListOf<WordVerbTenseTable>()
+                    Log.d(TAG, "$wordId onDataChange ${snapshot.children.count()}")
+                    val tenses = arrayListOf<WordVerbTenseTable>()
                     snapshot.children.forEach { data ->
                         val map = data.value as HashMap<*, *>
-                        val category = WordVerbTenseTable(
+                        val tense = WordVerbTenseTable(
                             _id = map[WordVerbTenseTable._ID] as String,
                             tenseId = map[WordVerbTenseTable.TENSE_ID] as String,
                             wordId = map[WordVerbTenseTable.WORD_ID] as String,
                             value = map[WordVerbTenseTable.VALUE] as String,
                         )
-                        tags.add(category)
+                        tenses.add(tense)
                     }
-                    Log.d(TAG, "trySend tags = ${tags.size}")
-                    trySend(tags)
+                    Log.d(TAG, "trySend tenses = ${tenses.size}")
+                    trySend(tenses)
                     close()
                 }
 

@@ -3,30 +3,15 @@ package my.dictionary.free.domain.viewmodels.user.dictionary.words
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.forEach
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import my.dictionary.free.R
 import my.dictionary.free.domain.models.dictionary.Dictionary
 import my.dictionary.free.domain.models.words.Word
-import my.dictionary.free.domain.models.words.variants.TranslationCategory
 import my.dictionary.free.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import my.dictionary.free.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import my.dictionary.free.domain.usecases.words.WordsUseCase
@@ -63,14 +48,14 @@ class DictionaryWordsViewModel @Inject constructor(
         emit(FetchDataState.StartLoadingState)
         wordsUseCase.getWordsByDictionaryId(dictionaryId)
             .catch {
-                Log.d(TAG, "catch ${it.message}")
+                Log.e(TAG, "catch ${it.message}")
                 emit(FetchDataState.ErrorState(it))
             }.onCompletion {
                 Log.d(TAG, "onCompletion")
                 if (dictionary == null) {
                     getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
                         .catch {
-                            Log.d(TAG, "catch ${it.message}")
+                            Log.e(TAG, "catch ${it.message}")
                             emit(FetchDataState.ErrorState(it))
                         }
                         .onCompletion {
@@ -96,17 +81,22 @@ class DictionaryWordsViewModel @Inject constructor(
                     }
                 }
             }
-            .collect {
-                for (translation in it.translates) {
-                    if(translation.categoryId != null) {
-                        translation.category = getCreateTranslationCategoriesUseCase.getDirectCategoryById(translation.categoryId)
+            .collect { words ->
+                words.forEach {
+                    for (translation in it.translates) {
+                        if (translation.categoryId != null) {
+                            translation.category =
+                                getCreateTranslationCategoriesUseCase.getDirectCategoryById(
+                                    translation.categoryId
+                                )
+                        }
                     }
+                    Log.d(
+                        TAG,
+                        "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
+                    )
+                    emit(FetchDataState.DataState(it))
                 }
-                Log.d(
-                    TAG,
-                    "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
-                )
-                emit(FetchDataState.DataState(it))
             }
     }
 

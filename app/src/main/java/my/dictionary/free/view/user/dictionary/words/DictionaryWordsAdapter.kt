@@ -102,7 +102,7 @@ class DictionaryWordsAdapter(
         viewHolder.translatedContainer.removeAllViews()
         fillTranslationValue(
             context,
-            word.translates.first(),
+            word.translates.firstOrNull(),
             viewHolder.translatedTextView,
             hideTranslations
         )
@@ -154,10 +154,11 @@ class DictionaryWordsAdapter(
 
     private fun fillTranslationValue(
         context: Context,
-        translation: TranslationVariant,
+        translation: TranslationVariant?,
         translatedTextView: AppCompatTextView? = null,
         hideTranslations: Boolean
-    ): View {
+    ): View? {
+        if(translation == null) return null
         val textView = translatedTextView
             ?: LayoutInflater.from(context)
                 .inflate(R.layout.item_word_translation, null, false) as AppCompatTextView

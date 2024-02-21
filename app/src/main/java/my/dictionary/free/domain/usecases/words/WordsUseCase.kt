@@ -7,10 +7,8 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import my.dictionary.free.data.models.words.WordTable
+import my.dictionary.free.data.models.words.WordTagTable
 import my.dictionary.free.data.repositories.DatabaseRepository
 import my.dictionary.free.domain.models.language.LanguageType
 import my.dictionary.free.domain.models.words.Word
@@ -66,7 +64,11 @@ class WordsUseCase @Inject constructor(
         return databaseRepository.deleteWord(userId, word.dictionaryId, word._id!!)
     }
 
-    suspend fun deleteVerbTense(dictionaryId: String, wordId: String, wordTenseId: String): Pair<Boolean, String?> {
+    suspend fun deleteVerbTense(
+        dictionaryId: String,
+        wordId: String,
+        wordTenseId: String
+    ): Pair<Boolean, String?> {
         val userId =
             preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(false, null)
         return databaseRepository.deleteVerbTenseFromWord(userId, dictionaryId, wordId, wordTenseId)
@@ -103,20 +105,26 @@ class WordsUseCase @Inject constructor(
         )
     }
 
-    suspend fun getWordsByDictionaryId(dictionaryId: String): Flow<Word> {
+    suspend fun getWordsByDictionaryId(dictionaryId: String): Flow<List<Word>> {
         Log.d(TAG, "getWordsByDictionaryId($dictionaryId)")
         val userId = preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID)
         return if (userId.isNullOrEmpty()) {
             emptyFlow()
         } else {
-            databaseRepository.getWordsByDictionaryId(userId, dictionaryId)
-                .map {
-                    return@map convertWordTableAndGetAllNecessaryData(
+            return combine(
+                databaseRepository.getTagsForDictionary(
+                    userId,
+                    dictionaryId
+                ), databaseRepository.getWordsByDictionaryTestId(userId, dictionaryId)
+            ) { tags, words ->
+                words.map {
+                    convertWordTable(
                         userId,
-                        dictionaryId,
+                        tags,
                         it
-                    ).first()
+                    )
                 }
+            }
         }
     }
 
@@ -125,86 +133,71 @@ class WordsUseCase @Inject constructor(
         return if (userId.isNullOrEmpty()) {
             emptyFlow()
         } else {
-            databaseRepository.getWordById(userId, dictionaryId, wordId)
-                .map {
-                    convertWordTableAndGetAllNecessaryData(userId, dictionaryId, it).first()
-                }
+            return combine(
+                databaseRepository.getTagsForDictionary(
+                    userId,
+                    dictionaryId
+                ), databaseRepository.getWordById(userId, dictionaryId, wordId)
+            ) { tags, word ->
+                convertWordTable(
+                    userId,
+                    tags,
+                    word
+                )
+            }
         }
     }
 
-    private suspend fun convertWordTableAndGetAllNecessaryData(
+    private fun convertWordTable(
         userId: String,
-        dictionaryId: String,
+        allTags: List<WordTagTable>,
         wordTable: WordTable
-    ): Flow<Word> {
-        return combine(
-            flowOf(wordTable),
-            databaseRepository.getTranslationVariantByWordId(
-                userId,
-                dictionaryId,
-                wordTable._id ?: ""
-            ),
-            databaseRepository.getVerbTenseForWord(
-                userId,
-                dictionaryId,
-                wordTable._id ?: ""
-            ),
-            databaseRepository.getTagsIdsForWord(
-                userId,
-                dictionaryId,
-                wordTable._id ?: ""
-            ),
-            databaseRepository.getTagsForDictionary(
-                userId,
-                dictionaryId
-            )
-        ) { table, translations, tenses, tagIds, allTags ->
-            val convertedTranslations: MutableList<TranslationVariant> = mutableListOf()
-            val convertedTags: ArrayList<WordTag> = arrayListOf()
-            val convertedTenses: ArrayList<WordVerbTense> = arrayListOf()
-            translations.forEach {
-                convertedTranslations.add(
-                    TranslationVariant(
-                        _id = it._id,
-                        wordId = it.wordId,
-                        categoryId = it.categoryId,
-                        example = it.description,
-                        translation = it.translate
-                    )
+    ): Word {
+        val convertedTranslations: MutableList<TranslationVariant> = mutableListOf()
+        val convertedTags: ArrayList<WordTag> = arrayListOf()
+        val convertedTenses: ArrayList<WordVerbTense> = arrayListOf()
+        wordTable.translations.forEach {
+            convertedTranslations.add(
+                TranslationVariant(
+                    _id = it._id,
+                    wordId = it.wordId,
+                    categoryId = it.categoryId,
+                    example = it.description,
+                    translation = it.translate
                 )
-            }
-            tenses.forEach {
-                convertedTenses.add(
-                    WordVerbTense(
-                        _id = it._id,
-                        wordId = it.wordId,
-                        tenseId = it.tenseId,
-                        value = it.value
-                    )
-                )
-            }
-            tagIds.forEach { id ->
-                allTags.find { it._id == id }?.let { table ->
-                    convertedTags.add(
-                        WordTag(
-                            _id = table._id,
-                            userUUID = userId,
-                            tag = table.tagName
-                        )
-                    )
-                }
-            }
-            return@combine Word(
-                _id = table._id,
-                dictionaryId = table.dictionaryId,
-                original = table.original,
-                phonetic = table.phonetic,
-                type = table.type,
-                translates = convertedTranslations,
-                tags = convertedTags,
-                tenses = convertedTenses
             )
         }
+        wordTable.verbTenses.forEach {
+            convertedTenses.add(
+                WordVerbTense(
+                    _id = it._id,
+                    wordId = it.wordId,
+                    tenseId = it.tenseId,
+                    value = it.value
+                )
+            )
+        }
+        wordTable.wordTagsIds.forEach { id ->
+            allTags.find { it._id == id }?.let { table ->
+                convertedTags.add(
+                    WordTag(
+                        _id = table._id,
+                        userUUID = userId,
+                        tag = table.tagName
+                    )
+                )
+            }
+        }
+        return Word(
+            _id = wordTable._id,
+            dictionaryId = wordTable.dictionaryId,
+            original = wordTable.original,
+            phonetic = wordTable.phonetic,
+            type = wordTable.type,
+            translates = convertedTranslations,
+            tags = convertedTags,
+            tenses = convertedTenses
+        )
     }
 
     suspend fun getPhonetics(context: Context, langCode: String): List<String> {
