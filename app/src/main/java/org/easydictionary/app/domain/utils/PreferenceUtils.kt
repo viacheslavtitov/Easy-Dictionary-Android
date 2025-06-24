@@ -4,6 +4,14 @@ import android.content.Context
 import android.content.SharedPreferences
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
+import android.util.Base64
+import org.easydictionary.app.BuildConfig
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 
 @Singleton
 class PreferenceUtils @Inject constructor(
@@ -11,8 +19,12 @@ class PreferenceUtils @Inject constructor(
 ) {
     companion object {
         private const val NOT_SECRET_SHARED_PREFERENCES = "easy_dictionary_pref"
+        private const val ANDROID_KEYSTORE = "AndroidKeyStore"
+        private const val AES_MODE = "AES/GCM/NoPadding"
+        private const val IV_SUFFIX = "_iv"
         const val CURRENT_USER_ID = "CURRENT_USER_ID"
         const val CURRENT_USER_UUID = "CURRENT_USER_UUID"
+        const val ACCESS_TOKEN_KEY = "ACCESS_TOKEN_KEY"
     }
 
     /**
@@ -20,6 +32,47 @@ class PreferenceUtils @Inject constructor(
      * it returns [EncryptedSharedPreferences] otherwise SharedPreferences with private mode
      */
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences(NOT_SECRET_SHARED_PREFERENCES, Context.MODE_PRIVATE)
+    private val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+
+    private fun getSecretKey(): SecretKey {
+        if (!keyStore.containsAlias(BuildConfig.SECURE_KEY_ALIAS)) {
+            val keyGenerator = KeyGenerator.getInstance("AES", ANDROID_KEYSTORE)
+            keyGenerator.init(256)
+            return keyGenerator.generateKey()
+        }
+        return (keyStore.getEntry(BuildConfig.SECURE_KEY_ALIAS, null) as KeyStore.SecretKeyEntry).secretKey
+    }
+
+    fun putSecureString(key: String, value: String) {
+        val cipher = Cipher.getInstance(AES_MODE)
+        cipher.init(Cipher.ENCRYPT_MODE, getSecretKey())
+
+        val iv = cipher.iv
+        val encryptedBytes = cipher.doFinal(value.toByteArray(Charsets.UTF_8))
+
+        sharedPreferences.edit {
+            putString(key, Base64.encodeToString(encryptedBytes, Base64.DEFAULT))
+                .putString(key + IV_SUFFIX, Base64.encodeToString(iv, Base64.DEFAULT))
+        }
+    }
+
+    fun getSecureString(key: String): String? {
+        val encrypted = sharedPreferences.getString(key, null) ?: return null
+        val ivBase64 = sharedPreferences.getString(key + IV_SUFFIX, null) ?: return null
+
+        val cipher = Cipher.getInstance(AES_MODE)
+        val iv = Base64.decode(ivBase64, Base64.DEFAULT)
+        val spec = GCMParameterSpec(128, iv)
+
+        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
+        val decryptedBytes = cipher.doFinal(Base64.decode(encrypted, Base64.DEFAULT))
+
+        return String(decryptedBytes, Charsets.UTF_8)
+    }
+
+    fun checkAccessTokenExist() : Boolean {
+        return getSecureString(ACCESS_TOKEN_KEY)?.isNotEmpty() == true
+    }
 
     fun getString(
         key: String,
@@ -36,10 +89,10 @@ class PreferenceUtils @Inject constructor(
     ) {
         val spf = sharedPreferences ?: this.sharedPreferences
         if (null == value) {
-            spf.edit().remove(key).apply()
+            spf.edit { remove(key) }
             return
         }
-        spf.edit().putString(key, value).apply()
+        spf.edit { putString(key, value) }
     }
 
     fun getInt(
@@ -58,10 +111,10 @@ class PreferenceUtils @Inject constructor(
     ) {
         val spf = sharedPreferences ?: this.sharedPreferences
         if (null == value) {
-            spf.edit().remove(key).apply()
+            spf.edit { remove(key) }
             return
         }
-        spf.edit().putInt(key, value).apply()
+        spf.edit { putInt(key, value) }
     }
 
     fun getLong(
@@ -80,10 +133,10 @@ class PreferenceUtils @Inject constructor(
     ) {
         val spf = sharedPreferences ?: this.sharedPreferences
         if (null == value) {
-            spf.edit().remove(key).apply()
+            spf.edit { remove(key) }
             return
         }
-        spf.edit().putLong(key, value).apply()
+        spf.edit { putLong(key, value) }
     }
 
     fun getBoolean(
@@ -102,10 +155,10 @@ class PreferenceUtils @Inject constructor(
     ) {
         val spf = sharedPreferences ?: this.sharedPreferences
         if (null == value) {
-            spf.edit().remove(key).apply()
+            spf.edit { remove(key) }
             return
         }
-        spf.edit().putBoolean(key, value).apply()
+        spf.edit { putBoolean(key, value) }
     }
 
     fun remove(
@@ -113,7 +166,7 @@ class PreferenceUtils @Inject constructor(
         sharedPreferences: SharedPreferences? = null
     ) {
         val spf = sharedPreferences ?: this.sharedPreferences
-        spf.edit().remove(key).apply()
+        spf.edit { remove(key) }
     }
 
     fun registerListener(
@@ -131,6 +184,6 @@ class PreferenceUtils @Inject constructor(
     }
 
     fun clear() {
-        sharedPreferences.edit().clear().apply()
+        sharedPreferences.edit { clear() }
     }
 }
