@@ -26,7 +26,7 @@
                 android:textColor="@color/main_text"
                 android:textSize="16dp" />
 
-            <my.dictionary.free.view.widget.bubble.BubbleLayout
+            <org.easy.dictionary.app.view.widget.bubble.BubbleLayout
                 android:id="@+id/categories_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
@@ -41,7 +41,7 @@
                 android:textColor="@color/main_text"
                 android:textSize="16dp" />
 
-            <my.dictionary.free.view.widget.bubble.BubbleLayout
+            <org.easy.dictionary.app.view.widget.bubble.BubbleLayout
                 android:id="@+id/tags_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
@@ -56,7 +56,7 @@
                 android:textColor="@color/main_text"
                 android:textSize="16dp" />
 
-            <my.dictionary.free.view.widget.bubble.BubbleLayout
+            <org.easy.dictionary.app.view.widget.bubble.BubbleLayout
                 android:id="@+id/types_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />

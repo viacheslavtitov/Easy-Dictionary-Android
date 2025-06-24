@@ -7,13 +7,13 @@
 
     <fragment
         android:id="@+id/simpleFragment"
-        android:name="my.dictionary.free.view.SimplerFragment"
+        android:name="org.easy.dictionary.app.view.SimplerFragment"
         android:label="fragment_simple"
         tools:layout="@layout/fragment_simple" />
 
     <fragment
         android:id="@+id/userDictionaryFragment"
-        android:name="my.dictionary.free.view.user.dictionary.UserDictionaryFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.UserDictionaryFragment"
         android:label="@string/my_dictionaries"
         tools:layout="@layout/fragment_user_dictionary">
         <action
@@ -26,7 +26,7 @@
 
     <fragment
         android:id="@+id/addUserDictionaryFragment"
-        android:name="my.dictionary.free.view.user.dictionary.add.AddUserDictionaryFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.add.AddUserDictionaryFragment"
         android:label="@string/add_dictionary"
         tools:layout="@layout/fragment_add_new_dictionary">
         <action
@@ -36,7 +36,7 @@
 
     <fragment
         android:id="@+id/languagesFragment"
-        android:name="my.dictionary.free.view.user.dictionary.add.languages.LanguagesFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.add.languages.LanguagesFragment"
         android:label="@string/add_language"
         tools:layout="@layout/fragment_languages">
         <argument
@@ -47,7 +47,7 @@
 
     <fragment
         android:id="@+id/dictionaryWordsFragment"
-        android:name="my.dictionary.free.view.user.dictionary.words.DictionaryWordsFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.words.DictionaryWordsFragment"
         android:label="@string/words"
         tools:layout="@layout/fragment_dictionary_words">
         <argument
@@ -64,7 +64,7 @@
 
     <fragment
         android:id="@+id/addDictionaryWordFragment"
-        android:name="my.dictionary.free.view.user.dictionary.words.add.AddDictionaryWordFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.words.add.AddDictionaryWordFragment"
         android:label="@string/add_word"
         tools:layout="@layout/fragment_dictionary_words">
         <argument
@@ -81,7 +81,7 @@
 
     <fragment
         android:id="@+id/addTranslationVariant"
-        android:name="my.dictionary.free.view.user.dictionary.words.translations.add.AddTranslationVariantFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.words.translations.add.AddTranslationVariantFragment"
         android:label="@string/add_translation_variants"
         tools:layout="@layout/fragment_dictionary_words">
         <argument
@@ -91,7 +91,7 @@
     </fragment>
     <fragment
         android:id="@+id/userQuizzesFragment"
-        android:name="my.dictionary.free.view.quiz.UserQuizzesFragment"
+        android:name="org.easy.dictionary.app.view.quiz.UserQuizzesFragment"
         android:label="@string/my_quizzes"
         tools:layout="@layout/fragment_dictionary_words">
         <action
@@ -103,12 +103,12 @@
     </fragment>
     <fragment
         android:id="@+id/dictionaryChooseDialogFragment"
-        android:name="my.dictionary.free.view.user.dictionary.choose.DictionaryChooseFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.choose.DictionaryChooseFragment"
         android:label="@string/choose_dictionary"
         tools:layout="@layout/fragment_dictionary_choose" />
     <fragment
         android:id="@+id/addQuizFragment"
-        android:name="my.dictionary.free.view.quiz.add.AddQuizFragment"
+        android:name="org.easy.dictionary.app.view.quiz.add.AddQuizFragment"
         android:label="AddQuizFragment"
         tools:layout="@layout/fragment_add_quiz">
         <action
@@ -120,7 +120,7 @@
     </fragment>
     <fragment
         android:id="@+id/wordsMultiChooseFragment"
-        android:name="my.dictionary.free.view.user.dictionary.words.choose.WordsMultiChooseFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.words.choose.WordsMultiChooseFragment"
         android:label="WordsMultiChooseFragment"
         tools:layout="@layout/fragment_words_multichoose">
         <argument
@@ -133,7 +133,7 @@
     </fragment>
     <fragment
         android:id="@+id/quizDetailTabsFragment"
-        android:name="my.dictionary.free.view.quiz.detail.QuizDetailTabsFragment"
+        android:name="org.easy.dictionary.app.view.quiz.detail.QuizDetailTabsFragment"
         android:label="QuizDetailTabsFragment"
         tools:layout="@layout/fragment_quiz_detail_tabs">
         <argument
@@ -149,7 +149,7 @@
     </fragment>
     <fragment
         android:id="@+id/runQuizFragment"
-        android:name="my.dictionary.free.view.quiz.run.RunQuizFragment"
+        android:name="org.easy.dictionary.app.view.quiz.run.RunQuizFragment"
         android:label="RunQuizFragment"
         tools:layout="@layout/fragment_run_quiz">
         <argument
@@ -159,17 +159,17 @@
     </fragment>
     <fragment
         android:id="@+id/addWordTagsFragment"
-        android:name="my.dictionary.free.view.user.dictionary.words.tags.AddWordTagsFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.words.tags.AddWordTagsFragment"
         android:label="WordCategoryFragment"
         tools:layout="@layout/fragment_add_word_tags" />
     <fragment
         android:id="@+id/dictionaryWordsFilterFragment"
-        android:name="my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment"
+        android:name="org.easy.dictionary.app.view.user.dictionary.words.filter.DictionaryWordsFilterFragment"
         android:label="DictionaryWordsFilterFragment"
         tools:layout="@layout/fragment_dictionary_words_filter" >
         <argument
             android:name="my.dictionary.free.view.user.dictionary.words.filter.DictionaryWordsFilterFragment.BUNDLE_DICTIONARY"
             android:defaultValue="@null"
-            app:argType="my.dictionary.free.domain.models.dictionary.Dictionary" />
+            app:argType="org.easy.dictionary.app.domain.models.dictionary.Dictionary" />
     </fragment>
 </navigation>

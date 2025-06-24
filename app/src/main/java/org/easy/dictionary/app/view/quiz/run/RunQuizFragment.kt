@@ -1,0 +1,477 @@
+package org.easy.dictionary.app.view.quiz.run
+
+import android.annotation.SuppressLint
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
+import org.easy.dictionary.app.R
+import org.easy.dictionary.app.domain.models.quiz.Quiz
+import org.easy.dictionary.app.domain.models.words.Word
+import org.easy.dictionary.app.domain.models.words.tags.CategoryTag
+import org.easy.dictionary.app.domain.models.words.tags.Tag
+import org.easy.dictionary.app.domain.models.words.tags.WordTag
+import org.easy.dictionary.app.domain.models.words.variants.TranslationCategory
+import org.easy.dictionary.app.domain.utils.QuizTimer
+import org.easy.dictionary.app.domain.utils.hasTiramisu
+import org.easy.dictionary.app.domain.viewmodels.main.SharedMainViewModel
+import org.easy.dictionary.app.domain.viewmodels.quiz.run.RunQuizViewModel
+import org.easy.dictionary.app.view.AbstractBaseFragment
+import org.easy.dictionary.app.view.FetchDataState
+import org.easy.dictionary.app.view.ext.addMenuProvider
+import org.easy.dictionary.app.view.ext.hide
+import org.easy.dictionary.app.view.ext.hideKeyboard
+import org.easy.dictionary.app.view.ext.setTint
+import org.easy.dictionary.app.view.ext.visible
+import org.easy.dictionary.app.view.quiz.add.AddQuizFragment
+import org.easy.dictionary.app.view.widget.bubble.BubbleLayout
+import org.easy.dictionary.app.view.widget.bubble.BubbleView
+
+@AndroidEntryPoint
+class RunQuizFragment : AbstractBaseFragment() {
+    companion object {
+        private val TAG = RunQuizFragment::class.simpleName
+        const val BUNDLE_QUIZ =
+            "my.dictionary.free.view.quiz.run.RunQuizFragment.BUNDLE_QUIZ"
+        private val DEFAULT_TIMER_SECONDS: Int = 10
+    }
+
+    private val sharedViewModel: SharedMainViewModel by activityViewModels()
+    private val viewModel: RunQuizViewModel by viewModels()
+
+    private var answerInputLayout: TextInputLayout? = null
+    private var answerEditText: TextInputEditText? = null
+    private var wordTextView: AppCompatTextView? = null
+    private var phoneticTextView: AppCompatTextView? = null
+    private var timeTextView: AppCompatTextView? = null
+    private var resultImageView: AppCompatImageView? = null
+    private var btnNext: MenuItem? = null
+    private var rootView: View? = null
+    private var tagsContainer: View? = null
+    private var categoriesContainer: View? = null
+    private var typesContainer: View? = null
+    private var tagsBubbleLayout: BubbleLayout? = null
+    private var categoriesBubbleLayout: BubbleLayout? = null
+    private var typesBubbleLayout: BubbleLayout? = null
+
+    private var quizTimer: QuizTimer? = null
+    private var wordTypes: List<String>? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.fragment_run_quiz, null)
+        answerInputLayout = view.findViewById(R.id.text_input_result)
+        answerEditText = view.findViewById(R.id.edit_text_result)
+        wordTextView = view.findViewById(R.id.word)
+        phoneticTextView = view.findViewById(R.id.phonetic)
+        timeTextView = view.findViewById(R.id.time)
+        rootView = view.findViewById(R.id.root)
+        resultImageView = view.findViewById(R.id.result_image)
+        tagsContainer = view.findViewById(R.id.tags_container)
+        categoriesContainer = view.findViewById(R.id.categories_container)
+        typesContainer = view.findViewById(R.id.types_container)
+        tagsBubbleLayout = view.findViewById(R.id.tags_layout)
+        categoriesBubbleLayout = view.findViewById(R.id.categories_layout)
+        typesBubbleLayout = view.findViewById(R.id.types_layout)
+        return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated")
+        answerEditText?.addTextChangedListener(onAnswerChangeListener)
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.validationErrorUIState.drop(1).collect { error ->
+                        if (answerEditText?.text?.isNullOrEmpty() == false) {
+                            answerInputLayout?.error = error
+                        } else {
+                            answerInputLayout?.error = ""
+                        }
+                    }
+                }
+                launch {
+                    viewModel.titleQuizUIState.collect { titlePair ->
+                        sharedViewModel.setTitle(
+                            getString(
+                                R.string.quiz_title,
+                                titlePair.first,
+                                titlePair.second
+                            )
+                        )
+                    }
+                }
+                launch {
+                    viewModel.quizEndedUIState.drop(1).collect { endResult ->
+                        val isEnded = endResult.first
+                        val countWord = endResult.third
+                        val successWord = endResult.second
+                        Log.d(TAG, "quiz is ended = $isEnded")
+                        if (isEnded) {
+                            wordTextView?.text =
+                                getString(R.string.quiz_ended_result, successWord, countWord)
+                            phoneticTextView?.text = ""
+                            answerEditText?.setText("")
+                            timeTextView?.text = ""
+                            timeTextView?.visible(false, View.GONE)
+                            resultImageView?.setImageResource(R.drawable.ic_emoji_smile)
+                            resultImageView?.setTint(R.color.yellow_700)
+                            resultImageView?.visible(true)
+                            btnNext?.setIcon(R.drawable.ic_baseline_save_24)
+                        }
+                    }
+                }
+            }
+        }
+        addMenuProvider(R.menu.menu_run_quiz, { menu, mi ->
+            btnNext = menu.findItem(R.id.next)
+        }, {
+            when (it) {
+                R.id.next -> {
+                    if (viewModel.isEnded()) {
+                        saveQuiz()
+                    } else {
+                        nextOrSkip()
+                    }
+                    return@addMenuProvider true
+                }
+
+                else -> false
+            }
+        })
+    }
+
+    private fun saveQuiz() {
+        lifecycleScope.launch {
+            viewModel.saveQuiz(context).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    is FetchDataState.ErrorState -> {
+                        displayError(
+                            it.exception.message
+                                ?: context?.getString(R.string.unknown_error),
+                            rootView
+                        )
+                    }
+
+                    is FetchDataState.DataState -> {
+                        Log.d(TAG, "quiz result save: ${it.data}")
+                        if (it.data) {
+                            val bundle = Bundle().apply {
+                                putBoolean(AddQuizFragment.BUNDLE_UPDATE_KEY, true)
+                            }
+                            setFragmentResult(AddQuizFragment.BUNDLE_UPDATE_RESULT, bundle)
+                            findNavController().popBackStack()
+                        }
+                    }
+
+                    is FetchDataState.ErrorStateString -> {
+                        displayError(it.error, rootView)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate")
+        viewModel.nextWordUIState.observe(this) { pair ->
+            val word = pair.first
+            val reversed = pair.second
+            Log.d(TAG, "quiz new word: $word")
+            fillQuiz(word, reversed)
+        }
+        val quiz = if (hasTiramisu()) arguments?.getParcelable(
+            BUNDLE_QUIZ,
+            Quiz::class.java
+        ) else arguments?.getParcelable(BUNDLE_QUIZ) as? Quiz
+        Log.d(TAG, quiz?.toString() ?: "quiz is null")
+        wordTypes = context?.resources?.getStringArray(R.array.word_types)?.toList()
+        lifecycleScope.launch {
+            viewModel.setQuiz(quiz).collect {
+                when (it) {
+                    is FetchDataState.StartLoadingState -> {
+                        sharedViewModel.loading(true)
+                    }
+
+                    is FetchDataState.FinishLoadingState -> {
+                        sharedViewModel.loading(false)
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    override fun onStop() {
+        quizTimer?.pause()
+        super.onStop()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        quizTimer?.resume()
+    }
+
+    private fun initTimer(timeInMilliseconds: Int? = DEFAULT_TIMER_SECONDS, wordsCount: Int) {
+        Log.d(TAG, "millisInFuture = $timeInMilliseconds and words count $wordsCount")
+        quizTimer?.cancel()
+        quizTimer = object : QuizTimer(
+            millisInFuture = (((timeInMilliseconds?.toLong())
+                ?: DEFAULT_TIMER_SECONDS.toLong()) * 1000L) * wordsCount
+        ) {
+            @SuppressLint("RestrictedApi", "SetTextI18n")
+            override fun onTick(millisUntilFinished: Long) {
+                super.onTick(millisUntilFinished)
+                Log.d(TAG, "change timer $millisUntilFinished")
+                val seconds = millisUntilFinished / 1000
+                timeTextView?.text = "$seconds"
+            }
+
+            override fun onFinish() {
+                super.onFinish()
+                Log.d(TAG, "timer is finished")
+                timeTextView?.visible(false, View.GONE)
+                resultImageView?.setImageResource(R.drawable.ic_emoji_bad)
+                resultImageView?.setTint(R.color.gray_400)
+                resultImageView?.visible(true)
+            }
+        }
+    }
+
+    private fun fillQuiz(word: Word, reversed: Boolean) {
+        val askWordQuiz = if (!reversed) word.original else word.translates?.first()?.translation
+        var answerWordCount = 1
+        if (!reversed) {
+            var tempCount = 1
+            word.translates.forEach {
+                var count = it.translation.split(" ").size
+                if (count > tempCount) {
+                    tempCount = count
+                }
+            }
+            answerWordCount = tempCount
+        }
+        answerInputLayout?.error = ""
+        answerEditText?.setText("")
+        timeTextView?.text = ""
+        timeTextView?.visible(true)
+        resultImageView?.visible(false, View.GONE)
+        wordTextView?.text = askWordQuiz
+        val visiblePhonetic = !word.phonetic.isNullOrEmpty() && !reversed
+        phoneticTextView?.visible(visiblePhonetic, View.GONE)
+        if (visiblePhonetic) {
+            if (viewModel.getQuiz()?.hidePhonetic == true) {
+                phoneticTextView?.text = "[${word.phonetic?.hide()}]"
+                phoneticTextView?.setOnClickListener {
+                    phoneticTextView?.text = "[${word.phonetic}]"
+                }
+            } else {
+                phoneticTextView?.text = "[${word.phonetic}]"
+            }
+
+        }
+        initTimer(viewModel.getQuiz()?.timeInSeconds, answerWordCount)
+        fillTags(word)
+        fillCategories(word)
+        fillTypes(word)
+        quizTimer?.start()
+        answerEditText?.requestFocus()
+        btnNext?.setIcon(R.drawable.ic_next_word_quiz)
+    }
+
+    private fun fillTags(word: Word) {
+        tagsBubbleLayout?.let { layout ->
+            layout.removeAllViews()
+            if (viewModel.getQuiz()?.showTags == true) {
+                tagsContainer?.visible(word.tags.isNotEmpty(), View.GONE)
+                word.tags.forEach {
+                    addTag(it)
+                }
+            } else {
+                tagsContainer?.visible(false, View.GONE)
+            }
+        }
+    }
+
+    private fun fillCategories(word: Word) {
+        categoriesBubbleLayout?.let { layout ->
+            layout.removeAllViews()
+            if (viewModel.getQuiz()?.showCategories == true) {
+                val wordCategories = mutableSetOf<TranslationCategory>()
+                word.translates.forEach { variant ->
+                    viewModel.getTranslationCategories()
+                        .find { variant.categoryId == it._id }?.let {
+                            wordCategories.add(it)
+                        }
+                }
+                categoriesContainer?.visible(wordCategories.isNotEmpty(), View.GONE)
+                wordCategories.forEach {
+                    addCategory(it)
+                }
+            } else {
+                categoriesContainer?.visible(false, View.GONE)
+            }
+        }
+    }
+
+    private fun fillTypes(word: Word) {
+        typesBubbleLayout?.let { layout ->
+            layout.removeAllViews()
+            if (viewModel.getQuiz()?.showTypes == true) {
+                if (word.type == 0) {
+                    typesContainer?.visible(false, View.GONE)
+                    return@let
+                }
+                val wordType = wordTypes?.get(word.type)
+                val matchTag =
+                    wordTypes?.find { wordTag -> wordType == wordTag }
+                if (matchTag != null) {
+                    typesContainer?.visible(true, View.GONE)
+                    addType(matchTag)
+                } else {
+                    typesContainer?.visible(false, View.GONE)
+                }
+            } else {
+                typesContainer?.visible(false, View.GONE)
+            }
+        }
+    }
+
+    private fun nextOrSkip() {
+        quizTimer?.cancel()
+        context?.hideKeyboard(answerEditText)
+        val answer = answerEditText?.text?.toString()?.trim() ?: ""
+        lifecycleScope.launch {
+            viewModel.checkAnswer(context, answer).collect {
+                when (it) {
+                    is FetchDataState.DataState -> {
+                        if (it.data) {
+                            timeTextView?.visible(false, View.GONE)
+                            resultImageView?.setImageResource(R.drawable.ic_emoji_happy)
+                            resultImageView?.setTint(R.color.yellow_700)
+                            resultImageView?.visible(true)
+                            Log.d(TAG, "answer is $answer")
+                            viewModel.nextWord(answer)
+                        } else {
+                            Log.d(TAG, "skip current word")
+                            viewModel.skipAnswer()
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    private val onAnswerChangeListener = object : TextWatcher {
+        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+
+        }
+
+        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+
+        }
+
+        override fun afterTextChanged(text: Editable?) {
+            val isTimerRunning = quizTimer?.isRunning() ?: false
+            if (isTimerRunning) {
+                val newAnswer = text?.toString()?.trim()
+                lifecycleScope.launch {
+                    viewModel.checkAnswer(context, newAnswer).collect {
+                        when (it) {
+                            is FetchDataState.StartLoadingState -> {
+                                sharedViewModel.loading(true)
+                            }
+
+                            is FetchDataState.FinishLoadingState -> {
+                                sharedViewModel.loading(false)
+                            }
+
+                            is FetchDataState.ErrorState -> {
+                                displayError(
+                                    it.exception.message
+                                        ?: context?.getString(R.string.unknown_error),
+                                    rootView
+                                )
+                            }
+
+                            is FetchDataState.DataState -> {
+                                if (it.data) {
+                                    context?.hideKeyboard(answerEditText)
+                                    timeTextView?.visible(false, View.GONE)
+                                    resultImageView?.setImageResource(R.drawable.ic_emoji_happy)
+                                    resultImageView?.setTint(R.color.yellow_700)
+                                    resultImageView?.visible(true)
+                                    quizTimer?.cancel()
+                                }
+                            }
+
+                            is FetchDataState.ErrorStateString -> {
+                                displayError(it.error, rootView)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    private fun addTag(tag: WordTag) {
+        Log.d(TAG, "add tag ${tag.tagName}")
+        val bubbleView = BubbleView(requireContext())
+        bubbleView.setWordTag(tag)
+        bubbleView.isHide(true)
+        tagsBubbleLayout?.addView(bubbleView)
+    }
+
+    private fun addCategory(category: TranslationCategory) {
+        Log.d(TAG, "add category ${category.categoryName}")
+        val bubbleView = BubbleView(requireContext())
+        val tag = CategoryTag(category, category.categoryName)
+        bubbleView.setWordTag(tag)
+        bubbleView.isHide(true)
+        categoriesBubbleLayout?.addView(bubbleView)
+    }
+
+    private fun addType(type: String) {
+        Log.d(TAG, "add type $type")
+        val bubbleView = BubbleView(requireContext())
+        bubbleView.setWordTag(Tag(type, ""))
+        bubbleView.isHide(true)
+        typesBubbleLayout?.addView(bubbleView)
+    }
+}
