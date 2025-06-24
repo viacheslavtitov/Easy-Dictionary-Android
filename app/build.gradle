@@ -33,11 +33,11 @@ android {
             keyAlias System.getenv("STAGING_ALIAS")
         }
     }
-    namespace 'org.easy.dictionary.app'
+    namespace 'org.easydictionary.app'
     compileSdk 35
 
     defaultConfig {
-        applicationId "my.dictionary.free"
+        applicationId "org.easydictionary.app"
         minSdk 24
         targetSdk 35
         versionCode 5
@@ -69,16 +69,13 @@ android {
         }
         demo {
             dimension = "version"
-            applicationIdSuffix = ".qa"
-            versionNameSuffix = "-qa"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
     }
     packagingOptions {
         resources.excludes.add("META-INF/*")
@@ -92,8 +89,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     //dependency injections
-    implementation("com.google.dagger:hilt-android:2.48.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.48.1")
+    implementation("com.google.dagger:hilt-android:2.56.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.56.2")
     //navigation
     implementation 'androidx.navigation:navigation-ui-ktx:2.9.0'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.9.0'
@@ -104,6 +101,8 @@ dependencies {
     implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
     implementation 'com.google.firebase:firebase-crashlytics:19.4.4'
     implementation 'com.google.firebase:firebase-analytics:22.4.0'
+    //api
+    implementation 'com.google.code.gson:gson:2.13.1'
     //facebook
     implementation 'com.facebook.android:facebook-android-sdk:18.0.3'
     //ui

@@ -1,4 +1,4 @@
-package org.easy.dictionary.app
+package org.easydictionary.app
 
 import org.junit.Test
 

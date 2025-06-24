@@ -16,7 +16,7 @@
         android:textSize="16dp"
         tools:text="Hello" />
 
-    <org.easy.dictionary.app.view.widget.bubble.BubbleLayout
+    <org.easydictionary.app.view.widget.bubble.BubbleLayout
         android:id="@+id/bubbles_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

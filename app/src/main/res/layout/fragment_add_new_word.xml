@@ -99,7 +99,7 @@
                     android:spinnerMode="dropdown"
                     tools:listitem="@layout/item_spinner_single" />
 
-                <org.easy.dictionary.app.view.widget.bubble.BubbleLayout
+                <org.easydictionary.app.view.widget.bubble.BubbleLayout
                     android:id="@+id/bubbles_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
@@ -120,7 +120,7 @@
             </androidx.appcompat.widget.LinearLayoutCompat>
         </androidx.core.widget.NestedScrollView>
 
-        <org.easy.dictionary.app.view.widget.phonetic.PhoneticsView
+        <org.easydictionary.app.view.widget.phonetic.PhoneticsView
             android:id="@+id/phonetic_view"
             android:layout_width="match_parent"
             android:layout_height="400dp"
