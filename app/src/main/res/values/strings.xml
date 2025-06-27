@@ -14,6 +14,7 @@
     <string name="filter">Filter</string>
     <string name="save">Save</string>
     <string name="unknown_error">Unknown error</string>
+    <string name="network_error">Network error</string>
     <string name="optional">Optional</string>
     <string name="from">From</string>
     <string name="to">To</string>

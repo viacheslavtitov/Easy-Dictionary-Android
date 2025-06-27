@@ -25,6 +25,7 @@ class PreferenceUtils @Inject constructor(
         const val CURRENT_USER_ID = "CURRENT_USER_ID"
         const val CURRENT_USER_UUID = "CURRENT_USER_UUID"
         const val ACCESS_TOKEN_KEY = "ACCESS_TOKEN_KEY"
+        const val REFRESH_ACCESS_TOKEN_KEY = "REFRESH_ACCESS_TOKEN_KEY"
     }
 
     /**
