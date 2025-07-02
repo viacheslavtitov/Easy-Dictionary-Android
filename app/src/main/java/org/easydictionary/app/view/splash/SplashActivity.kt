@@ -2,6 +2,7 @@ package org.easydictionary.app.view.splash
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.view.WindowInsetsCompat
@@ -13,7 +14,7 @@ import org.easydictionary.app.view.ext.visibleSystemBars
 import org.easydictionary.app.view.main.MainActivity
 
 @AndroidEntryPoint
-class SplashActivity : AbstractBaseActivity() {
+class SplashActivity : ComponentActivity() {
 
     companion object {
         private val TAG = SplashActivity::class.simpleName

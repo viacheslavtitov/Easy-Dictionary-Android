@@ -46,9 +46,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".view.splash.SplashActivity"
-            android:exported="true"
-            android:theme="@style/SplashTheme">
+            android:name=".view.SimpleActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

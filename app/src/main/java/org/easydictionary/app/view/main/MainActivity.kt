@@ -23,13 +23,11 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
-import com.firebase.ui.auth.AuthUI
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -103,7 +101,6 @@ class MainActivity : AbstractBaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseAuth.getInstance().addAuthStateListener(signOutListener)
         setContentView(R.layout.activity_main)
         visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.statusBars())
         visibleSystemBars(visible = true, type = WindowInsetsCompat.Type.systemBars())
@@ -299,20 +296,7 @@ class MainActivity : AbstractBaseActivity() {
     }
 
     private fun logOut() {
-        AuthUI.getInstance().signOut(this).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                sharedViewModel.clearData()
-                FirebaseAuth.getInstance().signOut()
-            }
-        }
-    }
 
-    private val signOutListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-        if (firebaseAuth.currentUser == null) {
-            val intent = Intent(applicationContext, SplashActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            startActivity(intent)
-        }
     }
 
     override fun onSupportNavigateUp(): Boolean {

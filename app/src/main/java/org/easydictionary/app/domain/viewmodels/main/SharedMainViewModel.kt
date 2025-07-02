@@ -5,8 +5,6 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -68,32 +66,9 @@ class SharedMainViewModel @Inject constructor(
 
     val titleSavedUIState: StateFlow<String> = uiStateHandle.getStateFlow(KEY_STATE_TITLE, "")
 
-    private fun updateUserData(user: FirebaseUser) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val result = getUpdateUsersUseCase.insertOrUpdateUser(
-                    User(
-                        name = user.displayName ?: "",
-                        email = user.email ?: "",
-                        uid = user.email ?: "",
-                        providerId = user.providerId
-                    )
-                )
-            }
-        }
-    }
-
     fun loadUserData() {
         viewModelScope.launch {
-            FirebaseAuth.getInstance().currentUser?.let { user ->
-                user.photoUrl?.let {
-                    userAvatarUri.tryEmit(it)
-                }
-                user.email?.let {
-                    _userEmailValue.send(it)
-                }
-                updateUserData(user)
-            }
+
         }
     }
 

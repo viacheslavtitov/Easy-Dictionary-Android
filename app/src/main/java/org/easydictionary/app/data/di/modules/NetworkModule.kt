@@ -8,12 +8,15 @@ import okhttp3.Authenticator
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.easydictionary.app.BuildConfig
+import org.easydictionary.app.R
 import org.easydictionary.app.data.models.auth.refresh_token.RefreshTokenRequest
 import org.easydictionary.app.data.remote.ApiCallAdapterFactory
+import org.easydictionary.app.data.remote.ApiResult
 import org.easydictionary.app.data.remote.auth.AuthInterceptor
 import org.easydictionary.app.data.remote.auth.TokenAuthenticator
 import org.easydictionary.app.data.remote.auth.AuthApiService
 import org.easydictionary.app.data.remote.provideGsonDateConvertor
+import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.REFRESH_ACCESS_TOKEN_KEY
@@ -72,13 +75,15 @@ object NetworkModule {
             .build()
 
         val authApi = retrofit.create(AuthApiService::class.java)
-        val response = authApi.refreshToken(RefreshTokenRequest(refreshToken)).execute()
+        val response = authApi.refreshToken(RefreshTokenRequest(refreshToken))
+        return when(response) {
+            is ApiResult.Success -> {
+                response.data.accessToken
+            }
 
-        return if (response.isSuccessful) {
-            val newAccessToken = response.body()?.accessToken
-            newAccessToken
-        } else {
-            null
+            else ->  {
+                null
+            }
         }
     }
 
