@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.easydictionary.app.view.buttons.ButtonPrimary
+import org.easydictionary.app.view.buttons.ButtonSecondary
 import org.easydictionary.app.view.inputs.EmailTextField
 import org.easydictionary.app.view.inputs.PasswordTextField
+import org.easydictionary.app.view.inputs.TextFieldPrimary
 
 @Composable
 fun SimpleScreen() {
@@ -20,8 +23,14 @@ fun SimpleScreen() {
             .padding(16.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        PasswordTextField("test", {value -> {}}, "Password")
-        Spacer(modifier = Modifier.height(12.dp))
         EmailTextField("", {value -> {}}, "Email")
+        Spacer(modifier = Modifier.height(6.dp))
+        PasswordTextField("", {value -> {}}, "Password")
+        Spacer(modifier = Modifier.height(6.dp))
+        TextFieldPrimary(defaultValue = "", {value -> {}}, label = "Text field", required = true, errorMessage = "Test")
+        Spacer(modifier = Modifier.height(12.dp))
+        ButtonPrimary("Log in") { }
+        Spacer(modifier = Modifier.height(12.dp))
+        ButtonSecondary("Cancel") { }
     }
 }

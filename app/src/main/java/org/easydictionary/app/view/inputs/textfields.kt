@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
@@ -28,6 +29,52 @@ import org.easydictionary.app.R
 
 @Preview
 @Composable
+fun TextFieldPrimary(
+    defaultValue: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    required: Boolean = false,
+    errorMessage: String? = null,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .padding(6.dp),
+) {
+    var value by remember { mutableStateOf(defaultValue) }
+    val isValid = remember(value) {
+        value.isNotEmpty()
+    }
+
+    val errorMessage = when {
+        value.isEmpty() -> null
+        required && value.isEmpty() -> errorMessage
+        else -> null
+    }
+    OutlinedTextField(
+        onValueChange = { newValue ->
+            value = newValue
+            onValueChange(value)
+        },
+        value = value,
+        label = { OutlinedTextFieldLabel(label) },
+        modifier = modifier,
+        isError = required && !isValid && value.isNotEmpty(),
+        supportingText = {
+            errorMessage?.let {
+                Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+            }
+        },
+        trailingIcon = {
+            if (value.isNotEmpty()) {
+                IconButton(onClick = { value = "" }) {
+                    Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear text")
+                }
+            }
+        },
+    )
+}
+
+@Preview
+@Composable
 fun EmailTextField(
     defaultValue: String,
     onValueChange: (String) -> Unit,
@@ -40,7 +87,9 @@ fun EmailTextField(
 
     val errorMessage = when {
         email.isEmpty() -> null
-        !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> stringResource(R.string.error_email_format_failed)
+        !android.util.Patterns.EMAIL_ADDRESS.matcher(email)
+            .matches() -> stringResource(R.string.error_email_format_failed)
+
         else -> null
     }
     OutlinedTextField(
