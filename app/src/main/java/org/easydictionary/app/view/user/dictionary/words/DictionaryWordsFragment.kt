@@ -34,9 +34,6 @@ import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.AlphabetSort
 import org.easydictionary.app.domain.models.filter.FilterModel
-import org.easydictionary.app.domain.models.navigation.AddDictionaryWordScreen
-import org.easydictionary.app.domain.models.navigation.DictionaryFilterScreen
-import org.easydictionary.app.domain.models.navigation.EditDictionaryWordScreen
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.utils.hasTiramisu
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
@@ -176,18 +173,18 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
         }, {
             when (it) {
                 R.id.nav_add_word -> {
-                    sharedViewModel.navigateTo(AddDictionaryWordScreen(dictionaryId ?: ""))
+//                    sharedViewModel.navigateTo(AddDictionaryWordScreen(dictionaryId ?: ""))
                     return@addMenuProvider true
                 }
 
                 R.id.nav_filter -> {
                     viewModel.getDictionary()?.let { dictionary ->
-                        sharedViewModel.navigateTo(
-                            DictionaryFilterScreen(
-                                dictionary,
-                                wordsAdapter?.getFilteredModel()
-                            )
-                        )
+//                        sharedViewModel.navigateTo(
+//                            DictionaryFilterScreen(
+//                                dictionary,
+//                                wordsAdapter?.getFilteredModel()
+//                            )
+//                        )
                     }
                     return@addMenuProvider true
                 }
@@ -293,7 +290,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
                 R.id.menu_edit -> {
                     wordsAdapter?.getSelectedWords()?.firstOrNull()?.let {
                         actionMode?.finish()
-                        sharedViewModel.navigateTo(EditDictionaryWordScreen(it))
+//                        sharedViewModel.navigateTo(EditDictionaryWordScreen(it))
                     }
                     true
                 }
@@ -358,7 +355,7 @@ class DictionaryWordsFragment : AbstractBaseFragment() {
     private val onWordClickListener = object: OnWordClickListener {
         override fun onClick(word: Word) {
             if (actionMode == null) {
-                sharedViewModel.navigateTo(EditDictionaryWordScreen(word))
+//                sharedViewModel.navigateTo(EditDictionaryWordScreen(word))
             } else {
                 selectWord(word)
             }

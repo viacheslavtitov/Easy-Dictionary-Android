@@ -2,7 +2,6 @@ package org.easydictionary.app.view.inputs
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,21 +15,19 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.easydictionary.app.R
 import org.easydictionary.app.view.widget.global.LightColors
 import org.easydictionary.app.view.widget.global.TextDimen
@@ -89,11 +86,17 @@ fun TextFieldPrimary(
 fun EmailTextField(
     defaultValue: String,
     onValueChange: (String) -> Unit,
+    onValidationChanged: (Boolean) -> Unit,
     label: String
 ) {
     var email by remember { mutableStateOf(defaultValue) }
-    val isValid = remember(email) {
-        email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    var isValid by remember { mutableStateOf(false) }
+    LaunchedEffect(email) {
+        val newValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        if (newValid != isValid) {
+            isValid = newValid
+            onValidationChanged(newValid)
+        }
     }
 
     val errorMessage = when {
@@ -129,19 +132,25 @@ fun EmailTextField(
 @Preview
 @Composable
 fun PasswordTextField(
-    value: String,
+    defaultValue: String,
     onValueChange: (String) -> Unit,
+    onValidationChanged: (Boolean) -> Unit,
     label: String
 ) {
     var showPassword by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
     val isDark = isSystemInDarkTheme()
-    var text by remember { mutableStateOf(value) }
-    val isValid = remember(text) {
-        text.length >= 8 &&
+    var text by remember { mutableStateOf(defaultValue) }
+    var isValid by remember { mutableStateOf(false) }
+    LaunchedEffect(text) {
+        val newValid = text.length >= 8 &&
                 text.any { it.isUpperCase() } &&
                 text.any { it.isLowerCase() }
+        if (newValid != isValid) {
+            isValid = newValid
+            onValidationChanged(newValid)
+        }
     }
 
     val errorMessage = when {
@@ -187,7 +196,7 @@ fun PasswordTextField(
             }
         },
         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-        isError = !isValid && text.isNotEmpty(),
+        isError = !isValid && text.isNotBlank(),
         supportingText = {
             if (errorMessage != null) {
                 Text(text = errorMessage, fontSize = TextDimen.TextFieldError)

@@ -7,8 +7,12 @@ object ErrorParser {
     private val gson = Gson()
 
     fun parse(errorBody: ResponseBody?): String {
+        return parse(errorBody?.string() ?: return "Unknown error")
+    }
+
+    fun parse(errorBody: String?): String {
         return try {
-            val json = errorBody?.string() ?: return "Unknown error"
+            val json = errorBody ?: return "Unknown error"
 
             val validation = gson.fromJson(json, ValidationErrorResponse::class.java)
             validation.validationErrors?.entries?.joinToString("\n") {

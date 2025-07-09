@@ -24,7 +24,6 @@ import org.easydictionary.app.domain.models.dictionary.Dictionary
 import org.easydictionary.app.domain.models.dictionary.VerbTense
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
-import org.easydictionary.app.domain.models.navigation.LanguagesScreen
 import org.easydictionary.app.domain.utils.hasTiramisu
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
@@ -76,7 +75,7 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         verbTensesRecyclerView.layoutManager = LinearLayoutManager(context)
         verbTensesRecyclerView.adapter = verbTensesAdapter
         langFromBtn.setOnClickListener {
-            sharedViewModel.navigateTo(LanguagesScreen(LangType.FROM))
+//            sharedViewModel.navigateTo(LanguagesScreen(LangType.FROM))
         }
         view.findViewById<View>(R.id.btn_add_verb_time).setOnClickListener {
             val dialog = DialogBuilders.InputDialogBuilder
@@ -105,7 +104,7 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         }
         langToBtn = view.findViewById(R.id.btn_lang_to)
         langToBtn.setOnClickListener {
-            sharedViewModel.navigateTo(LanguagesScreen(LangType.TO))
+//            sharedViewModel.navigateTo(LanguagesScreen(LangType.TO))
         }
         return view
     }

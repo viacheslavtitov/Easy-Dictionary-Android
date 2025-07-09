@@ -24,8 +24,6 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.Dictionary
-import org.easydictionary.app.domain.models.navigation.DictionaryChooseScreen
-import org.easydictionary.app.domain.models.navigation.WordsMultiChooseScreen
 import org.easydictionary.app.domain.models.quiz.Quiz
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.utils.hasTiramisu
@@ -96,10 +94,10 @@ class AddQuizFragment : AbstractBaseFragment() {
             fillDictionary()
         }
         addDictionaryContainer?.setOnClickListener {
-            sharedViewModel.navigateTo(DictionaryChooseScreen())
+//            sharedViewModel.navigateTo(DictionaryChooseScreen())
         }
         dictionaryNameTextView?.setOnClickListener {
-            sharedViewModel.navigateTo(DictionaryChooseScreen())
+//            sharedViewModel.navigateTo(DictionaryChooseScreen())
         }
         addDurationContainer?.setOnClickListener {
             showSecondsPickerDialog()
@@ -109,12 +107,12 @@ class AddQuizFragment : AbstractBaseFragment() {
         }
         view.findViewById<View>(R.id.add_words).setOnClickListener {
             if (selectedDictionary != null && selectedDictionary!!._id != null) {
-                sharedViewModel.navigateTo(
-                    WordsMultiChooseScreen(
-                        selectedDictionary!!._id!!,
-                        wordsAdapter?.getWords()?.toList() as? ArrayList<Word>
-                    )
-                )
+//                sharedViewModel.navigateTo(
+//                    WordsMultiChooseScreen(
+//                        selectedDictionary!!._id!!,
+//                        wordsAdapter?.getWords()?.toList() as? ArrayList<Word>
+//                    )
+//                )
             } else {
                 displayError(getString(R.string.error_set_dictionary_first), wordsRecyclerView)
             }

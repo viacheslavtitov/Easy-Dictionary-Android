@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.easydictionary.app.view.widget.global.ButtonDimen
 import org.easydictionary.app.view.widget.global.Colors
 import org.easydictionary.app.view.widget.global.LightColors
@@ -31,6 +30,7 @@ fun ButtonPrimary(
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .padding(0.dp),
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -53,6 +53,7 @@ fun ButtonPrimary(
         contentPadding = PaddingValues(16.dp),
         shape = RoundedCornerShape(12.dp),
         onClick = onClick,
+        enabled = enabled,
         interactionSource = interactionSource,
         colors = ButtonDefaults.buttonColors(
             containerColor = backgroundColor

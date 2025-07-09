@@ -19,7 +19,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.filter.FilterModel
-import org.easydictionary.app.domain.models.navigation.DictionaryMultiChooseFilterScreen
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.utils.hasTiramisu
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
@@ -114,7 +113,7 @@ class WordsMultiChooseFragment : AbstractBaseFragment() {
                 }
                 R.id.nav_filter -> {
                     viewModel.getDictionary()?.let {dictionary ->
-                        sharedViewModel.navigateTo(DictionaryMultiChooseFilterScreen(dictionary, wordsAdapter?.getFilteredModel()))
+//                        sharedViewModel.navigateTo(DictionaryMultiChooseFilterScreen(dictionary, wordsAdapter?.getFilteredModel()))
                     }
                     return@addMenuProvider true
                 }

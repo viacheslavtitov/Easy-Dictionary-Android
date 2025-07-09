@@ -32,9 +32,6 @@ import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.VerbTense
 import org.easydictionary.app.domain.models.navigation.AddTagNavigation
 import org.easydictionary.app.domain.models.navigation.AddTranslationVariantNavigation
-import org.easydictionary.app.domain.models.navigation.AddTranslationVariantsScreen
-import org.easydictionary.app.domain.models.navigation.AddWordTagsScreen
-import org.easydictionary.app.domain.models.navigation.EditTranslationVariantsScreen
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.models.words.tags.WordTag
 import org.easydictionary.app.domain.models.words.variants.TranslationCategory
@@ -175,45 +172,45 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
                     }
                 }
                 launch {
-                    sharedViewModel.actionNavigation.drop(1).collect { action ->
-                        when (action) {
-                            is AddTagNavigation -> {
-                                context?.hideKeyboard(textInputEditTextWord)
-                                context?.hideKeyboard(textInputEditTextPhonetic)
-                                if (!phonetics.isNullOrEmpty()) {
-                                    togglePhoneticsView(false)
-                                }
-                                viewModel.getDictionary()?.let { dictionary ->
-                                    val originalWord = textInputEditTextWord.text?.toString()
-                                    val tags = tagsLayout.getTags<WordTag>(false)
-                                    val word = viewModel.getEditedWord() ?: Word(
-                                        _id = null,
-                                        dictionaryId = dictionary._id ?: "",
-                                        original = originalWord ?: "",
-                                        type = 0,
-                                        phonetic = null,
-                                        translates = emptyList(),
-                                        tags = tags,
-                                        tenses = arrayListOf()
-                                    )
-                                    sharedViewModel.navigateTo(AddWordTagsScreen(word, dictionary))
-                                }
-                            }
-
-                            is AddTranslationVariantNavigation -> {
-                                context?.hideKeyboard(textInputEditTextWord)
-                                context?.hideKeyboard(textInputEditTextPhonetic)
-                                if (!phonetics.isNullOrEmpty()) {
-                                    togglePhoneticsView(false)
-                                }
-                                sharedViewModel.navigateTo(
-                                    AddTranslationVariantsScreen(
-                                        textInputEditTextWord.text?.toString()
-                                    )
-                                )
-                            }
-                        }
-                    }
+//                    sharedViewModel.actionNavigation.drop(1).collect { action ->
+//                        when (action) {
+//                            is AddTagNavigation -> {
+//                                context?.hideKeyboard(textInputEditTextWord)
+//                                context?.hideKeyboard(textInputEditTextPhonetic)
+//                                if (!phonetics.isNullOrEmpty()) {
+//                                    togglePhoneticsView(false)
+//                                }
+//                                viewModel.getDictionary()?.let { dictionary ->
+//                                    val originalWord = textInputEditTextWord.text?.toString()
+//                                    val tags = tagsLayout.getTags<WordTag>(false)
+//                                    val word = viewModel.getEditedWord() ?: Word(
+//                                        _id = null,
+//                                        dictionaryId = dictionary._id ?: "",
+//                                        original = originalWord ?: "",
+//                                        type = 0,
+//                                        phonetic = null,
+//                                        translates = emptyList(),
+//                                        tags = tags,
+//                                        tenses = arrayListOf()
+//                                    )
+//                                    sharedViewModel.navigateTo(AddWordTagsScreen(word, dictionary))
+//                                }
+//                            }
+//
+//                            is AddTranslationVariantNavigation -> {
+//                                context?.hideKeyboard(textInputEditTextWord)
+//                                context?.hideKeyboard(textInputEditTextPhonetic)
+//                                if (!phonetics.isNullOrEmpty()) {
+//                                    togglePhoneticsView(false)
+//                                }
+//                                sharedViewModel.navigateTo(
+//                                    AddTranslationVariantsScreen(
+//                                        textInputEditTextWord.text?.toString()
+//                                    )
+//                                )
+//                            }
+//                        }
+//                    }
                 }
             }
         }
@@ -492,13 +489,13 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
 
     private val onTranslationVariantEditListener = object : OnTranslationVariantEditListener {
         override fun onEdit(entity: TranslationVariant) {
-            sharedViewModel.navigateTo(
-                EditTranslationVariantsScreen(
-                    textInputEditTextWord.text?.toString(),
-                    dictionaryId ?: "",
-                    entity
-                )
-            )
+//            sharedViewModel.navigateTo(
+//                EditTranslationVariantsScreen(
+//                    textInputEditTextWord.text?.toString(),
+//                    dictionaryId ?: "",
+//                    entity
+//                )
+//            )
         }
 
         override fun onDelete(entity: TranslationVariant) {

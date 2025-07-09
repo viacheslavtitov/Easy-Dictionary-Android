@@ -28,9 +28,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.Dictionary
-import org.easydictionary.app.domain.models.navigation.AddUserDictionaryScreen
-import org.easydictionary.app.domain.models.navigation.DictionaryWordsScreen
-import org.easydictionary.app.domain.models.navigation.EditDictionaryScreen
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.view.AbstractBaseFragment
@@ -148,7 +145,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
         }, {
             when (it) {
                 R.id.nav_add_dictionary -> {
-                    sharedViewModel.navigateTo(AddUserDictionaryScreen())
+//                    sharedViewModel.navigateTo(AddUserDictionaryScreen())
                     return@addMenuProvider true
                 }
 
@@ -210,7 +207,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 dictionariesRecyclerView.getChildAdapterPosition(childView)
             )?.let { dictionary ->
                 if (actionMode == null) {
-                    sharedViewModel.navigateTo(DictionaryWordsScreen(dictionary))
+//                    sharedViewModel.navigateTo(DictionaryWordsScreen(dictionary))
                 } else {
                     selectDictionary(dictionary)
                 }
@@ -282,7 +279,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 R.id.menu_edit -> {
                     dictionariesAdapter?.getSelectedDictionaries()?.firstOrNull()?.let {
                         actionMode?.finish()
-                        sharedViewModel.navigateTo(EditDictionaryScreen(it))
+//                        sharedViewModel.navigateTo(EditDictionaryScreen(it))
                     }
                     true
                 }

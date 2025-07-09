@@ -13,7 +13,10 @@ import org.easydictionary.app.domain.models.auth.Auth
 import org.easydictionary.app.domain.repository.auth.AuthRepository
 import javax.inject.Inject
 
-class AuthRepositoryImpl @Inject constructor(private val resources: Resources, private val authApiService: AuthApiService) : AuthRepository {
+class AuthRepositoryImpl @Inject constructor(
+    private val resources: Resources,
+    private val authApiService: AuthApiService
+) : AuthRepository {
 
     override suspend fun signIn(
         email: String?,
@@ -21,29 +24,33 @@ class AuthRepositoryImpl @Inject constructor(private val resources: Resources, p
         provider: String,
         providerToken: String?
     ): Flow<DomainResult<Auth>> {
-        return flowOf(when (val result = authApiService.login(
-            AuthRequest(
-                email = email,
-                password = password,
-                provider = provider,
-                providerToken = providerToken
-            )
-        )) {
-            is ApiResult.Success -> {
-                DomainResult.Success(result.data.toDomain())
-            }
+        return flowOf(
+            when (val result = wrapApi {
+                authApiService.login(
+                    AuthRequest(
+                        email = email,
+                        password = password,
+                        provider = provider,
+                        providerToken = providerToken
+                    )
+                )
+            }) {
+                is ApiResult.Success -> {
+                    DomainResult.Success(result.data.toDomain())
+                }
 
-            is ApiResult.ApiError -> {
-                DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
-            }
+                is ApiResult.ApiError -> {
+                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
+                }
 
-            is ApiResult.NetworkError -> {
-                DomainResult.Error(resources.getString(R.string.network_error))
-            }
+                is ApiResult.NetworkError -> {
+                    DomainResult.Error(resources.getString(R.string.network_error))
+                }
 
-            is ApiResult.UnknownError -> {
-                DomainResult.Error(resources.getString(R.string.unknown_error))
+                is ApiResult.UnknownError -> {
+                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                }
             }
-        })
+        )
     }
 }

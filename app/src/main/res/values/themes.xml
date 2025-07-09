@@ -1,5 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
+    <style name="Theme.New.EasyDictionary" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- або Theme.Material3.Light.NoActionBar -->
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
     <style name="Theme.EasyDictionary" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/main</item>

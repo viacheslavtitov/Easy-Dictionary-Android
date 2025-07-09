@@ -27,9 +27,6 @@ import com.google.android.material.snackbar.SnackbarContentLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
-import org.easydictionary.app.domain.models.navigation.AddUserQuizScreen
-import org.easydictionary.app.domain.models.navigation.EditQuizScreenFromQuizList
-import org.easydictionary.app.domain.models.navigation.UserQuizScreen
 import org.easydictionary.app.domain.models.quiz.Quiz
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.quiz.UserQuizzesViewModel
@@ -149,7 +146,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
         }, {
             when (it) {
                 R.id.nav_add_quize -> {
-                    sharedViewModel.navigateTo(AddUserQuizScreen())
+//                    sharedViewModel.navigateTo(AddUserQuizScreen())
                     return@addMenuProvider true
                 }
 
@@ -213,7 +210,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                 quizzesRecyclerView.getChildAdapterPosition(childView)
             )?.let { quiz ->
                 if (actionMode == null) {
-                    sharedViewModel.navigateTo(UserQuizScreen(quiz))
+//                    sharedViewModel.navigateTo(UserQuizScreen(quiz))
                 } else {
                     selectQuiz(quiz)
                 }
@@ -286,7 +283,7 @@ class UserQuizzesFragment : AbstractBaseFragment() {
                 R.id.menu_edit -> {
                     quizzesAdapter?.getSelectedQuizzes()?.firstOrNull()?.let { quiz ->
                         actionMode?.finish()
-                        sharedViewModel.navigateTo(EditQuizScreenFromQuizList(quiz))
+//                        sharedViewModel.navigateTo(EditQuizScreenFromQuizList(quiz))
                     }
                     true
                 }

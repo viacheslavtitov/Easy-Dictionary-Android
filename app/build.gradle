@@ -52,7 +52,7 @@ android {
         debug {
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
             buildConfigField "String", "SECURE_KEY_ALIAS", "\"debug_secure_key_alias\""
-            buildConfigField "String", "BASE_API_URL", "\"http://dev.easydictionary.org/api\""
+            buildConfigField "String", "BASE_API_URL", "\"http://dev.easydictionary.org/api/\""
         }
         staging {
             signingConfig signingConfigs.qa
@@ -104,6 +104,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.9.0'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.9.0'
     implementation 'androidx.hilt:hilt-navigation-compose:1.2.0'
+    implementation 'androidx.navigation:navigation-compose:2.9.1'
     //http
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.retrofit2:retrofit:3.0.0")

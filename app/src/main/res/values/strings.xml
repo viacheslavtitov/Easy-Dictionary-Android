@@ -10,6 +10,7 @@
     <string name="cancel">Cancel</string>
     <string name="retry">Retry</string>
     <string name="error">Error</string>
+    <string name="info">Info</string>
     <string name="add">Add</string>
     <string name="filter">Filter</string>
     <string name="save">Save</string>
@@ -34,6 +35,9 @@
     <string name="sort_a_z">A-Z</string>
     <string name="sort_z_a">Z-A</string>
     <string name="types">Types</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="log_in">Log in</string>
     <!-- Sign-in -->
     <string name="sign_in_error_description">%s\nDo you want to retry?</string>
     <!-- Menu -->

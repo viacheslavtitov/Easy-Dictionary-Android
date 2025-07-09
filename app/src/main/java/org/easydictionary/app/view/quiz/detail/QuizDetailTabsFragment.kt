@@ -15,8 +15,6 @@ import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
-import org.easydictionary.app.domain.models.navigation.EditQuizScreenFromDetail
-import org.easydictionary.app.domain.models.navigation.RunQuizScreen
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.quiz.detail.QuizDetailTabsViewModel
 import org.easydictionary.app.view.AbstractBaseFragment
@@ -61,7 +59,7 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
             when (it) {
                 R.id.edit -> {
                     viewModel.getQuiz()?.let {
-                        sharedViewModel.navigateTo(EditQuizScreenFromDetail(it))
+//                        sharedViewModel.navigateTo(EditQuizScreenFromDetail(it))
                     }
                     return@addMenuProvider true
                 }
@@ -69,7 +67,7 @@ class QuizDetailTabsFragment : AbstractBaseFragment() {
                 R.id.run_quiz -> {
                     viewModel.getQuiz()?.let {
                         Log.d(TAG, "run quiz")
-                        sharedViewModel.navigateTo(RunQuizScreen(it))
+//                        sharedViewModel.navigateTo(RunQuizScreen(it))
                     }
                     return@addMenuProvider true
                 }

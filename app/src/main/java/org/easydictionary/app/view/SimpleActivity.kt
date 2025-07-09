@@ -7,19 +7,18 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
-import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel2
+import org.easydictionary.app.domain.viewmodels.main.SimpleMainViewModel
 import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
 import org.easydictionary.app.view.widget.global.EasyDictionaryTheme
 
 class SimpleActivity : ComponentActivity() {
 
-    private val viewModel: SharedMainViewModel2 by viewModels()
+    private val viewModel: SimpleMainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
