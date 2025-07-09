@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +41,7 @@ fun TextFieldPrimary(
     label: String,
     required: Boolean = false,
     errorMessage: String? = null,
+    signLine: Boolean = true,
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .padding(6.dp),
@@ -64,6 +66,7 @@ fun TextFieldPrimary(
         textStyle = TextStyle(
             fontSize = TextDimen.TextFieldText
         ),
+        singleLine = signLine,
         modifier = modifier,
         isError = required && !isValid && value.isNotEmpty(),
         supportingText = {
@@ -73,7 +76,10 @@ fun TextFieldPrimary(
         },
         trailingIcon = {
             if (value.isNotEmpty()) {
-                IconButton(onClick = { value = "" }) {
+                IconButton(onClick = {
+                    value = ""
+                    onValueChange(value)
+                }) {
                     Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear text")
                 }
             }
@@ -135,6 +141,8 @@ fun PasswordTextField(
     defaultValue: String,
     onValueChange: (String) -> Unit,
     onValidationChanged: (Boolean) -> Unit,
+    isRelationValidationError: State<Boolean> = mutableStateOf(false),
+    otherErrorMessage: String? = null,
     label: String
 ) {
     var showPassword by remember { mutableStateOf(false) }
@@ -143,10 +151,11 @@ fun PasswordTextField(
     val isDark = isSystemInDarkTheme()
     var text by remember { mutableStateOf(defaultValue) }
     var isValid by remember { mutableStateOf(false) }
-    LaunchedEffect(text) {
+    LaunchedEffect(text, isRelationValidationError) {
+        val relationValidationValid = if(otherErrorMessage == null) true else if(isRelationValidationError.value) false else true
         val newValid = text.length >= 8 &&
                 text.any { it.isUpperCase() } &&
-                text.any { it.isLowerCase() }
+                text.any { it.isLowerCase() } && relationValidationValid
         if (newValid != isValid) {
             isValid = newValid
             onValidationChanged(newValid)
@@ -158,6 +167,7 @@ fun PasswordTextField(
         text.length < 8 -> stringResource(R.string.error_password_length)
         !text.any { it.isUpperCase() } -> stringResource(R.string.error_password_upper_letter)
         !text.any { it.isLowerCase() } -> stringResource(R.string.error_password_lower_letter)
+        isRelationValidationError.value && otherErrorMessage != null -> otherErrorMessage
         else -> null
     }
     val iconTintColor = if (isFocused) {

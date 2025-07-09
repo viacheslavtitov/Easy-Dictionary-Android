@@ -27,6 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
+import org.easydictionary.app.view.register.SignUpScreen
 import org.easydictionary.app.view.signin.SignInScreen
 import org.easydictionary.app.view.splash.SplashScreen
 import org.easydictionary.app.view.widget.global.EasyDictionaryTheme
@@ -518,6 +519,10 @@ class MainActivity : ComponentActivity() {
             composable(route = AppNavigation.SignInScreen.route) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 SignInScreen(navController, sharedMainViewModel = sharedViewModel)
+            }
+            composable(route = AppNavigation.SignUpScreen.route) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                SignUpScreen(navController, sharedMainViewModel = sharedViewModel)
             }
 
 //            composable(

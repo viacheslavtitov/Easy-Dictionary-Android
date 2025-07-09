@@ -36,7 +36,7 @@ fun SimpleScreen() {
         var showInfoDialog by remember { mutableStateOf(false) }
         EmailTextField("", { value -> {} }, { isValid -> {} }, "Email")
         Spacer(modifier = Modifier.height(6.dp))
-        PasswordTextField("", { value -> {} }, { isValid -> {} }, "Password")
+        PasswordTextField("", { value -> {} }, { isValid -> {} }, label = "Password")
         Spacer(modifier = Modifier.height(6.dp))
         TextFieldPrimary(
             defaultValue = "",

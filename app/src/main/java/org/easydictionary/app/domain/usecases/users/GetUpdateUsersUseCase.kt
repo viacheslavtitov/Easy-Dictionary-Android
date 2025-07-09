@@ -9,15 +9,16 @@ import javax.inject.Inject
 class GetUpdateUsersUseCase @Inject constructor(private val databaseRepository: DatabaseRepository, private val preferenceUtils: PreferenceUtils) {
 
     suspend fun insertOrUpdateUser(user: User): Boolean {
-        return databaseRepository.insertOrUpdateUser(
-            user = UsersTable(
-                _id = user._id,
-                name = user.name,
-                email = user.email,
-                providerId = user.providerId,
-                uid = user.uid
-            ), preferenceUtils
-        )
+        return true
+//        return databaseRepository.insertOrUpdateUser(
+//            user = UsersTable(
+//                _id = user._id,
+//                name = user.name,
+//                email = user.email,
+//                providerId = user.providerId,
+//                uid = user.uid
+//            ), preferenceUtils
+//        )
     }
 
 }
