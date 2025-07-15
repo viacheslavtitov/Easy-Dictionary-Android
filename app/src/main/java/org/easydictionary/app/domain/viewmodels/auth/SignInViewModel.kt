@@ -11,13 +11,17 @@ import kotlinx.coroutines.flow.onCompletion
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.auth.Auth
 import org.easydictionary.app.domain.usecases.auth.AuthUseCase
+import org.easydictionary.app.domain.utils.PreferenceUtils
+import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
+import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.REFRESH_ACCESS_TOKEN_KEY
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.view.FetchDataState
 import javax.inject.Inject
 
 @HiltViewModel
 class SignInViewModel @Inject constructor(
-    private val authUseCase: AuthUseCase
+    private val authUseCase: AuthUseCase,
+    private val preferenceUtils: PreferenceUtils
 ) : ViewModel() {
     companion object {
         private val TAG = SignInViewModel::class.simpleName
@@ -45,7 +49,11 @@ class SignInViewModel @Inject constructor(
             }
             .collect { result->
                 when (result) {
-                    is DomainResult.Success -> emit(FetchDataState.DataState(result.data))
+                    is DomainResult.Success -> {
+                        preferenceUtils.putSecureString(ACCESS_TOKEN_KEY, result.data.accessToken)
+                        preferenceUtils.putSecureString(REFRESH_ACCESS_TOKEN_KEY, result.data.refreshToken)
+                        emit(FetchDataState.DataState(result.data))
+                    }
                     is DomainResult.Error -> emit(FetchDataState.ErrorStateString(result.message))
                 }
             }

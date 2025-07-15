@@ -28,4 +28,8 @@ object LightColors {
     val Text_Secondary = Color(0xFF616161)
     val Error = Color(0xFFff1744)
     val Outlined = Color(0xFF49454F)
+    val Main_Screen_Background = Colors.Gray_300
+    val Secondary_Screen_Background = Colors.Gray_200
+    val Divider = Colors.Gray_300
+    val Surface = Colors.White
 }

@@ -32,6 +32,7 @@ import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.view.FetchDataState
 import org.easydictionary.app.view.buttons.ButtonPrimary
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
+import org.easydictionary.app.view.ext.clearStack
 import org.easydictionary.app.view.inputs.EmailTextField
 import org.easydictionary.app.view.inputs.PasswordTextField
 import org.easydictionary.app.view.texts.TextFieldLabel
@@ -82,7 +83,9 @@ fun SignInScreen(
                 viewModel.signIn(email, password, "email", "").collect {
                     when (it) {
                         is FetchDataState.DataState<Auth> -> {
-//                            navController.navigate(AppNavigation.HomeScreen)
+                            navController.navigate(AppNavigation.HomeScreen.route) {
+                                clearStack()
+                            }
                         }
 
                         is FetchDataState.ErrorStateString -> {

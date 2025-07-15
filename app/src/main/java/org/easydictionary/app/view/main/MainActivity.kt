@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
+import org.easydictionary.app.view.home.HomeScreen
 import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
 import org.easydictionary.app.view.register.SignUpScreen
 import org.easydictionary.app.view.signin.SignInScreen
@@ -67,7 +68,7 @@ class MainActivity : ComponentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(WindowInsets.systemBars.asPaddingValues())
+//                        .padding(WindowInsets.systemBars.asPaddingValues())
                 ) {
                     AppNavHost()
                     val loadingState by sharedViewModel.loadingUIState
@@ -523,6 +524,10 @@ class MainActivity : ComponentActivity() {
             composable(route = AppNavigation.SignUpScreen.route) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 SignUpScreen(navController, sharedMainViewModel = sharedViewModel)
+            }
+            composable(route = AppNavigation.HomeScreen.route) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                HomeScreen(navController, sharedMainViewModel = sharedViewModel)
             }
 
 //            composable(

@@ -2,6 +2,8 @@ package org.easydictionary.app.domain.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
@@ -38,11 +40,21 @@ class PreferenceUtils @Inject constructor(
     private fun getSecretKey(): SecretKey {
         if (!keyStore.containsAlias(BuildConfig.SECURE_KEY_ALIAS)) {
             val keyGenerator = KeyGenerator.getInstance("AES", ANDROID_KEYSTORE)
-            keyGenerator.init(256)
+
+            val keyGenParams = KeyGenParameterSpec.Builder(
+                BuildConfig.SECURE_KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .build()
+
+            keyGenerator.init(keyGenParams)
             return keyGenerator.generateKey()
         }
         return (keyStore.getEntry(BuildConfig.SECURE_KEY_ALIAS, null) as KeyStore.SecretKeyEntry).secretKey
     }
+
 
     fun putSecureString(key: String, value: String) {
         val cipher = Cipher.getInstance(AES_MODE)

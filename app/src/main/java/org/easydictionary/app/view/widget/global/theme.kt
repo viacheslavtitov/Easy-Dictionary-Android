@@ -9,9 +9,10 @@ val LightColorScheme = lightColorScheme(
     primary = LightColors.Main,
     secondary = LightColors.Secondary,
     onSecondary = LightColors.Secondary_Light,
-    background = LightColors.Main_Light,
+    background = LightColors.Secondary_Screen_Background,
     onPrimary = LightColors.Main_Dark,
-    onSurface = LightColors.Outlined
+    onSurface = LightColors.Outlined,
+    surface = LightColors.Surface
 )
 
 @Composable

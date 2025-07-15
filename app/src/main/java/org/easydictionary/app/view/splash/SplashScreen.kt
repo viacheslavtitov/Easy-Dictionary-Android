@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.splash.SplashViewModel
+import org.easydictionary.app.view.ext.clearStack
 import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
 
 @Composable
@@ -22,8 +23,12 @@ fun SplashScreen(navController: NavController, viewModel: SplashViewModel = hilt
         LoadingIndicatorCircle()
     }
     if(viewModel.isUserSignedIn()) {
-        navController.navigate(AppNavigation.HomeScreen.route)
+        navController.navigate(AppNavigation.HomeScreen.route) {
+            clearStack()
+        }
     } else {
-        navController.navigate(AppNavigation.SignInScreen.route)
+        navController.navigate(AppNavigation.SignInScreen.route) {
+            clearStack()
+        }
     }
 }

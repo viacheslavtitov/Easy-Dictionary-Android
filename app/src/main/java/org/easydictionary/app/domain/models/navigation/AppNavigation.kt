@@ -12,6 +12,7 @@ sealed class AppNavigation(val route: String) {
     object SignInScreen : AppNavigation("signin")
     object SignUpScreen : AppNavigation("signup")
     object HomeScreen : AppNavigation("home")
+    object SettingsScreen : AppNavigation("settings")
     object LanguagesScreen : AppNavigation("languages/{langType}") {
         fun createRoute(langType: LangType) = "languages/$langType"
     }

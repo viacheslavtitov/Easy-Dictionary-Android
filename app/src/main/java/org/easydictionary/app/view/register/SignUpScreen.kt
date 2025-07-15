@@ -1,6 +1,5 @@
 package org.easydictionary.app.view.register
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,7 +22,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
-import org.easydictionary.app.domain.models.auth.Auth
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.users.User
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
@@ -31,10 +29,10 @@ import org.easydictionary.app.domain.viewmodels.register.SignUpViewModel
 import org.easydictionary.app.view.FetchDataState
 import org.easydictionary.app.view.buttons.ButtonPrimary
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
+import org.easydictionary.app.view.ext.clearStack
 import org.easydictionary.app.view.inputs.EmailTextField
 import org.easydictionary.app.view.inputs.PasswordTextField
 import org.easydictionary.app.view.inputs.TextFieldPrimary
-import org.easydictionary.app.view.texts.TextFieldLabel
 
 @Composable
 fun SignUpScreen(
@@ -60,7 +58,7 @@ fun SignUpScreen(
         var isPasswordValid by remember { mutableStateOf(false) }
         var isConfirmPasswordValid by remember { mutableStateOf(false) }
         val isPasswordsMatched by remember(isConfirmPasswordValid, isPasswordValid) {
-            derivedStateOf { isConfirmPasswordValid && isPasswordValid && (confirmPassword == password)}
+            derivedStateOf { isConfirmPasswordValid && isPasswordValid && (confirmPassword == password) }
         }
         val isFirstNameValid = remember(firstName) {
             firstName.isNotEmpty()
@@ -68,8 +66,14 @@ fun SignUpScreen(
         val isLastNameValid = remember(lastName) {
             lastName.isNotEmpty()
         }
-        val isFormValid by remember(isEmailValid, isPasswordValid, isPasswordsMatched, isFirstNameValid, isLastNameValid) {
-            derivedStateOf { isEmailValid && isPasswordValid && isPasswordsMatched && isFirstNameValid && isLastNameValid}
+        val isFormValid by remember(
+            isEmailValid,
+            isPasswordValid,
+            isPasswordsMatched,
+            isFirstNameValid,
+            isLastNameValid
+        ) {
+            derivedStateOf { isEmailValid && isPasswordValid && isPasswordsMatched && isFirstNameValid && isLastNameValid }
         }
         val isMismatchError by remember(confirmPassword, password) {
             derivedStateOf { confirmPassword.isNotEmpty() && password != confirmPassword }
@@ -111,17 +115,19 @@ fun SignUpScreen(
             { value -> confirmPassword = value },
             onValidationChanged = { isValid -> isConfirmPasswordValid = isValid },
             label = stringResource(R.string.confirm_password),
-            isRelationValidationError = derivedStateOf{isMismatchError},
+            isRelationValidationError = derivedStateOf { isMismatchError },
             otherErrorMessage = stringResource(R.string.error_passwords_not_match)
         )
         Spacer(modifier = Modifier.height(6.dp))
         ButtonPrimary(title = stringResource(R.string.sign_up), enabled = isFormValid) {
             scope.launch {
-                viewModel.signUp(email, password, firstName, lastName,"email", "").collect {
+                viewModel.signUp(email, password, firstName, lastName, "email", "").collect {
                     when (it) {
                         is FetchDataState.DataState<User> -> {
                             Log.d("SignUpScreen", "User with ${it.data.uuid} registered")
-//                            navController.navigate(AppNavigation.HomeScreen)
+                            navController.navigate(AppNavigation.HomeScreen.route) {
+                                clearStack()
+                            }
                         }
 
                         is FetchDataState.ErrorStateString -> {
