@@ -100,11 +100,11 @@ class LanguagesFragment : Fragment() {
 
     private val onLanguageClickListener = object : OnLanguageClickListener {
         override fun onLanguageClick(language: Language) {
-            val bundle = Bundle().apply {
-                putParcelable(BUNDLE_LANGUAGE_SELECT_KEY, language)
-                putInt(BUNDLE_LANGUAGE_TYPE_KEY, langType)
-            }
-            setFragmentResult(BUNDLE_LANGUAGE_SELECT_RESULT, bundle)
+//            val bundle = Bundle().apply {
+//                putParcelable(BUNDLE_LANGUAGE_SELECT_KEY, language)
+//                putInt(BUNDLE_LANGUAGE_TYPE_KEY, langType)
+//            }
+//            setFragmentResult(BUNDLE_LANGUAGE_SELECT_RESULT, bundle)
             findNavController().popBackStack()
         }
     }

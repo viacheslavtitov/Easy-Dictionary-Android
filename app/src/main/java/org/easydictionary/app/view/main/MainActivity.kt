@@ -2,6 +2,7 @@ package org.easydictionary.app.view.main
 
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,8 +26,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
+import org.easydictionary.app.view.dictionary.DictionariesScreen
+import org.easydictionary.app.view.ext.clearStack
 import org.easydictionary.app.view.home.HomeScreen
 import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
 import org.easydictionary.app.view.register.SignUpScreen
@@ -64,6 +69,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val navController = rememberNavController()
+            LaunchedEffect(Unit) {
+                sharedViewModel.authEvents.collect { event ->
+                    Log.d(TAG, "Got global auth event $event")
+                    when (event) {
+                        GlobalErrorEvent.Unauthorized -> {
+                            navController.navigate(AppNavigation.SignInScreen.route) {
+                                clearStack()
+                            }
+                        }
+                    }
+                }
+            }
             EasyDictionaryTheme {
                 Box(
                     modifier = Modifier
@@ -528,6 +546,10 @@ class MainActivity : ComponentActivity() {
             composable(route = AppNavigation.HomeScreen.route) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 HomeScreen(navController, sharedMainViewModel = sharedViewModel)
+            }
+            composable(route = AppNavigation.DictionariesScreen.route) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                DictionariesScreen(navController, sharedMainViewModel = sharedViewModel)
             }
 
 //            composable(

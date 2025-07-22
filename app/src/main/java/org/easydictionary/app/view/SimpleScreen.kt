@@ -18,7 +18,6 @@ import org.easydictionary.app.view.buttons.ButtonSecondary
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.dialogs.InfoAlertDialog
-import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
 import org.easydictionary.app.view.inputs.EmailTextField
 import org.easydictionary.app.view.inputs.PasswordTextField
 import org.easydictionary.app.view.inputs.TextFieldPrimary

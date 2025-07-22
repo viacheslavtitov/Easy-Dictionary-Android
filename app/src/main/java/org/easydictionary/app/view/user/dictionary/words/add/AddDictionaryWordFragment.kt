@@ -529,9 +529,9 @@ class AddDictionaryWordFragment : AbstractBaseFragment() {
             Log.d(TAG, "word type position was changed $position")
             if (position == VERB_POSITION) {
                 verbTenseContainer.removeAllViews()
-                viewModel.getDictionary()?.tenses?.forEach {
-                    addVerbTense(it)
-                }
+//                viewModel.getDictionary()?.tenses?.forEach {
+//                    addVerbTense(it)
+//                }
                 viewModel.getEditedWord()?.tenses?.forEach {
                     fillVerbTenses(it.tenseId, it.value)
                 }

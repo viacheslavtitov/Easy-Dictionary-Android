@@ -46,15 +46,15 @@ class QuizDetailViewModel @Inject constructor() : ViewModel() {
         quizModel = quiz
         _nameUIState.value = quiz.name
         _durationUIState.value = context.getString(R.string.seconds_value, quiz.timeInSeconds)
-        quiz.dictionary?.let { dict ->
-            if(quiz.reversed) {
-                _dictionaryUIState.value =
-                    "${dict.dictionaryTo.langFull} - ${dict.dictionaryFrom.langFull}"
-            } else {
-                _dictionaryUIState.value =
-                    "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}"
-            }
-        }
+//        quiz.dictionary?.let { dict ->
+//            if(quiz.reversed) {
+//                _dictionaryUIState.value =
+//                    "${dict.dictionaryTo.langFull} - ${dict.dictionaryFrom.langFull}"
+//            } else {
+//                _dictionaryUIState.value =
+//                    "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}"
+//            }
+//        }
     }
 
     fun getQuiz() = quizModel

@@ -9,7 +9,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.easydictionary.app.BuildConfig
+import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
 import org.easydictionary.app.data.repositories.DatabaseRepository
+import org.easydictionary.app.data.repositories.dictionary.DictionaryRepositoryImpl
+import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import org.easydictionary.app.domain.usecases.quize.GetCreateQuizUseCase
@@ -27,6 +30,11 @@ object MainActivityModule {
     @Provides
     fun provideDatabaseRepository(): DatabaseRepository {
         return DatabaseRepository(Firebase.database(BuildConfig.FIREBASE_DATABASE_URL))
+    }
+
+    @Provides
+    fun provideDictionaryRepository(@ApplicationContext context: Context, dictionaryApiService: DictionaryApiService): DictionaryRepository {
+        return DictionaryRepositoryImpl(context.resources, dictionaryApiService)
     }
 
     @Provides
@@ -54,12 +62,14 @@ object MainActivityModule {
     fun provideGetCreateDictionaryUseCase(
         databaseRepository: DatabaseRepository,
         preferenceUtils: PreferenceUtils,
-        getDictionaryLanguagesUseCase: GetDictionaryLanguagesUseCase
+        getDictionaryLanguagesUseCase: GetDictionaryLanguagesUseCase,
+        dictionaryRepository: DictionaryRepository
     ): GetCreateDictionaryUseCase {
         return GetCreateDictionaryUseCase(
             databaseRepository,
             preferenceUtils,
-            getDictionaryLanguagesUseCase
+            getDictionaryLanguagesUseCase,
+            dictionaryRepository
         )
     }
 

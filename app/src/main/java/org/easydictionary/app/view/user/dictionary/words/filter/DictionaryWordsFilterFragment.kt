@@ -95,9 +95,9 @@ class DictionaryWordsFilterFragment : AbstractBaseFragment() {
             Dictionary::class.java
         ) else arguments?.getParcelable(BUNDLE_DICTIONARY) as? Dictionary
         tagsLayout.removeAllViews()
-        dictionary?.tags?.forEach {
-            addTag(it)
-        }
+//        dictionary?.tags?.forEach {
+//            addTag(it)
+//        }
         loadCategories(dictionary)
         typesLayout.removeAllViews()
         context?.resources?.getStringArray(R.array.word_types)?.toList()?.forEachIndexed { index, value ->

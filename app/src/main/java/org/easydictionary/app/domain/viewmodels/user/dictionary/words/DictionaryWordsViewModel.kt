@@ -46,65 +46,65 @@ class DictionaryWordsViewModel @Inject constructor(
         }
         Log.d(TAG, "loadWords()")
         emit(FetchDataState.StartLoadingState)
-        wordsUseCase.getWordsByDictionaryId(dictionaryId)
-            .catch {
-                Log.e(TAG, "catch ${it.message}")
-                emit(FetchDataState.ErrorState(it))
-            }.onCompletion {
-                Log.d(TAG, "onCompletion")
-                if (dictionary == null) {
-                    getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
-                        .catch {
-                            Log.e(TAG, "catch ${it.message}")
-                            emit(FetchDataState.ErrorState(it))
-                        }
-                        .onCompletion {
-                            Log.d(TAG, "onCompletion")
-                            emit(FetchDataState.FinishLoadingState)
-                        }
-                        .collect {
-                            Log.d(
-                                TAG,
-                                "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
-                            )
-                            dictionary = it
-                            titleUIState.tryEmit(
-                                "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
-                            )
-                        }
-                } else {
-                    emit(FetchDataState.FinishLoadingState)
-                    dictionary?.let {
-                        titleUIState.tryEmit(
-                            "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
-                        )
-                    }
-                }
-            }
-            .collect { words ->
-                words.forEach {
-                    for (translation in it.translates) {
-                        if (translation.categoryId != null) {
-                            translation.category =
-                                getCreateTranslationCategoriesUseCase.getDirectCategoryById(
-                                    translation.categoryId
-                                )
-                        }
-                    }
-                    Log.d(
-                        TAG,
-                        "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
-                    )
-                    emit(FetchDataState.DataState(it))
-                }
-            }
+//        wordsUseCase.getWordsByDictionaryId(dictionaryId)
+//            .catch {
+//                Log.e(TAG, "catch ${it.message}")
+//                emit(FetchDataState.ErrorState(it))
+//            }.onCompletion {
+//                Log.d(TAG, "onCompletion")
+//                if (dictionary == null) {
+//                    getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
+//                        .catch {
+//                            Log.e(TAG, "catch ${it.message}")
+//                            emit(FetchDataState.ErrorState(it))
+//                        }
+//                        .onCompletion {
+//                            Log.d(TAG, "onCompletion")
+//                            emit(FetchDataState.FinishLoadingState)
+//                        }
+//                        .collect {
+//                            Log.d(
+//                                TAG,
+//                                "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
+//                            )
+//                            dictionary = it
+//                            titleUIState.tryEmit(
+//                                "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
+//                            )
+//                        }
+//                } else {
+//                    emit(FetchDataState.FinishLoadingState)
+//                    dictionary?.let {
+//                        titleUIState.tryEmit(
+//                            "${it.dictionaryFrom.langFull} - ${it.dictionaryTo.langFull}"
+//                        )
+//                    }
+//                }
+//            }
+//            .collect { words ->
+//                words.forEach {
+//                    for (translation in it.translates) {
+//                        if (translation.categoryId != null) {
+//                            translation.category =
+//                                getCreateTranslationCategoriesUseCase.getDirectCategoryById(
+//                                    translation.categoryId
+//                                )
+//                        }
+//                    }
+//                    Log.d(
+//                        TAG,
+//                        "collect word ${it.original} | translates ${it.translates.size} | tags ${it.tags.size}"
+//                    )
+//                    emit(FetchDataState.DataState(it))
+//                }
+//            }
     }
 
     fun deleteWords(context: Context?, words: List<Word>?) = flow<FetchDataState<Nothing>> {
         if (context == null || words.isNullOrEmpty()) {
             return@flow
         }
-        val dictionaryId = dictionary?._id ?: return@flow
+        val dictionaryId = dictionary?.id.toString() ?: return@flow
         Log.d(TAG, "deleteWords(${words.size})")
         emit(FetchDataState.StartLoadingState)
         val result = wordsUseCase.deleteWords(dictionaryId, words)

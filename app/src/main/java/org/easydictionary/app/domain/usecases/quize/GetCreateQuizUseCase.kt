@@ -43,12 +43,12 @@ class GetCreateQuizUseCase @Inject constructor(
                 null,
                 null
             )
-        val dictionaryId = quiz.dictionary?._id ?: return Triple(false, null, null)
+        val dictionaryId = quiz.dictionary?.id ?: return Triple(false, null, null)
         return databaseRepository.createQuiz(
             userId, QuizTable(
                 _id = null,
                 userId = userId,
-                dictionaryId = dictionaryId,
+                dictionaryId = dictionaryId.toString(),
                 name = quiz.name,
                 reversed = quiz.reversed,
                 hidePhonetic = quiz.hidePhonetic,
@@ -63,12 +63,12 @@ class GetCreateQuizUseCase @Inject constructor(
     suspend fun updateQuiz(quiz: Quiz): Boolean {
         val userId =
             preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return false
-        val dictionaryId = quiz.dictionary?._id ?: return false
+        val dictionaryId = quiz.dictionary?.id ?: return false
         return databaseRepository.updateQuiz(
             userId, QuizTable(
                 _id = quiz._id,
                 userId = userId,
-                dictionaryId = dictionaryId,
+                dictionaryId = dictionaryId.toString(),
                 name = quiz.name,
                 reversed = quiz.reversed,
                 hidePhonetic = quiz.hidePhonetic,
@@ -161,15 +161,13 @@ class GetCreateQuizUseCase @Inject constructor(
                         val date = Date(it.unixDateTimeStamp)
                         sdf.format(date)
                     }
-                    val langPair =
-                        "${quiz.dictionary?.dictionaryFrom?.langFull} - ${quiz.dictionary?.dictionaryTo?.langFull}"
                     return@map QuizResult(
                         _id = it._id,
                         quizId = it.quizId,
                         wordsCount = it.wordsCount,
                         rightAnswers = it.rightAnswers,
                         dateTime = dateTime,
-                        langPair = langPair,
+                        langPair = "langPair",
                         quizName = quiz.name
                     )
                 } ?: arrayListOf()

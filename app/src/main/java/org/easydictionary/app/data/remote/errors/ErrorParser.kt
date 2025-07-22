@@ -1,6 +1,7 @@
 package org.easydictionary.app.data.remote.errors
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import okhttp3.ResponseBody
 
 object ErrorParser {
@@ -21,6 +22,8 @@ object ErrorParser {
                 val simple = gson.fromJson(json, SimpleErrorResponse::class.java)
                 simple.message ?: "Unknown error"
             }
+        } catch (e: JsonSyntaxException) {
+            "Invalid JSON in errorBody: ${e.message}"
         } catch (e: Exception) {
             "Failed to parse error: ${e.message}"
         }

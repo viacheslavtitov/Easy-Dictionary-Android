@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.domain.usecases.users.GetUpdateUsersUseCase
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import javax.inject.Inject
@@ -15,7 +17,8 @@ import javax.inject.Inject
 class SharedMainViewModel @Inject constructor(
     private val getUpdateUsersUseCase: GetUpdateUsersUseCase,
     private val preferenceUtils: PreferenceUtils,
-    private val uiStateHandle: SavedStateHandle
+    private val uiStateHandle: SavedStateHandle,
+    val authEvents: MutableSharedFlow<GlobalErrorEvent>
 ) : ViewModel() {
 
     companion object {

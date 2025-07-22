@@ -12,7 +12,11 @@ suspend fun <T> safeApiCall(
         ApiResult.Success(result)
     } catch (e: HttpException) {
         val errorMsg = e.response()?.errorBody()?.string()
-        ApiResult.ApiError(ErrorParser.parse(errorMsg), e.code())
+        if(e.code() != 404) {
+            ApiResult.ApiError(ErrorParser.parse(errorMsg), e.code())
+        } else {
+            ApiResult.ApiError(e.message(), e.code())
+        }
     } catch (e: IOException) {
         ApiResult.NetworkError(e)
     } catch (e: Exception) {

@@ -106,7 +106,7 @@ class AddQuizFragment : AbstractBaseFragment() {
             showSecondsPickerDialog()
         }
         view.findViewById<View>(R.id.add_words).setOnClickListener {
-            if (selectedDictionary != null && selectedDictionary!!._id != null) {
+            if (selectedDictionary != null && selectedDictionary!!.id.toString() != null) {
 //                sharedViewModel.navigateTo(
 //                    WordsMultiChooseScreen(
 //                        selectedDictionary!!._id!!,
@@ -336,12 +336,12 @@ class AddQuizFragment : AbstractBaseFragment() {
         selectedDictionary?.let { dict ->
             val reversed = reverseDictionary?.isChecked ?: false
             if (reversed) {
-                val text = "${dict.dictionaryTo.langFull} - ${dict.dictionaryFrom.langFull}"
-                dictionaryNameTextView?.text = text
+//                val text = "${dict.dictionaryTo.langFull} - ${dict.dictionaryFrom.langFull}"
+//                dictionaryNameTextView?.text = text
             } else {
-                val text =
-                    if (dict.dialect?.isNullOrEmpty() == true) "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}" else "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull} (${dict.dialect})"
-                dictionaryNameTextView?.text = text
+//                val text =
+//                    if (dict.dialect?.isNullOrEmpty() == true) "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull}" else "${dict.dictionaryFrom.langFull} - ${dict.dictionaryTo.langFull} (${dict.dialect})"
+//                dictionaryNameTextView?.text = text
             }
         }
     }

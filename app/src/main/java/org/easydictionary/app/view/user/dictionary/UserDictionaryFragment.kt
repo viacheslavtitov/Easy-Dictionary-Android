@@ -157,7 +157,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
 
     private fun refreshDictionaries() {
         lifecycleScope.launch {
-            viewModel.loadDictionaries(context).collect {
+            viewModel.loadDictionaries().collect {
                 when (it) {
                     is FetchDataState.StartLoadingState -> {
                         dictionariesAdapter?.clearData()
@@ -178,7 +178,7 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                     }
 
                     is FetchDataState.DataState -> {
-                        dictionariesAdapter?.add(it.data)
+//                        dictionariesAdapter?.add(it.data)
                     }
 
                     is FetchDataState.ErrorStateString -> {

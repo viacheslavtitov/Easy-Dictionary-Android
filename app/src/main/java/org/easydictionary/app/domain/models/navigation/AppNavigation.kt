@@ -17,6 +17,7 @@ sealed class AppNavigation(val route: String) {
         fun createRoute(langType: LangType) = "languages/$langType"
     }
 
+    object DictionariesScreen : AppNavigation("dictionary")
     object AddUserDictionaryScreen : AppNavigation("dictionary/add")
     object EditDictionaryScreen : AppNavigation("dictionary/edit/{dictionary}") {
         fun createRoute(dictionary: Dictionary) = "dictionary/edit/$dictionary"

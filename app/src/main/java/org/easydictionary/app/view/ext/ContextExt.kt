@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.ColorRes
+import androidx.compose.ui.unit.Density
 import androidx.core.content.ContextCompat
 
 fun Context.getColorInt(@ColorRes colorResId: Int) = ContextCompat.getColor(this, colorResId)
@@ -18,3 +19,6 @@ fun Context.hideKeyboard(view: View?) {
         imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }
+
+fun Context.getDensity(): Density =
+    Density(this.resources.displayMetrics.density)

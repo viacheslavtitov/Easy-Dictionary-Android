@@ -90,7 +90,7 @@ class AddQuizViewModel @Inject constructor(
             emit(FetchDataState.DataState(false))
             return@flow
         }
-        if (dictionary?._id == null) {
+        if (dictionary?.id == null) {
             emit(FetchDataState.ErrorStateString(context.getString(R.string.error_empty_dictionary)))
             emit(FetchDataState.DataState(false))
             return@flow

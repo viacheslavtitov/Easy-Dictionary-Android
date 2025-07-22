@@ -122,15 +122,15 @@ class AddWordTagsFragment : AbstractBaseFragment() {
             }
         }
         wordTextView.text = word?.original
-        if (!dictionary?.tags.isNullOrEmpty()) {
-            bubbleLayout.removeAllViews()
-        }
-        dictionary?.let {
-            for (tag in it.tags) {
-                val select = word?.tags?.find { it._id == tag._id } != null
-                addTag(tag, select)
-            }
-        }
+//        if (!dictionary?.tags.isNullOrEmpty()) {
+//            bubbleLayout.removeAllViews()
+//        }
+//        dictionary?.let {
+//            for (tag in it.tags) {
+//                val select = word?.tags?.find { it._id == tag._id } != null
+//                addTag(tag, select)
+//            }
+//        }
     }
 
     private fun addTag(tag: WordTag, selected: Boolean) {

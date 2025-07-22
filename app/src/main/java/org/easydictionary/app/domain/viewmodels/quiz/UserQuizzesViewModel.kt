@@ -45,7 +45,7 @@ class UserQuizzesViewModel @Inject constructor(
                 val quiz = pair.first
                 val wordIds = pair.second
                 wordIds?.forEach { wordId ->
-                    quiz.dictionary?._id?.let { dictionaryId ->
+                    quiz.dictionary?.id.toString().let { dictionaryId ->
                         wordsUseCase.getWordById(dictionaryId, wordId)
                             .catch {
                                 Log.d(TAG, "catch ${it.message}")

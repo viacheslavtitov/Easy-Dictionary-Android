@@ -7,8 +7,9 @@ import okhttp3.Response
 import okhttp3.Route
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
+import javax.inject.Inject
 
-class TokenAuthenticator(
+class TokenAuthenticator @Inject constructor(
     private val tokenRefresher: suspend () -> String?,
     private val preferenceUtils: PreferenceUtils
 ) : Authenticator {

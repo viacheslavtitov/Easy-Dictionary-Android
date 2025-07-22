@@ -42,10 +42,10 @@ class UserQuizzesAdapter(
         val quiz = filteredData[position]
         val context = viewHolder.itemView.context
         viewHolder.nameTextView.text = quiz.name
-        quiz.dictionary?.let { dictionary ->
-            viewHolder.langsTextView.text =
-                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull} (${quiz.quizWords.size})"
-        }
+//        quiz.dictionary?.let { dictionary ->
+//            viewHolder.langsTextView.text =
+//                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull} (${quiz.quizWords.size})"
+//        }
         viewHolder.swipePosition = position
         val selected = selectedQuizzes.firstOrNull { it._id == quiz._id } != null
         viewHolder.itemView.setBackgroundColor(

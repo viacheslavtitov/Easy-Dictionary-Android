@@ -120,14 +120,14 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                 }
                 launch {
                     viewModel.languageFromSavedUIState.collect { language ->
-                        langFromBtn.text =
-                            language.value.ifEmpty { getString(R.string.select_language_from) }
+//                        langFromBtn.text =
+//                            language.value.ifEmpty { getString(R.string.select_language_from) }
                     }
                 }
                 launch {
                     viewModel.languageToSavedUIState.collect { language ->
-                        langToBtn.text =
-                            language.value.ifEmpty { getString(R.string.select_language_to) }
+//                        langToBtn.text =
+//                            language.value.ifEmpty { getString(R.string.select_language_to) }
                     }
                 }
                 launch {
@@ -154,7 +154,7 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
             BUNDLE_DICTIONARY,
             Dictionary::class.java
         ) else arguments?.getParcelable(BUNDLE_DICTIONARY) as? Dictionary
-        viewModel.setDictionary(context, dictionary)
+//        viewModel.setDictionary(context, dictionary)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -170,16 +170,16 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
                     ?: LangType.FROM
             when (languageType) {
                 LangType.FROM -> {
-                    langFromBtn.text = language?.value
-                    viewModel.saveLangFrom(language)
+//                    langFromBtn.text = language?.value
+//                    viewModel.saveLangFrom(language)
                 }
 
                 LangType.TO -> {
-                    langToBtn.text = language?.value
-                    viewModel.saveLanguageTo(language)
+//                    langToBtn.text = language?.value
+//                    viewModel.saveLanguageTo(language)
                 }
             }
-            viewModel.saveDialect(textInputEditTextDialect.text?.toString())
+//            viewModel.saveDialect(textInputEditTextDialect.text?.toString())
         }
     }
 
@@ -220,8 +220,8 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
 
     override fun onStop() {
         val dialect = textInputEditTextDialect.text?.toString()
-        viewModel.saveDialect(dialect)
-        viewModel.saveVerbTenses(verbTensesAdapter?.getData() ?: emptyList())
+//        viewModel.saveDialect(dialect)
+//        viewModel.saveVerbTenses(verbTensesAdapter?.getData() ?: emptyList())
         super.onStop()
     }
 

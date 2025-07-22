@@ -66,7 +66,7 @@ class DictionaryChooseFragment : AbstractBaseFragment() {
 
     private fun refreshDictionaries() {
         lifecycleScope.launch {
-            viewModel.loadDictionaries(context).collect {
+            viewModel.loadDictionaries().collect {
                 when (it) {
                     is FetchDataState.StartLoadingState -> {
                         dictionariesAdapter?.clearData()
@@ -85,7 +85,7 @@ class DictionaryChooseFragment : AbstractBaseFragment() {
                     }
 
                     is FetchDataState.DataState -> {
-                        dictionariesAdapter?.add(it.data)
+//                        dictionariesAdapter?.add(it.data)
                     }
 
                     is FetchDataState.ErrorStateString -> {
@@ -102,7 +102,7 @@ class DictionaryChooseFragment : AbstractBaseFragment() {
                 dictionariesRecyclerView.getChildAdapterPosition(childView)
             )?.let { dictionary ->
                 val bundle = Bundle().apply {
-                    putParcelable(BUNDLE_DICTIONARY_KEY, dictionary)
+//                    putParcelable(BUNDLE_DICTIONARY_KEY, dictionary)
                 }
                 setFragmentResult(BUNDLE_DICTIONARY_RESULT, bundle)
                 findNavController().popBackStack()

@@ -29,7 +29,8 @@ class GetDictionaryLanguagesUseCase @Inject constructor() {
                 .use { it.readText() }
             val listCountryType = object : TypeToken<List<Language>>() {}.type
             val languages: List<Language> = Gson().fromJson(jsonString, listCountryType)
-            return languages.sortedBy { it.value }
+//            return languages.sortedBy { it.value }
+            return languages
         } catch (ex: IOException) {
             //skip
         }
@@ -37,11 +38,13 @@ class GetDictionaryLanguagesUseCase @Inject constructor() {
     }
 
     suspend fun getLanguages(context: Context, query: String): List<Language> {
-        return getLanguages(context).filter { it.value.contains(query, true) }
+//        return getLanguages(context).filter { it.value.contains(query, true) }
+        return getLanguages(context)
     }
 
     suspend fun findLanguageByKey(context: Context, langKey: String): Language? {
-        return getLanguages(context).find { it.key == langKey }
+//        return getLanguages(context).find { it.key == langKey }
+        return getLanguages(context).find { it.id == 1 }
     }
 
 }

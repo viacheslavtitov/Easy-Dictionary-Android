@@ -18,14 +18,14 @@ class QuizDetailTabsAdapter(fragment: Fragment, private val quiz: Quiz): Fragmen
             0 -> {
                 QuizDetailFragment().also {
                     it.arguments = Bundle().apply {
-                        putParcelable(QuizDetailFragment.BUNDLE_QUIZ, quiz)
+//                        putParcelable(QuizDetailFragment.BUNDLE_QUIZ, quiz)
                     }
                 }
             }
             else -> {
                 QuizHistoryFragment().also {
                     it.arguments = Bundle().apply {
-                        putParcelable(QuizHistoryFragment.BUNDLE_QUIZ, quiz)
+//                        putParcelable(QuizHistoryFragment.BUNDLE_QUIZ, quiz)
                     }
                 }
             }

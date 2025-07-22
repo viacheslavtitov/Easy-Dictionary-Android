@@ -47,32 +47,32 @@ class UserDictionaryAdapter(
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val dictionary = data[position]
         val context = viewHolder.itemView.context
-        if (!dictionary.dialect.isNullOrEmpty()) {
-            viewHolder.nameTextView.text =
-                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}\n${dictionary.dialect}"
-        } else {
-            viewHolder.nameTextView.text =
-                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}"
-        }
+//        if (!dictionary.dialect.isNullOrEmpty()) {
+//            viewHolder.nameTextView.text =
+//                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}\n${dictionary.dialect}"
+//        } else {
+//            viewHolder.nameTextView.text =
+//                "${dictionary.dictionaryFrom.langFull} - ${dictionary.dictionaryTo.langFull}"
+//        }
         viewHolder.swipePosition = position
-        Glide
-            .with(viewHolder.itemView.context)
-            .load(dictionary.dictionaryFrom.flag?.png)
-            .centerCrop()
-            .placeholder(R.drawable.ic_flag_neutral_default)
-            .into(viewHolder.flagLangFromImage)
-        Glide
-            .with(viewHolder.itemView.context)
-            .load(dictionary.dictionaryTo.flag?.png)
-            .centerCrop()
-            .placeholder(R.drawable.ic_flag_neutral_default)
-            .into(viewHolder.flagLangToImage)
-        val selected = selectedDictionaries.firstOrNull { it._id == dictionary._id } != null
-        viewHolder.rootView.setBackgroundColor(
-            if (selected) context.getColorInt(R.color.gray_300) else context.getColorInt(
-                R.color.gray_200
-            )
-        )
+//        Glide
+//            .with(viewHolder.itemView.context)
+//            .load(dictionary.dictionaryFrom.flag?.png)
+//            .centerCrop()
+//            .placeholder(R.drawable.ic_flag_neutral_default)
+//            .into(viewHolder.flagLangFromImage)
+//        Glide
+//            .with(viewHolder.itemView.context)
+//            .load(dictionary.dictionaryTo.flag?.png)
+//            .centerCrop()
+//            .placeholder(R.drawable.ic_flag_neutral_default)
+//            .into(viewHolder.flagLangToImage)
+//        val selected = selectedDictionaries.firstOrNull { it._id == dictionary._id } != null
+//        viewHolder.rootView.setBackgroundColor(
+//            if (selected) context.getColorInt(R.color.gray_300) else context.getColorInt(
+//                R.color.gray_200
+//            )
+//        )
     }
 
     override fun getItemCount() = filteredData.size
@@ -108,21 +108,21 @@ class UserDictionaryAdapter(
     }
 
     fun selectDictionary(dictionary: Dictionary) {
-        val position = filteredData.indexOfFirst { it._id == dictionary._id }
-        if (selectedDictionaries.firstOrNull { it._id == dictionary._id } == null) {
-            selectedDictionaries.add(dictionary)
-            if (position > -1) {
-                this.notifyItemChanged(position)
-            }
-        } else {
-            val selectedPosition = selectedDictionaries.indexOfFirst { it._id == dictionary._id }
-            if (selectedPosition > -1) {
-                selectedDictionaries.removeAt(selectedPosition)
-            }
-            if (position > -1) {
-                this.notifyItemChanged(position)
-            }
-        }
+//        val position = filteredData.indexOfFirst { it._id == dictionary._id }
+//        if (selectedDictionaries.firstOrNull { it._id == dictionary._id } == null) {
+//            selectedDictionaries.add(dictionary)
+//            if (position > -1) {
+//                this.notifyItemChanged(position)
+//            }
+//        } else {
+//            val selectedPosition = selectedDictionaries.indexOfFirst { it._id == dictionary._id }
+//            if (selectedPosition > -1) {
+//                selectedDictionaries.removeAt(selectedPosition)
+//            }
+//            if (position > -1) {
+//                this.notifyItemChanged(position)
+//            }
+//        }
     }
 
     fun getSelectedDictionariesCount() = selectedDictionaries.size
@@ -156,10 +156,11 @@ class UserDictionaryAdapter(
     private val filter = object : Filter() {
         override fun performFiltering(query: CharSequence?): FilterResults {
             val filtered = data.filter {
-                it.dictionaryFrom.langFull?.contains(
-                    query ?: "",
-                    true
-                ) ?: false || it.dictionaryTo.langFull?.contains(query ?: "", true) ?: false
+                it.id == 2
+//                it.dictionaryFrom.langFull?.contains(
+//                    query ?: "",
+//                    true
+//                ) ?: false || it.dictionaryTo.langFull?.contains(query ?: "", true) ?: false
             }
             return FilterResults().apply {
                 count = filtered.size

@@ -31,10 +31,10 @@ class AddWordTagsViewModel @Inject constructor(
                 emit(FetchDataState.ErrorStateString(context.getString(R.string.error_load_data)))
                 return@flow
             }
-            Log.d(
-                TAG,
-                "loadData(${word?.original}, ${dictionary.dictionaryFrom} - ${dictionary.dictionaryTo})"
-            )
+//            Log.d(
+//                TAG,
+//                "loadData(${word?.original}, ${dictionary.dictionaryFrom} - ${dictionary.dictionaryTo})"
+//            )
             this@AddWordTagsViewModel.word = word
             this@AddWordTagsViewModel.dictionary = dictionary
         }
@@ -43,10 +43,10 @@ class AddWordTagsViewModel @Inject constructor(
         if (context == null) return@flow
         if (dictionary == null) return@flow
         if (tagName.isNullOrEmpty()) return@flow
-        if (dictionary?.tags?.find { it.tag == tagName } != null) {
-            emit(FetchDataState.ErrorStateString(context.getString(R.string.error_tag_exist)))
-            return@flow
-        }
+//        if (dictionary?.tags?.find { it.tag == tagName } != null) {
+//            emit(FetchDataState.ErrorStateString(context.getString(R.string.error_tag_exist)))
+//            return@flow
+//        }
         Log.d(TAG, "addTag($tagName)")
         emit(FetchDataState.StartLoadingState)
         val createdTagResult = dictionaryUseCase.createDictionaryTag(dictionary!!, tagName)
@@ -57,7 +57,7 @@ class AddWordTagsViewModel @Inject constructor(
             emit(FetchDataState.ErrorStateString(error))
         } else {
             val tag = WordTag(_id = createdTagResult.second, userUUID = "", tag = tagName)
-            dictionary?.tags?.add(tag)
+//            dictionary?.tags?.add(tag)
             emit(FetchDataState.DataState(tag))
         }
         emit(FetchDataState.FinishLoadingState)

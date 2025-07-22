@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -69,51 +70,51 @@ class AddDictionaryWordViewModel @Inject constructor(
     private var notSavingTranslations = mutableListOf<TranslationVariant>()
     private var tempDeletedTranslations = mutableListOf<TranslationVariant>()
 
-    fun loadData(context: Context?, dictionaryId: String?, word: Word?) =
-        flow<FetchDataState<List<String>>> {
-            if (context == null) {
-                return@flow
-            }
-            if (dictionaryId.isNullOrEmpty()) {
-                emit(FetchDataState.ErrorStateString(context.getString(R.string.error_load_data)))
-                return@flow
-            }
-            Log.d(TAG, "loadData($dictionaryId, ${word?.original})")
-            editWord = word
-            emit(FetchDataState.StartLoadingState)
-            getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
-                .catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    emit(FetchDataState.ErrorState(it))
-                }
-                .onCompletion {
-                    Log.d(TAG, "onCompletion")
-                    emit(FetchDataState.FinishLoadingState)
-                }
-                .map {
-                    Log.d(
-                        TAG,
-                        "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
-                    )
-                    dictionary = it
-                    return@map loadPhonetic(context, dictionary)
-                }
-                .collect {
-                    emit(it.first())
-                }
-        }
+    fun loadData(context: Context?, dictionaryId: String?, word: Word?) = emptyFlow<FetchDataState<List<String>>>()
+//        flow<FetchDataState<List<String>>> {
+//            if (context == null) {
+//                return@flow
+//            }
+//            if (dictionaryId.isNullOrEmpty()) {
+//                emit(FetchDataState.ErrorStateString(context.getString(R.string.error_load_data)))
+//                return@flow
+//            }
+//            Log.d(TAG, "loadData($dictionaryId, ${word?.original})")
+//            editWord = word
+//            emit(FetchDataState.StartLoadingState)
+//            getCreateDictionaryUseCase.getDictionaryById(context, dictionaryId)
+//                .catch {
+//                    Log.d(TAG, "catch ${it.message}")
+//                    emit(FetchDataState.ErrorState(it))
+//                }
+//                .onCompletion {
+//                    Log.d(TAG, "onCompletion")
+//                    emit(FetchDataState.FinishLoadingState)
+//                }
+//                .map {
+//                    Log.d(
+//                        TAG,
+//                        "collect dictionary ${it.dictionaryFrom.lang} - ${it.dictionaryTo.lang}"
+//                    )
+//                    dictionary = it
+//                    return@map loadPhonetic(context, dictionary)
+//                }
+//                .collect {
+//                    emit(it.first())
+//                }
+//        }
 
-    private fun loadPhonetic(context: Context, dictionary: Dictionary?) =
-        flow<FetchDataState<List<String>>> {
-            if (dictionary != null) {
-                val phonetics =
-                    wordsUseCase.getPhonetics(context, dictionary!!.dictionaryFrom.lang)
-                Log.d(TAG, "found phonetics count ${phonetics.size}")
-                emit(FetchDataState.DataState(phonetics))
-            } else {
-                emit(FetchDataState.DataState(emptyList()))
-            }
-        }
+    private fun loadPhonetic(context: Context, dictionary: Dictionary?) = emptyFlow<FetchDataState<List<String>>>()
+//        flow<FetchDataState<List<String>>> {
+//            if (dictionary != null) {
+//                val phonetics =
+//                    wordsUseCase.getPhonetics(context, dictionary!!.dictionaryFrom.lang)
+//                Log.d(TAG, "found phonetics count ${phonetics.size}")
+//                emit(FetchDataState.DataState(phonetics))
+//            } else {
+//                emit(FetchDataState.DataState(emptyList()))
+//            }
+//        }
 
     fun loadWordData() = flow<FetchDataState<TranslationVariant>> {
         Log.d(TAG, "not saving translations exist ${notSavingTranslations.size}")
@@ -189,12 +190,12 @@ class AddDictionaryWordViewModel @Inject constructor(
     ) = flow<FetchDataState<Boolean>> {
         if (context == null) return@flow
         if (wordName.isNullOrEmpty()) return@flow
-        if (dictionary == null || dictionary?._id.isNullOrEmpty()) return@flow
+        if (dictionary == null || dictionary?.id.toString().isNullOrEmpty()) return@flow
         emit(FetchDataState.StartLoadingState)
         if (isEditMode()) {
             val entity = Word(
                 _id = editWord!!._id!!,
-                dictionaryId = dictionary?._id!!,
+                dictionaryId = dictionary?.id.toString()!!,
                 original = wordName.trim(),
                 type = typePosition,
                 phonetic = phonetic,
@@ -218,7 +219,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                     val resultDeleteTranslations =
                         getCreateTranslationsUseCase.deleteTranslationsFromWord(
                             shouldDeleteTranslationsIds,
-                            dictionary!!._id!!,
+                            dictionary!!.id.toString()!!,
                             editWord!!._id!!
                         )
                     if (!resultDeleteTranslations.first) {
@@ -231,7 +232,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                 for (tr in translations) {
                     if (tr._id?.isNullOrEmpty() == false) continue
                     val translationResult = getCreateTranslationsUseCase.createTranslation(
-                        tr.copyWithNewWordId(editWord!!._id!!), dictionary!!._id!!
+                        tr.copyWithNewWordId(editWord!!._id!!), dictionary!!.id.toString()!!
                     )
                     if (!translationResult.first) {
                         val error =
@@ -245,14 +246,14 @@ class AddDictionaryWordViewModel @Inject constructor(
                 if (tags.isNotEmpty()) {
                     Log.d(TAG, "add tags ${tags.size}")
                     val addTagsResult =
-                        wordsUseCase.addTagsToWord(dictionary!!._id!!, tags, editWord!!._id!!)
+                        wordsUseCase.addTagsToWord(dictionary!!.id.toString()!!, tags, editWord!!._id!!)
                     Log.d(TAG, "tags added result $addTagsResult")
                 }
                 editWord?.tenses?.forEach {
                     Log.d(TAG, "remove verb tense ${it.value}")
                     val result =
                         wordsUseCase.deleteVerbTense(
-                            dictionary!!._id!!,
+                            dictionary!!.id.toString()!!,
                             editWord!!._id!!,
                             it._id ?: ""
                         )
@@ -262,7 +263,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                     Log.d(TAG, "add verb tense ${it.first} ${it.second}")
                     val result =
                         wordsUseCase.addTensesToWord(
-                            dictionary!!._id!!,
+                            dictionary!!.id.toString()!!,
                             editWord!!._id!!,
                             it.first,
                             it.second
@@ -273,7 +274,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                 emit(FetchDataState.DataState(translationUpdatedSuccess))
             }
         } else {
-            val dictionaryId = dictionary?._id!!
+            val dictionaryId = dictionary?.id.toString()!!
             val entity = Word(
                 dictionaryId = dictionaryId,
                 original = wordName.trim(),

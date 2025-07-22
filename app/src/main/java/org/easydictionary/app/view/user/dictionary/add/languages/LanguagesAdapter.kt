@@ -31,13 +31,13 @@ class LanguagesAdapter(private val data: List<Language>, private val clickListen
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val lang = data[position]
-        viewHolder.nameTextView.text = lang.value
-        Glide
-            .with(viewHolder.itemView.context)
-            .load(lang.flags.png)
-            .centerCrop()
-            .placeholder(R.drawable.ic_flag_neutral_default)
-            .into(viewHolder.flagImage)
+//        viewHolder.nameTextView.text = lang.value
+//        Glide
+//            .with(viewHolder.itemView.context)
+//            .load(lang.flags.png)
+//            .centerCrop()
+//            .placeholder(R.drawable.ic_flag_neutral_default)
+//            .into(viewHolder.flagImage)
         viewHolder.itemView.setOnClickListener { clickListener.onLanguageClick(lang) }
     }
 
