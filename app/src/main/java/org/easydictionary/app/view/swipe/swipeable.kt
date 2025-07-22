@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import org.easydictionary.app.view.widget.global.LightColors
 import kotlin.math.roundToInt
 
 enum class DragAnchors {

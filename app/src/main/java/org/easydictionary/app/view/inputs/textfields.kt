@@ -27,13 +27,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.easydictionary.app.R
-import org.easydictionary.app.view.widget.global.LightColors
 import org.easydictionary.app.view.widget.global.TextDimen
 
-@Preview
 @Composable
 fun TextFieldPrimary(
     defaultValue: String,
@@ -87,7 +84,6 @@ fun TextFieldPrimary(
     )
 }
 
-@Preview
 @Composable
 fun EmailTextField(
     defaultValue: String,
@@ -135,7 +131,6 @@ fun EmailTextField(
     )
 }
 
-@Preview
 @Composable
 fun PasswordTextField(
     defaultValue: String,
@@ -170,17 +165,6 @@ fun PasswordTextField(
         isRelationValidationError.value && otherErrorMessage != null -> otherErrorMessage
         else -> null
     }
-    val iconTintColor = if (isFocused) {
-        if (isDark)
-            LightColors.Main
-        else
-            LightColors.Main
-    } else {
-        if (isDark)
-            LightColors.Outlined
-        else
-            LightColors.Outlined
-    }
     OutlinedTextField(
         onValueChange = { newValue ->
             text = newValue
@@ -202,7 +186,7 @@ fun PasswordTextField(
             else
                 Icons.Default.VisibilityOff
             IconButton(onClick = { showPassword = !showPassword }) {
-                Icon(imageVector = image, tint = iconTintColor, contentDescription = "Toggle password visibility")
+                Icon(imageVector = image, contentDescription = "Toggle password visibility")
             }
         },
         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),

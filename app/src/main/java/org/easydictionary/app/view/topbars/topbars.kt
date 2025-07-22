@@ -2,8 +2,10 @@
 
 package org.easydictionary.app.view.topbars
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerState
@@ -12,15 +14,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.easydictionary.app.view.widget.global.Colors
-import org.easydictionary.app.view.widget.global.LightColors
 
 @Composable
 fun TitleTopBar(
@@ -28,7 +29,6 @@ fun TitleTopBar(
 ) {
     TopAppBar(
         title = { TopBarTitle(title = title) },
-        colors = topBarLightColors()
     )
 }
 
@@ -39,7 +39,14 @@ fun DrawerTitleTopBar(
     drawerState: DrawerState
 ) {
     TopAppBar(
-        title = { TopBarTitle(title = title) },
+        title = {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                TopBarTitle(title = title)
+            }
+        },
         navigationIcon = {
             IconButton(onClick = {
                 scope.launch {
@@ -52,27 +59,13 @@ fun DrawerTitleTopBar(
             }) {
                 Icon(Icons.Default.Menu, contentDescription = "Menu")
             }
-        },
-        colors = topBarLightColors()
+        }
     )
 }
 
 @Composable
-private fun TopBarTitle(title: String, modifier: Modifier = Modifier.fillMaxWidth()) {
-    val isDark = isSystemInDarkTheme()
-    val titleColor =
-        if (isDark)
-            LightColors.Text_Main
-        else
-            LightColors.Text_Main
-    Text(modifier = modifier, text = title, fontSize = 18.sp, color = titleColor)
+private fun TopBarTitle(
+    title: String
+) {
+    Text(modifier = Modifier.padding(end = 48.dp), text = title, fontSize = 18.sp)
 }
-
-@Composable
-private fun topBarLightColors(): TopAppBarColors = TopAppBarDefaults.topAppBarColors(
-    containerColor = Colors.White,
-    scrolledContainerColor = Colors.White,
-    navigationIconContentColor = LightColors.Outlined,
-    titleContentColor = LightColors.Outlined,
-    actionIconContentColor = LightColors.Main_Dark
-)

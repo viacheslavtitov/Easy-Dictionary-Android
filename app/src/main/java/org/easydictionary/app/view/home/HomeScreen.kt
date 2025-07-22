@@ -1,8 +1,5 @@
 package org.easydictionary.app.view.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,15 +8,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
@@ -31,9 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -51,7 +47,6 @@ import org.easydictionary.app.view.buttons.ButtonPrimary
 import org.easydictionary.app.view.dictionary.DictionariesScreen
 import org.easydictionary.app.view.dividers.Divider
 import org.easydictionary.app.view.topbars.DrawerTitleTopBar
-import org.easydictionary.app.view.widget.global.LightColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,12 +56,6 @@ fun HomeScreen(
     defaultSelectedRoute: String = AppNavigation.DictionariesScreen.route,
     sharedMainViewModel: SharedMainViewModel
 ) {
-    val isDark = isSystemInDarkTheme()
-    val drawerContainerColor =
-        if (isDark)
-            LightColors.Secondary_Screen_Background
-        else
-            LightColors.Secondary_Screen_Background
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 //    val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -83,14 +72,10 @@ fun HomeScreen(
         gesturesEnabled = true,
         drawerContent = {
             ModalDrawerSheet(
-                drawerContainerColor = drawerContainerColor,
                 drawerTonalElevation = 0.dp
             ) {
                 Text(
-                    text = stringResource(R.string.menu), fontSize = 18.sp, color = if (isDark)
-                        LightColors.Text_Secondary
-                    else
-                        LightColors.Text_Secondary,
+                    text = stringResource(R.string.menu), fontSize = 18.sp,
                     modifier = Modifier.padding(horizontal = 32.dp, vertical = 6.dp)
                 )
                 DrawerItem(
@@ -132,6 +117,19 @@ fun HomeScreen(
         }
     ) {
         Scaffold(
+            floatingActionButton = {
+                when (selectedSection.value) {
+                    AppNavigation.DictionariesScreen.route -> ExtendedFloatingActionButton(
+                        text = { Text(stringResource(R.string.add_dictionary)) },
+                        icon = { Icon(Icons.Filled.Add, contentDescription = "Add") },
+                        onClick = {
+                            scope.launch {
+                                drawerState.close()
+                            }
+                        }
+                    )
+                }
+            },
             topBar = {
                 when (selectedSection.value) {
                     AppNavigation.DictionariesScreen.route -> DrawerTitleTopBar(
@@ -179,33 +177,6 @@ private fun DrawerItem(
     val isSelected by remember {
         derivedStateOf { selectedRoute.value == routeName }
     }
-
-    val isDark = isSystemInDarkTheme()
-    val selectedContainerColor =
-        if (isDark)
-            LightColors.Secondary_Dark
-        else
-            LightColors.Secondary_Dark
-    val selectedIconColor =
-        if (isDark)
-            LightColors.Text_Main
-        else
-            LightColors.Text_Main
-    val unselectedIconColor =
-        if (isDark)
-            LightColors.Outlined
-        else
-            LightColors.Outlined
-    val selectedTextColor =
-        if (isDark)
-            LightColors.Text_Main
-        else
-            LightColors.Text_Main
-    val unselectedTextColor =
-        if (isDark)
-            LightColors.Text_Secondary
-        else
-            LightColors.Text_Secondary
     val titleTextWeight =
         if (isSelected)
             FontWeight.Bold
@@ -229,14 +200,6 @@ private fun DrawerItem(
                     .height(36.dp)
             )
         },
-        colors = NavigationDrawerItemDefaults.colors(
-            selectedContainerColor = selectedContainerColor,
-            unselectedContainerColor = Color.Transparent,
-            selectedIconColor = selectedIconColor,
-            unselectedIconColor = unselectedIconColor,
-            selectedTextColor = selectedTextColor,
-            unselectedTextColor = unselectedTextColor
-        ),
         onClick = {
             onSectionSelected(routeName)
         }

@@ -43,7 +43,7 @@ import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryVi
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.dividers.Divider
 import org.easydictionary.app.view.swipe.SwipeRevealItem
-import org.easydictionary.app.view.widget.global.LightColors
+import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,12 +102,6 @@ fun DictionariesScreen(
             key = { it.id }
         ) { item ->
             DictionaryListItem(item, openItemId, onEdit, onDelete)
-//            DictionaryListItem(DictionaryDetailShort(
-//                id = 10,
-//                wordsCount = 0,
-//                wordTagsCount = 0,
-//                quizCount = 0
-//            ), openItemId)
         }
     }
 }
@@ -120,22 +114,7 @@ private fun DictionaryListItem(
     onEdit: (Int) -> Unit,
     onDelete: (Int) -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
-    val backgroundColor =
-        if (isDark)
-            LightColors.Main_Light
-        else
-            LightColors.Main_Light
-    val titleColor =
-        if (isDark)
-            LightColors.Text_Main
-        else
-            LightColors.Text_Main
-    val descriptionColor =
-        if (isDark)
-            LightColors.Text_Secondary
-        else
-            LightColors.Text_Secondary
+    val backgroundColor = getCurrentColorScheme().primaryContainer
     val dialect = if (dictionary.dialect?.isNotEmpty() == true) " (${dictionary.dialect})" else ""
     val titleText = "${dictionary.langFrom?.name} - ${dictionary.langTo?.name}$dialect"
     SwipeRevealItem(
@@ -153,8 +132,7 @@ private fun DictionaryListItem(
             ) {
                 Text(
                     text = titleText,
-                    fontSize = 18.sp,
-                    color = titleColor
+                    fontSize = 18.sp
                 )
                 Row(
                     modifier = Modifier
@@ -165,18 +143,15 @@ private fun DictionaryListItem(
                 ) {
                     Text(
                         text = stringResource(R.string.words_count, dictionary.wordsCount),
-                        fontSize = 14.sp,
-                        color = descriptionColor,
+                        fontSize = 14.sp
                     )
                     Text(
                         text = stringResource(R.string.quiz_count, dictionary.quizCount),
-                        fontSize = 14.sp,
-                        color = descriptionColor
+                        fontSize = 14.sp
                     )
                     Text(
                         text = stringResource(R.string.tags_count, dictionary.wordTagsCount),
-                        fontSize = 14.sp,
-                        color = descriptionColor
+                        fontSize = 14.sp
                     )
                 }
             }
@@ -198,22 +173,8 @@ private fun MenuDictionaryItem(
     onEdit: (Int) -> Unit,
     onDelete: (Int) -> Unit
 ) {
-    val isDark = isSystemInDarkTheme()
-    val backgroundColor =
-        if (isDark)
-            LightColors.Main_Screen_Background
-        else
-            LightColors.Main_Screen_Background
-    val tintIcon =
-        if (isDark)
-            LightColors.Main_Dark
-        else
-            LightColors.Main_Dark
-    val menuTextColor =
-        if (isDark)
-            LightColors.Text_Secondary
-        else
-            LightColors.Text_Secondary
+    val backgroundColor = getCurrentColorScheme().tertiaryContainer
+    val tintIcon = getCurrentColorScheme().primary
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -240,8 +201,7 @@ private fun MenuDictionaryItem(
             Text(
                 modifier = Modifier.padding(top = 9.dp),
                 text = stringResource(R.string.edit),
-                fontSize = 14.sp,
-                color = menuTextColor
+                fontSize = 14.sp
             )
         }
         Column(
@@ -261,8 +221,7 @@ private fun MenuDictionaryItem(
             Text(
                 modifier = Modifier.padding(top = 9.dp),
                 text = stringResource(R.string.delete),
-                fontSize = 14.sp,
-                color = menuTextColor
+                fontSize = 14.sp
             )
         }
     }

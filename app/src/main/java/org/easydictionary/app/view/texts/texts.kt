@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import org.easydictionary.app.view.widget.global.LightColors
 import org.easydictionary.app.view.widget.global.TextDimen
 
 @Composable
@@ -19,16 +18,10 @@ fun TextFieldLabel(
         .padding(horizontal = 6.dp)
 ) {
     val isDark = isSystemInDarkTheme()
-    val textColor =
-        if (isDark)
-            LightColors.Text_Main
-        else
-            LightColors.Text_Main
     Text(
         text = label,
         modifier = modifier,
         fontSize = TextDimen.TextFieldText,
-        style = MaterialTheme.typography.titleMedium,
-        color = textColor
+        style = MaterialTheme.typography.titleMedium
     )
 }
