@@ -6,7 +6,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.MutableSharedFlow
-import okhttp3.Authenticator
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.easydictionary.app.BuildConfig
@@ -18,6 +17,8 @@ import org.easydictionary.app.data.remote.auth.RefreshInterceptor
 import org.easydictionary.app.data.remote.auth.TokenAuthenticator
 import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
+import org.easydictionary.app.data.remote.language.LanguageApiService
+import org.easydictionary.app.data.remote.language.LanguageStaticApiService
 import org.easydictionary.app.data.remote.provideGsonDateConvertor
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
@@ -52,6 +53,7 @@ object NetworkModule {
             preferenceUtils = preferenceUtils,
             authEvents = authEvents
         )
+
     @Provides
     fun provideRefreshInterceptor(
         preferenceUtils: PreferenceUtils,
@@ -91,13 +93,39 @@ object NetworkModule {
         retrofit.create(DictionaryApiService::class.java)
 
     @Provides
-    fun provideTokenAuthenticator(preferenceUtils: PreferenceUtils, refreshInterceptor: RefreshInterceptor): TokenAuthenticator =
+    fun provideLanguageApiService(retrofit: Retrofit): LanguageApiService =
+        retrofit.create(LanguageApiService::class.java)
+
+    @Provides
+    fun provideLanguageStaticApiService(loggingInterceptor: HttpLoggingInterceptor): LanguageStaticApiService {
+        val client =
+            OkHttpClient.Builder()
+                .addInterceptor(loggingInterceptor)
+                .build()
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BuildConfig.LANGUAGES_BASE_API_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(provideGsonDateConvertor()))
+            .build()
+        return retrofit.create(LanguageStaticApiService::class.java)
+    }
+
+    @Provides
+    fun provideTokenAuthenticator(
+        preferenceUtils: PreferenceUtils,
+        refreshInterceptor: RefreshInterceptor,
+        authEvents: MutableSharedFlow<GlobalErrorEvent>
+    ): TokenAuthenticator =
         TokenAuthenticator(
             tokenRefresher = { doRefreshToken(preferenceUtils, refreshInterceptor) },
-            preferenceUtils
+            preferenceUtils,
+            authEvents
         )
 
-    private suspend fun doRefreshToken(preferenceUtils: PreferenceUtils, refreshInterceptor: RefreshInterceptor): String? {
+    private suspend fun doRefreshToken(
+        preferenceUtils: PreferenceUtils,
+        refreshInterceptor: RefreshInterceptor
+    ): String? {
         val refreshToken = preferenceUtils.getSecureString(REFRESH_ACCESS_TOKEN_KEY) ?: ""
         val client =
             OkHttpClient.Builder()

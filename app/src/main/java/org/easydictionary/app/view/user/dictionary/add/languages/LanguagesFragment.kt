@@ -62,9 +62,9 @@ class LanguagesFragment : Fragment() {
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.languages.drop(1).collect { languages ->
-                        recyclerViewLanguages.adapter = LanguagesAdapter(languages, onLanguageClickListener)
-                    }
+//                    viewModel.languages.drop(1).collect { languages ->
+//                        recyclerViewLanguages.adapter = LanguagesAdapter(languages, onLanguageClickListener)
+//                    }
                 }
             }
         }
@@ -82,17 +82,17 @@ class LanguagesFragment : Fragment() {
         }, callbackMenuClicked = { true }
         )
         langType = arguments?.getInt(BUNDLE_LANGUAGE_TYPE_KEY, 0) ?: 0
-        viewModel.loadLanguages(requireContext())
+//        viewModel.loadLanguages(requireContext())
     }
 
     private val onLanguagesQueryListener = object : SearchView.OnQueryTextListener {
         override fun onQueryTextSubmit(query: String): Boolean {
-            viewModel.queryLanguages(requireContext(), query)
+//            viewModel.queryLanguages(requireContext(), query)
             return true
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            viewModel.queryLanguages(requireContext(), newText)
+//            viewModel.queryLanguages(requireContext(), newText)
             return true
         }
 

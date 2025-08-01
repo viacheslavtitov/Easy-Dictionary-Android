@@ -97,6 +97,8 @@
     <string name="error_update_dictionary">Something was wrong to update dictionary</string>
     <!-- Language -->
     <string name="add_language">Add language</string>
+    <string name="add_your_own_language">Add your own language</string>
+    <string name="or_add_your_own_language">Or add your own language</string>
     <string name="search_hint">English</string>
     <!-- Words -->
     <string name="words">Words</string>

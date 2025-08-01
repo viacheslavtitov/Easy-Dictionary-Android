@@ -1,8 +1,6 @@
 package org.easydictionary.app.view.inputs
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
@@ -38,7 +36,8 @@ fun TextFieldPrimary(
     label: String,
     required: Boolean = false,
     errorMessage: String? = null,
-    signLine: Boolean = true,
+    supportingText: String? = null,
+    singleLine: Boolean = true,
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .padding(6.dp),
@@ -49,6 +48,7 @@ fun TextFieldPrimary(
     }
 
     val errorMessage = when {
+        !required && supportingText?.isNotEmpty() == true -> supportingText
         value.isEmpty() -> null
         required && value.isEmpty() -> errorMessage
         else -> null
@@ -63,7 +63,7 @@ fun TextFieldPrimary(
         textStyle = TextStyle(
             fontSize = TextDimen.TextFieldText
         ),
-        singleLine = signLine,
+        singleLine = singleLine,
         modifier = modifier,
         isError = required && !isValid && value.isNotEmpty(),
         supportingText = {
@@ -142,12 +142,11 @@ fun PasswordTextField(
 ) {
     var showPassword by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val isDark = isSystemInDarkTheme()
     var text by remember { mutableStateOf(defaultValue) }
     var isValid by remember { mutableStateOf(false) }
     LaunchedEffect(text, isRelationValidationError) {
-        val relationValidationValid = if(otherErrorMessage == null) true else if(isRelationValidationError.value) false else true
+        val relationValidationValid =
+            if (otherErrorMessage == null) true else if (isRelationValidationError.value) false else true
         val newValid = text.length >= 8 &&
                 text.any { it.isUpperCase() } &&
                 text.any { it.isLowerCase() } && relationValidationValid

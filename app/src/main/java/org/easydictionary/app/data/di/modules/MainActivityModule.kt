@@ -1,6 +1,8 @@
 package org.easydictionary.app.data.di.modules
 
 import android.content.Context
+import coil.ImageLoader
+import coil.decode.SvgDecoder
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import dagger.Module
@@ -10,11 +12,18 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.easydictionary.app.BuildConfig
 import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
+import org.easydictionary.app.data.remote.language.LanguageApiService
+import org.easydictionary.app.data.remote.language.LanguageStaticApiService
 import org.easydictionary.app.data.repositories.DatabaseRepository
 import org.easydictionary.app.data.repositories.dictionary.DictionaryRepositoryImpl
+import org.easydictionary.app.data.repositories.language.LanguageRepositoryImpl
 import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
+import org.easydictionary.app.domain.repository.language.LanguageRepository
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
+import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
 import org.easydictionary.app.domain.usecases.languages.GetDictionaryLanguagesUseCase
+import org.easydictionary.app.domain.usecases.languages.GetLanguagesStaticUseCase
+import org.easydictionary.app.domain.usecases.languages.GetLanguagesUserUseCase
 import org.easydictionary.app.domain.usecases.quize.GetCreateQuizUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationsUseCase
@@ -33,8 +42,24 @@ object MainActivityModule {
     }
 
     @Provides
-    fun provideDictionaryRepository(@ApplicationContext context: Context, dictionaryApiService: DictionaryApiService): DictionaryRepository {
+    fun provideDictionaryRepository(
+        @ApplicationContext context: Context,
+        dictionaryApiService: DictionaryApiService
+    ): DictionaryRepository {
         return DictionaryRepositoryImpl(context.resources, dictionaryApiService)
+    }
+
+    @Provides
+    fun provideLanguageRepository(
+        @ApplicationContext context: Context,
+        languageStaticApiService: LanguageStaticApiService,
+        languageApiService: LanguageApiService,
+    ): LanguageRepository {
+        return LanguageRepositoryImpl(
+            context.resources,
+            languageStaticApiService,
+            languageApiService
+        )
     }
 
     @Provides
@@ -48,6 +73,21 @@ object MainActivityModule {
     @Provides
     fun provideGetDictionaryLanguagesUseCase(): GetDictionaryLanguagesUseCase {
         return GetDictionaryLanguagesUseCase()
+    }
+
+    @Provides
+    fun provideGetLanguagesStaticUseCase(languageRepository: LanguageRepository): GetLanguagesStaticUseCase {
+        return GetLanguagesStaticUseCase(languageRepository)
+    }
+
+    @Provides
+    fun provideGetLanguagesUserUseCase(languageRepository: LanguageRepository): GetLanguagesUserUseCase {
+        return GetLanguagesUserUseCase(languageRepository)
+    }
+
+    @Provides
+    fun provideAddUserLanguageUseCase(languageRepository: LanguageRepository): AddUserLanguageUseCase {
+        return AddUserLanguageUseCase(languageRepository)
     }
 
     @Provides
@@ -112,6 +152,16 @@ object MainActivityModule {
     @Provides
     fun providePreferenceUtils(@ApplicationContext context: Context): PreferenceUtils {
         return PreferenceUtils(context)
+    }
+
+    @Singleton
+    @Provides
+    fun provideImageLoader(@ApplicationContext context: Context): ImageLoader {
+        return ImageLoader.Builder(context)
+            .components {
+                add(SvgDecoder.Factory())
+            }
+            .build()
     }
 
 }

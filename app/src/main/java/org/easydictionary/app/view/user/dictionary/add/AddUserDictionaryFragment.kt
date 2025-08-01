@@ -112,33 +112,6 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.dialectSavedUIState.collect { value ->
-                        textInputEditTextDialect.setText(value)
-                    }
-                }
-                launch {
-                    viewModel.languageFromSavedUIState.collect { language ->
-//                        langFromBtn.text =
-//                            language.value.ifEmpty { getString(R.string.select_language_from) }
-                    }
-                }
-                launch {
-                    viewModel.languageToSavedUIState.collect { language ->
-//                        langToBtn.text =
-//                            language.value.ifEmpty { getString(R.string.select_language_to) }
-                    }
-                }
-                launch {
-                    viewModel.tensesSavedUIState.collect { tenses ->
-                        if(tenses.isNotEmpty()) verbTensesAdapter?.clear()
-                        tenses.forEach {
-                            verbTensesAdapter?.add(it)
-                        }
-                    }
-                }
-            }
         }
         addMenuProvider(R.menu.menu_add_user_dictionary, { menu, mi -> }, {
             when (it) {
@@ -187,34 +160,34 @@ class AddUserDictionaryFragment : AbstractBaseFragment() {
         lifecycleScope.launch {
             val dialect = textInputEditTextDialect.text?.toString()
             val tenses = verbTensesAdapter?.getData() ?: arrayListOf()
-            viewModel.createDictionary(context, dialect, tenses).collect {
-                when (it) {
-                    is FetchDataState.StartLoadingState -> {
-                        sharedViewModel.loading(true)
-                    }
-
-                    is FetchDataState.FinishLoadingState -> {
-                        sharedViewModel.loading(false)
-                    }
-
-                    is FetchDataState.ErrorState -> {
-                        displayError(
-                            it.exception.message ?: context?.getString(R.string.unknown_error),
-                            rootView
-                        )
-                    }
-
-                    is FetchDataState.DataState -> {
-                        if (it.data) {
-                            findNavController().popBackStack()
-                        }
-                    }
-
-                    is FetchDataState.ErrorStateString -> {
-                        displayError(it.error, rootView)
-                    }
-                }
-            }
+//            viewModel.createDictionary(context, dialect, tenses).collect {
+//                when (it) {
+//                    is FetchDataState.StartLoadingState -> {
+//                        sharedViewModel.loading(true)
+//                    }
+//
+//                    is FetchDataState.FinishLoadingState -> {
+//                        sharedViewModel.loading(false)
+//                    }
+//
+//                    is FetchDataState.ErrorState -> {
+//                        displayError(
+//                            it.exception.message ?: context?.getString(R.string.unknown_error),
+//                            rootView
+//                        )
+//                    }
+//
+//                    is FetchDataState.DataState -> {
+//                        if (it.data) {
+//                            findNavController().popBackStack()
+//                        }
+//                    }
+//
+//                    is FetchDataState.ErrorStateString -> {
+//                        displayError(it.error, rootView)
+//                    }
+//                }
+//            }
         }
     }
 

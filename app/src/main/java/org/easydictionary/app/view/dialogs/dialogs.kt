@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import org.easydictionary.app.R
+import org.easydictionary.app.view.inputs.TextFieldPrimary
 import org.easydictionary.app.view.widget.global.TextDimen
 
 @Composable
@@ -129,5 +130,74 @@ fun ButtonsAlertDialog(
         cancelButtonText = cancelButtonText,
         okButtonText = okButtonText,
         icon = icon
+    )
+}
+
+@Composable
+fun InputAlertDialog(
+    onDismissRequest: (() -> Unit)? = null,
+    onConfirmation: (() -> Unit)? = null,
+    title: String,
+    defaultValue: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    singleLine: Boolean = true,
+    okButtonText: String = stringResource(R.string.ok),
+    cancelButtonText: String? = stringResource(R.string.cancel),
+    icon: ImageVector? = null,
+) {
+    AlertDialog(
+        icon = icon?.let {
+            {
+                Icon(
+                    imageVector = it,
+                    contentDescription = null,
+                )
+            }
+        },
+        title = {
+            Text(
+                text = title,
+                fontSize = TextDimen.TextFieldText,
+                style = MaterialTheme.typography.titleMedium
+            )
+        },
+        text = {
+            TextFieldPrimary(
+                defaultValue = defaultValue,
+                onValueChange = onValueChange,
+                label = label,
+                singleLine = singleLine
+            )
+        },
+        onDismissRequest = {
+            onDismissRequest?.invoke()
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirmation?.invoke()
+                }
+            ) {
+                Text(
+                    text = okButtonText.uppercase(),
+                    fontSize = TextDimen.TextFieldLabel
+                )
+            }
+        },
+        dismissButton = {
+            cancelButtonText?.let {
+                TextButton(
+                    onClick = {
+                        onDismissRequest?.invoke()
+                    }
+                ) {
+                    Text(
+                        text = cancelButtonText.uppercase(),
+                        fontSize = TextDimen.TextFieldLabel
+                    )
+                }
+            }
+        }
     )
 }

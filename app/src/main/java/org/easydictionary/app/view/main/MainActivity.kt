@@ -8,11 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,21 +18,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import coil.ImageLoader
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
+import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
+import org.easydictionary.app.view.dictionary.AddOrEditDictionaryScreen
 import org.easydictionary.app.view.dictionary.DictionariesScreen
 import org.easydictionary.app.view.ext.clearStack
 import org.easydictionary.app.view.home.HomeScreen
 import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
+import org.easydictionary.app.view.language.AddNewLanguageDialogScreen
+import org.easydictionary.app.view.language.BUNDLE_NEW_LANGUAGE
+import org.easydictionary.app.view.language.SelectLanguageScreen
 import org.easydictionary.app.view.register.SignUpScreen
 import org.easydictionary.app.view.signin.SignInScreen
 import org.easydictionary.app.view.splash.SplashScreen
 import org.easydictionary.app.view.widget.global.EasyDictionaryTheme
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -46,6 +53,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private val sharedViewModel: SharedMainViewModel by viewModels()
+
+    @Inject
+    lateinit var imageLoader: ImageLoader
 
 //    private lateinit var toolbar: MaterialToolbar
 //    private lateinit var navDrawerLayout: DrawerLayout
@@ -75,6 +85,8 @@ class MainActivity : ComponentActivity() {
                     Log.d(TAG, "Got global auth event $event")
                     when (event) {
                         GlobalErrorEvent.Unauthorized -> {
+                            navController.currentBackStackEntryFlow
+                                .first()
                             navController.navigate(AppNavigation.SignInScreen.route) {
                                 clearStack()
                             }
@@ -88,7 +100,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
 //                        .padding(WindowInsets.systemBars.asPaddingValues())
                 ) {
-                    AppNavHost()
+                    AppNavHost(navController)
                     val loadingState by sharedViewModel.loadingUIState
                     if (loadingState) {
                         Box(
@@ -526,7 +538,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun AppNavHost(navController: NavHostController = rememberNavController()) {
+    fun AppNavHost(navController: NavHostController) {
         NavHost(
             navController = navController,
             startDestination = AppNavigation.SplashScreen.route
@@ -550,6 +562,50 @@ class MainActivity : ComponentActivity() {
             composable(route = AppNavigation.DictionariesScreen.route) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 DictionariesScreen(navController, sharedMainViewModel = sharedViewModel)
+            }
+            composable(route = AppNavigation.AddUserDictionaryScreen.route) { backStackEntry ->
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                AddOrEditDictionaryScreen(
+                    backStackEntry,
+                    navController,
+                    sharedMainViewModel = sharedViewModel
+                )
+            }
+            composable(route = AppNavigation.EditDictionaryScreen.route) { backStackEntry ->
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                AddOrEditDictionaryScreen(
+                    backStackEntry,
+                    navController,
+                    sharedMainViewModel = sharedViewModel
+                )
+            }
+            composable(
+                AppNavigation.LanguagesScreen.route,
+                arguments = listOf(navArgument("langType") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val langType = backStackEntry.arguments?.getInt("langType")
+                LangType.fromInt(langType)?.let {
+                    SelectLanguageScreen(
+                        backStackEntry,
+                        navController,
+                        sharedMainViewModel = sharedViewModel,
+                        langType = it,
+                        imageLoader = imageLoader
+                    )
+                }
+            }
+            dialog(AppNavigation.AddNewLanguageScreen.route) { backStackEntry ->
+                AddNewLanguageDialogScreen(
+                    onDismiss = {
+                        navController.popBackStack()
+                    },
+                    onConfirm = { value ->
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(BUNDLE_NEW_LANGUAGE, value)
+                        navController.popBackStack()
+                    }
+                )
             }
 
 //            composable(

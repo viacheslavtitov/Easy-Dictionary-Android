@@ -9,6 +9,7 @@ plugins {
     id("kotlin-parcelize")
     id 'com.google.firebase.crashlytics'
     id 'org.jetbrains.kotlin.plugin.compose' version '2.2.0'
+    id 'kotlinx-serialization'
 }
 
 def getCurrentGitBranch() {
@@ -53,6 +54,7 @@ android {
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
             buildConfigField "String", "SECURE_KEY_ALIAS", "\"debug_secure_key_alias\""
             buildConfigField "String", "BASE_API_URL", "\"http://dev.easydictionary.org/api/\""
+            buildConfigField "String", "LANGUAGES_BASE_API_URL", "\"https://languages.dictionaryeasy.workers.dev/\""
         }
         staging {
             signingConfig signingConfigs.qa
@@ -97,6 +99,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2")
     //dependency injections
     implementation("com.google.dagger:hilt-android:2.56.2")
     kapt("com.google.dagger:hilt-android-compiler:2.56.2")
@@ -117,6 +120,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-svg:2.7.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     //firebase
     implementation platform('com.google.firebase:firebase-bom:33.16.0')
@@ -126,6 +131,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics:22.5.0'
     //api
     implementation 'com.google.code.gson:gson:2.13.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
     //facebook
     implementation 'com.facebook.android:facebook-android-sdk:18.0.3'
     //ui

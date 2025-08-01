@@ -1,7 +1,9 @@
 package org.easydictionary.app.domain.models.dictionary
 
+import kotlinx.serialization.Serializable
 import org.easydictionary.app.domain.models.language.Language
 
+@Serializable
 data class Dictionary(
     val id: Int,
     val dialect: String? = null,
@@ -9,6 +11,7 @@ data class Dictionary(
     val langToId: Int,
 )
 
+@Serializable
 data class DictionaryDetailShort(
     val id: Int,
     val dialect: String? = null,

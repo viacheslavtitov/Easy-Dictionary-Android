@@ -1,6 +1,8 @@
 package org.easydictionary.app.domain.models.navigation
 
+import kotlinx.serialization.json.Json
 import org.easydictionary.app.domain.models.dictionary.Dictionary
+import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.filter.FilterModel
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.quiz.Quiz
@@ -14,13 +16,15 @@ sealed class AppNavigation(val route: String) {
     object HomeScreen : AppNavigation("home")
     object SettingsScreen : AppNavigation("settings")
     object LanguagesScreen : AppNavigation("languages/{langType}") {
-        fun createRoute(langType: LangType) = "languages/$langType"
+        fun createRoute(langType: LangType) = "languages/${langType.type}"
     }
-
+    object AddNewLanguageScreen : AppNavigation("languages/add")
     object DictionariesScreen : AppNavigation("dictionary")
     object AddUserDictionaryScreen : AppNavigation("dictionary/add")
     object EditDictionaryScreen : AppNavigation("dictionary/edit/{dictionary}") {
-        fun createRoute(dictionary: Dictionary) = "dictionary/edit/$dictionary"
+        fun createRoute(dictionary: DictionaryDetailShort) = {
+            "dictionary/edit/${Json.encodeToString(dictionary)}"
+        }
     }
 
     object AddUserQuizScreen : AppNavigation("quiz/add")

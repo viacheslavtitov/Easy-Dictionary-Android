@@ -1,185 +1,115 @@
 package org.easydictionary.app.domain.viewmodels.user.dictionary.add
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
-import org.easydictionary.app.R
+import kotlinx.serialization.json.Json
+import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.dictionary.Dictionary
-import org.easydictionary.app.domain.models.dictionary.VerbTense
+import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
+import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
 import org.easydictionary.app.domain.usecases.languages.GetDictionaryLanguagesUseCase
-import org.easydictionary.app.domain.utils.PreferenceUtils
-import org.easydictionary.app.view.FetchDataState
 import javax.inject.Inject
 
 @HiltViewModel
 class AddUserDictionaryViewModel @Inject constructor(
     private val dictionaryUseCase: GetCreateDictionaryUseCase,
     private val languagesUseCase: GetDictionaryLanguagesUseCase,
-    private val preferenceUtils: PreferenceUtils,
+    private val addUserLanguageUseCase: AddUserLanguageUseCase,
     private val uiStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     companion object {
         private val TAG = AddUserDictionaryViewModel::class.simpleName
-        private const val KEY_STATE_LANGUAGE_FROM = "languageFrom"
-        private const val KEY_STATE_LANGUAGE_TO = "languageTo"
-        private const val KEY_STATE_DIALECT = "dialect"
-        private const val KEY_STATE_TENSES = "tenses"
     }
 
-    private var languageFrom: Language? = null
-    private var languageTo: Language? = null
-    private var dialect: String? = null
-    private var editDictionary: Dictionary? = null
+    val editDictionary: Dictionary? = uiStateHandle.get<String>("dictionary")
+        ?.let { Json.decodeFromString(it) }
+    private val _selectedLanguageFrom = MutableStateFlow<Language?>(null)
+    val selectedLanguageFrom: StateFlow<Language?> = _selectedLanguageFrom.asStateFlow()
+    private val _selectedLanguageTo = MutableStateFlow<Language?>(null)
+    val selectedLanguageTo: StateFlow<Language?> = _selectedLanguageTo.asStateFlow()
+    private val _loadingDataUI = MutableStateFlow<Boolean>(false)
+    val loadingDataUI: StateFlow<Boolean> = _loadingDataUI.asStateFlow()
+    private val _errorUI = MutableStateFlow<String>("")
+    val errorUI: StateFlow<String> = _errorUI.asStateFlow()
+    private val _dictionaryCreated = MutableSharedFlow<Boolean>()
+    val dictionaryCreated: SharedFlow<Boolean> = _dictionaryCreated
 
-    val languageFromSavedUIState: StateFlow<Language> = uiStateHandle.getStateFlow(
-        KEY_STATE_LANGUAGE_FROM, Language(0, "", "")
-    )
-    val languageToSavedUIState: StateFlow<Language> = uiStateHandle.getStateFlow(
-        KEY_STATE_LANGUAGE_TO, Language(0, "", "")
-    )
-    val dialectSavedUIState: StateFlow<String> = uiStateHandle.getStateFlow(
-        KEY_STATE_DIALECT, ""
-    )
-    val tensesSavedUIState: StateFlow<List<VerbTense>> = uiStateHandle.getStateFlow(
-        KEY_STATE_TENSES, emptyList()
-    )
+    fun setLanguage(langType: LangType, json: String) {
+        val language: Language = Json.decodeFromString(json)
+        when (langType) {
+            LangType.FROM -> {
+                _selectedLanguageFrom.value = language
+            }
 
-    fun createDictionary(context: Context?, dialectValue: String? = null, tenses: List<VerbTense>) =
-        emptyFlow<FetchDataState<Boolean>>()
-//        flow<FetchDataState<Boolean>> {
-//            if (languageFrom == null || languageTo == null || context == null) return@flow
-//            val userUUID =
-//                preferenceUtils.getString(PreferenceUtils.CURRENT_USER_UUID) ?: return@flow
-//            emit(FetchDataState.StartLoadingState)
-//            val editedTense = mutableListOf<VerbTense>()
-//            editedTense.addAll(tenses)
-//            if (isEditMode()) {
-//                val result = dictionaryUseCase.updateDictionary(
-//                    Dictionary(
-//                        _id = editDictionary?._id,
-//                        userUUID = userUUID,
-//                        dictionaryFrom = DictionaryItem(
-//                            lang = languageFrom!!.key
-//                        ),
-//                        dictionaryTo = DictionaryItem(
-//                            lang = languageTo!!.key
-//                        ),
-//                        dialect = dialectValue ?: "",
-//                        tenses = editedTense
-//                    )
-//                )
-//                if (!result) {
-//                    emit(FetchDataState.ErrorStateString(context.getString(R.string.error_update_dictionary)))
-//                } else {
-//                    editDictionary?.let { dict ->
-//                        val shouldDeleteTenseVerbs = arrayListOf<VerbTense>()
-//                        dict.tenses.forEach { verb ->
-//                            val exist = tenses.find { it._id == verb._id && it.name == verb.name }
-//                            if (exist == null) {
-//                                shouldDeleteTenseVerbs.add(verb)
-//                            }
-//                        }
-//                        if (shouldDeleteTenseVerbs.isNotEmpty()) {
-//                            dictionaryUseCase.deleteVerbTenseFromDictionary(
-//                                dict._id!!,
-//                                shouldDeleteTenseVerbs
-//                            )
-//                        }
-//                        val shouldAddTenseVerbs = arrayListOf<VerbTense>()
-//                        tenses.forEach { verb ->
-//                            if (verb._id == null) {
-//                                shouldAddTenseVerbs.add(verb)
-//                            }
-//                        }
-//                        if (shouldAddTenseVerbs.isNotEmpty()) {
-//                            dictionaryUseCase.addVerbTenseToDictionary(
-//                                dict._id!!,
-//                                shouldAddTenseVerbs.maxOf { it.name }
-//                            )
-//                        }
-//                    }
-//                }
-//                emit(FetchDataState.DataState(result))
-//            } else {
-//                val result = dictionaryUseCase.createDictionary(
-//                    Dictionary(
-//                        userUUID = userUUID,
-//                        dictionaryFrom = DictionaryItem(
-//                            lang = languageFrom!!.key
-//                        ),
-//                        dictionaryTo = DictionaryItem(
-//                            lang = languageTo!!.key
-//                        ),
-//                        dialect = dialectValue ?: "",
-//                        tenses = editedTense
-//                    )
-//                )
-//                if (result.first == null) {
-//                    emit(FetchDataState.ErrorStateString(context.getString(R.string.error_create_dictionary)))
-//                    emit(FetchDataState.DataState(false))
-//                } else {
-//                    result.first?.let { dictionaryId ->
-//                        editedTense.forEach {
-//                            val verbResult =
-//                                dictionaryUseCase.addVerbTenseToDictionary(dictionaryId, it.name)
-//                            Log.d(
-//                                TAG,
-//                                "verb tense ${it.name} was added ${verbResult.first} ${verbResult.second}"
-//                            )
-//                        }
-//                    }
-//                    emit(FetchDataState.DataState(true))
-//                }
-//            }
-//            emit(FetchDataState.FinishLoadingState)
+            LangType.TO -> {
+                _selectedLanguageTo.value = language
+            }
         }
+    }
 
-//    fun isEditMode() = editDictionary != null
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun createDictionary(dialectValue: String? = null) {
+        val languageFrom =
+            selectedLanguageFrom.value ?: throw DictionaryValidationException.LanguageFromException
+        val languageTo =
+            selectedLanguageTo.value ?: throw DictionaryValidationException.LanguageToException
+        Log.d(TAG, "createDictionary($dialectValue)")
+        _loadingDataUI.value = true
+        viewModelScope.launch {
+            combine(
+                addUserLanguageUseCase.invoke(languageFrom.code, languageFrom.name),
+                addUserLanguageUseCase.invoke(languageTo.code, languageTo.name)
+            ) { langFrom, langTo ->
+                langFrom to langTo
+            }.flatMapLatest { langs ->
+                if (langs.first is DomainResult.Success && langs.second is DomainResult.Success)
+                    return@flatMapLatest dictionaryUseCase.createDictionary(
+                        dialectValue,
+                        (langs.first as DomainResult.Success<Language>).data.id,
+                        (langs.second as DomainResult.Success<Language>).data.id
+                    ) else {
+                    throw IllegalStateException("Languages wasn't created")
+                }
+            }.catch {
+                Log.d(TAG, "catch ${it.message}")
+                _errorUI.value = it.message ?: "Error"
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _loadingDataUI.value = false
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        Log.d(TAG, "Dictionary created")
+                        _dictionaryCreated.emit(true)
+                    }
 
-    fun setDictionary(context: Context?, dictionary: Dictionary?) {
-//        if (context == null) return
-//        Log.d(TAG, "load passed dictionary $dictionary")
-//        editDictionary = dictionary
-//        dictionary?.let { dict ->
-//            viewModelScope.launch {
-//                saveLangFrom(languagesUseCase.findLanguageByKey(context, dict.dictionaryFrom.lang))
-//                saveLanguageTo(languagesUseCase.findLanguageByKey(context, dict.dictionaryTo.lang))
-//                saveVerbTenses(dict.tenses)
-//                if (dict.dialect?.isNullOrEmpty() == false) {
-//                    saveDialect(dict.dialect)
-//                    Log.d(TAG, "emit dialect ${dict.dialect}")
-//                }
-//            }
-//        }
-//    }
-//
-//    fun saveLangFrom(value: Language?) {
-//        languageFrom = value
-//        uiStateHandle[KEY_STATE_LANGUAGE_FROM] = value
-//    }
-//
-//    fun saveLanguageTo(value: Language?) {
-//        languageTo = value
-//        uiStateHandle[KEY_STATE_LANGUAGE_TO] = value
-//    }
-//
-//    fun saveDialect(value: String?) {
-//        dialect = value
-//        uiStateHandle[KEY_STATE_DIALECT] = value
-//    }
-//
-//    fun saveVerbTenses(tenses: List<VerbTense>) {
-//        uiStateHandle[KEY_STATE_TENSES] = tenses
-//    }
+                    is DomainResult.Error -> _errorUI.value = result.message
+                }
+            }
+        }
+    }
 
+    fun isEditMode() = editDictionary != null
+}
+
+sealed class DictionaryValidationException(message: String) : Exception(message) {
+    object LanguageFromException : Exception("Language from is not valid or empty")
+    object LanguageToException : Exception("Language to is not valid or empty")
 }

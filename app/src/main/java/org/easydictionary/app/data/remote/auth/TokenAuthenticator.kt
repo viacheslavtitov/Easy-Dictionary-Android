@@ -1,17 +1,21 @@
 package org.easydictionary.app.data.remote.auth
 
+import android.util.Log
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
+import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
 import javax.inject.Inject
 
 class TokenAuthenticator @Inject constructor(
     private val tokenRefresher: suspend () -> String?,
-    private val preferenceUtils: PreferenceUtils
+    private val preferenceUtils: PreferenceUtils,
+    private val authEvents: MutableSharedFlow<GlobalErrorEvent>
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
@@ -19,11 +23,16 @@ class TokenAuthenticator @Inject constructor(
 
         val newToken = runBlocking { tokenRefresher() }
 
-        return newToken?.let {
-            preferenceUtils.putSecureString(ACCESS_TOKEN_KEY, it)
+        return if(newToken != null) {
+            preferenceUtils.putSecureString(ACCESS_TOKEN_KEY, newToken)
             response.request.newBuilder()
-                .header("Authorization", "Bearer $it")
+                .header("Authorization", "Bearer $newToken")
                 .build()
+        } else {
+            Log.e("AuthInterceptor", "Got error when try to refresh. Response code is ${response.code}")
+            preferenceUtils.clear()
+            authEvents.tryEmit(GlobalErrorEvent.Unauthorized)
+            return null
         }
     }
 

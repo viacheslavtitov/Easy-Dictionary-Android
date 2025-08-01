@@ -1,29 +1,33 @@
-package org.easydictionary.app.data.repositories.dictionary
+package org.easydictionary.app.data.repositories.language
 
 import android.content.res.Resources
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.easydictionary.app.R
-import org.easydictionary.app.data.models.dictionary.DictionaryRequest
+import org.easydictionary.app.data.models.language.LanguageRequest
 import org.easydictionary.app.data.remote.ApiResult
-import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
+import org.easydictionary.app.data.remote.language.LanguageApiService
+import org.easydictionary.app.data.remote.language.LanguageStaticApiService
 import org.easydictionary.app.domain.models.DomainResult
-import org.easydictionary.app.domain.models.dictionary.Dictionary
-import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
-import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
+import org.easydictionary.app.domain.models.language.Language
+import org.easydictionary.app.domain.models.language.LanguageListItem
+import org.easydictionary.app.domain.repository.language.LanguageRepository
 import javax.inject.Inject
 
-class DictionaryRepositoryImpl @Inject constructor(
+class LanguageRepositoryImpl @Inject constructor(
     private val resources: Resources,
-    private val dictionaryApiService: DictionaryApiService
-): DictionaryRepository {
-    override suspend fun getAllDictionaries(): Flow<DomainResult<List<Dictionary>>> {
+    private val languageStaticApiService: LanguageStaticApiService,
+    private val languageApiService: LanguageApiService,
+) : LanguageRepository {
+    override suspend fun getAllLanguages(lang: String): Flow<DomainResult<List<LanguageListItem>>> {
         return flowOf(
             when (val result = wrapApi {
-                dictionaryApiService.getAll()
+                languageStaticApiService.getAll(lang)
             }) {
                 is ApiResult.Success -> {
-                    DomainResult.Success(result.data.map { it.toDomain() })
+                    DomainResult.Success(result.data.map { it.toDomain() }.sortedBy {
+                        it.name
+                    })
                 }
 
                 is ApiResult.ApiError -> {
@@ -41,13 +45,15 @@ class DictionaryRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getAllDictionariesDetailShort(): Flow<DomainResult<List<DictionaryDetailShort>>> {
+    override suspend fun getAllUserLanguages(): Flow<DomainResult<List<Language>>> {
         return flowOf(
             when (val result = wrapApi {
-                dictionaryApiService.getAllDetailShort()
+                languageApiService.getAll()
             }) {
                 is ApiResult.Success -> {
-                    DomainResult.Success(result.data.map { it.toDomain() })
+                    DomainResult.Success(result.data.map { it.toDomain() }.sortedBy {
+                        it.name
+                    })
                 }
 
                 is ApiResult.ApiError -> {
@@ -65,21 +71,16 @@ class DictionaryRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun createDictionary(
-        dialect: String?,
-        langFromId: Int,
-        langToId: Int
-    ): Flow<DomainResult<Unit>> {
+    override suspend fun addUserLanguage(code: String?, name: String): Flow<DomainResult<Language>> {
         return flowOf(
             when (val result = wrapApi {
-                dictionaryApiService.create(DictionaryRequest(
-                    dialect = dialect,
-                    langFromId = langFromId,
-                    langToId = langToId
+                languageApiService.add(LanguageRequest(
+                    code = code,
+                    name = name
                 ))
             }) {
                 is ApiResult.Success -> {
-                    DomainResult.Success(Unit)
+                    DomainResult.Success(result.data.toDomain())
                 }
 
                 is ApiResult.ApiError -> {

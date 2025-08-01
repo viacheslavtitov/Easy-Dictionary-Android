@@ -3,7 +3,6 @@ package org.easydictionary.app.domain.usecases.dictionary
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import org.easydictionary.app.data.repositories.DatabaseRepository
@@ -27,23 +26,16 @@ class GetCreateDictionaryUseCase @Inject constructor(
         private val TAG = GetCreateDictionaryUseCase::class.simpleName
     }
 
-    suspend fun createDictionary(dictionary: Dictionary): Pair<String?, String?> {
-//        val userId =
-//            preferenceUtils.getString(PreferenceUtils.CURRENT_USER_ID) ?: return Pair(null, null)
-//        return databaseRepository.createDictionary(
-//            userId = userId,
-//            dictionary = DictionaryTable(
-//                _id = dictionary._id,
-//                userUUID = dictionary.userUUID,
-//                langFrom = dictionary.dictionaryFrom.lang,
-//                langTo = dictionary.dictionaryTo.lang,
-//                dialect = dictionary.dialect,
-//                tenses = dictionary.tenses.toList().map {
-//                    VerbTenseTable(it._id, it.name)
-//                }
-//            )
-//        )
-        return Pair("", "")
+    suspend fun createDictionary(
+        dialect: String?,
+        langFromId: Int,
+        langToId: Int
+    ): Flow<DomainResult<Unit>> {
+        return dictionaryRepository.createDictionary(
+            dialect = dialect,
+            langFromId = langFromId,
+            langToId = langToId
+        )
     }
 
     suspend fun addVerbTenseToDictionary(

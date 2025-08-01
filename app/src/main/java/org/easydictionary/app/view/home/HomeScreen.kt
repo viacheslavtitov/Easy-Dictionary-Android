@@ -126,6 +126,7 @@ fun HomeScreen(
                             scope.launch {
                                 drawerState.close()
                             }
+                            navController.navigate(AppNavigation.AddUserDictionaryScreen.route)
                         }
                     )
                 }

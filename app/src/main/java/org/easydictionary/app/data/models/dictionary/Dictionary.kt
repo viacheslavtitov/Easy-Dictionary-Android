@@ -21,6 +21,11 @@ data class DictionaryResponse(
         )
     }
 }
+data class DictionaryRequest(
+    @SerializedName("dialect") val dialect: String? = null,
+    @SerializedName("lang_from_id") val langFromId: Int,
+    @SerializedName("lang_to_id") val langToId: Int
+)
 
 data class DictionaryDetailShortResponse(
     @SerializedName("dialect") val dialect: String? = null,
