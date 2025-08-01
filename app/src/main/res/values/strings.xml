@@ -83,6 +83,7 @@
     <string name="show_types">Display types</string>
     <string name="error_delete_quiz">Something was wrong to delete quiz</string>
     <string name="quiz_count">Quizzes %d</string>
+    <string name="are_you_sure">Are you sure?</string>
     <!-- Dictionary -->
     <string name="dictionary">Dictionary</string>
     <string name="add_dictionary">Add dictionary</string>
@@ -92,6 +93,7 @@
     <string name="add_verb_time">Add verb tenses</string>
     <string name="add_verb_time_descriptional">It\'s optionally. You may add tenses of verbs and include them into your quizzes</string>
     <string name="add_tense">Add tense</string>
+    <string name="delete_dictionary_title">Delete dictionary</string>
     <string name="error_delete_dictionary">Something was wrong to delete dictionary</string>
     <string name="error_create_dictionary">Something was wrong to create dictionary</string>
     <string name="error_update_dictionary">Something was wrong to update dictionary</string>

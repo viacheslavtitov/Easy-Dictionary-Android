@@ -73,12 +73,12 @@ class UserDictionaryFragment : AbstractBaseFragment() {
 
             override fun onFinish() {
                 undoRemoveDictionarySnackbar = null
-                dictionariesAdapter?.getRemoveDictionaryByTimer()?.let { dict ->
-                    viewModel.deleteDictionaries(
-                        context,
-                        listOf(dict)
-                    )
-                }
+//                dictionariesAdapter?.getRemoveDictionaryByTimer()?.let { dict ->
+//                    viewModel.deleteDictionaries(
+//                        context,
+//                        listOf(dict)
+//                    )
+//                }
                 dictionariesAdapter?.finallyRemoveItem()
             }
         }
@@ -285,42 +285,42 @@ class UserDictionaryFragment : AbstractBaseFragment() {
                 }
 
                 R.id.menu_delete -> {
-                    lifecycleScope.launch {
-                        viewModel.deleteDictionaries(
-                            context,
-                            dictionariesAdapter?.getSelectedDictionaries()
-                        ).collect {
-                            when (it) {
-                                is FetchDataState.StartLoadingState -> {
-                                    swipeRefreshLayout?.isRefreshing = true
-                                    sharedViewModel.loading(true)
-                                }
-
-                                is FetchDataState.FinishLoadingState -> {
-                                    swipeRefreshLayout?.isRefreshing = false
-                                    sharedViewModel.loading(false)
-                                    actionMode?.finish()
-                                    refreshDictionaries()
-                                }
-
-                                is FetchDataState.ErrorState -> {
-                                    displayError(
-                                        it.exception.message
-                                            ?: context?.getString(R.string.unknown_error),
-                                        dictionariesRecyclerView
-                                    )
-                                }
-
-                                is FetchDataState.DataState -> {
-                                    //skip
-                                }
-
-                                is FetchDataState.ErrorStateString -> {
-                                    displayError(it.error, dictionariesRecyclerView)
-                                }
-                            }
-                        }
-                    }
+//                    lifecycleScope.launch {
+//                        viewModel.deleteDictionaries(
+//                            context,
+//                            dictionariesAdapter?.getSelectedDictionaries()
+//                        ).collect {
+//                            when (it) {
+//                                is FetchDataState.StartLoadingState -> {
+//                                    swipeRefreshLayout?.isRefreshing = true
+//                                    sharedViewModel.loading(true)
+//                                }
+//
+//                                is FetchDataState.FinishLoadingState -> {
+//                                    swipeRefreshLayout?.isRefreshing = false
+//                                    sharedViewModel.loading(false)
+//                                    actionMode?.finish()
+//                                    refreshDictionaries()
+//                                }
+//
+//                                is FetchDataState.ErrorState -> {
+//                                    displayError(
+//                                        it.exception.message
+//                                            ?: context?.getString(R.string.unknown_error),
+//                                        dictionariesRecyclerView
+//                                    )
+//                                }
+//
+//                                is FetchDataState.DataState -> {
+//                                    //skip
+//                                }
+//
+//                                is FetchDataState.ErrorStateString -> {
+//                                    displayError(it.error, dictionariesRecyclerView)
+//                                }
+//                            }
+//                        }
+//                    }
                     true
                 }
 

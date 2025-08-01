@@ -16,7 +16,7 @@ import javax.inject.Inject
 class DictionaryRepositoryImpl @Inject constructor(
     private val resources: Resources,
     private val dictionaryApiService: DictionaryApiService
-): DictionaryRepository {
+) : DictionaryRepository {
     override suspend fun getAllDictionaries(): Flow<DomainResult<List<Dictionary>>> {
         return flowOf(
             when (val result = wrapApi {
@@ -72,11 +72,37 @@ class DictionaryRepositoryImpl @Inject constructor(
     ): Flow<DomainResult<Unit>> {
         return flowOf(
             when (val result = wrapApi {
-                dictionaryApiService.create(DictionaryRequest(
-                    dialect = dialect,
-                    langFromId = langFromId,
-                    langToId = langToId
-                ))
+                dictionaryApiService.create(
+                    DictionaryRequest(
+                        dialect = dialect,
+                        langFromId = langFromId,
+                        langToId = langToId
+                    )
+                )
+            }) {
+                is ApiResult.Success -> {
+                    DomainResult.Success(Unit)
+                }
+
+                is ApiResult.ApiError -> {
+                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
+                }
+
+                is ApiResult.NetworkError -> {
+                    DomainResult.Error(resources.getString(R.string.network_error))
+                }
+
+                is ApiResult.UnknownError -> {
+                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                }
+            }
+        )
+    }
+
+    override suspend fun deleteDictionary(dictionaryId: Int): Flow<DomainResult<Unit>> {
+        return flowOf(
+            when (val result = wrapApi {
+                dictionaryApiService.delete(dictionaryId)
             }) {
                 is ApiResult.Success -> {
                     DomainResult.Success(Unit)

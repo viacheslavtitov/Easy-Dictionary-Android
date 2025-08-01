@@ -4,8 +4,10 @@ import org.easydictionary.app.data.models.dictionary.DictionaryDetailShortRespon
 import org.easydictionary.app.data.models.dictionary.DictionaryRequest
 import org.easydictionary.app.data.models.dictionary.DictionaryResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface DictionaryApiService {
     @GET("dictionary/all")
@@ -16,4 +18,7 @@ interface DictionaryApiService {
 
     @POST("dictionary/create")
     suspend fun create(@Body dictionary: DictionaryRequest): Unit
+
+    @DELETE("dictionary/{id}")
+    suspend fun delete(@Path("id") id: Int): Unit
 }

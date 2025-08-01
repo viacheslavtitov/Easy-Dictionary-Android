@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -39,6 +41,7 @@ import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
+import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.dividers.Divider
 import org.easydictionary.app.view.swipe.SwipeRevealItem
@@ -79,10 +82,25 @@ fun DictionariesScreen(
             Log.d("DictionariesScreen", "Click on edit $itemId")
         }
     }
-    val onDelete: (Int) -> Unit = { itemId ->
+    val deleteItemId = remember { mutableStateOf<Int?>(null) }
+    deleteItemId.value?.let { itemId ->
         dictionaries.find { itemId == it.id }?.let { dictionary ->
             Log.d("DictionariesScreen", "Click on delete $itemId")
+            ButtonsAlertDialog(
+                onConfirmation = {
+                    viewModel.deleteDictionary(dictionary)
+                },
+                onDismissRequest = {
+                    deleteItemId.value = null
+                },
+                message = stringResource(R.string.are_you_sure),
+                title = stringResource(R.string.delete_dictionary_title),
+                icon = Icons.Default.Info
+            )
         }
+    }
+    val onDelete: (Int) -> Unit = { itemId ->
+        deleteItemId.value = itemId
     }
     LazyColumn(
         modifier = Modifier
@@ -104,7 +122,6 @@ fun DictionariesScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DictionaryListItem(
     dictionary: DictionaryDetailShort,
@@ -171,6 +188,13 @@ private fun MenuDictionaryItem(
     onEdit: (Int) -> Unit,
     onDelete: (Int) -> Unit
 ) {
+    val deleteRequest = remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(deleteRequest.value) {
+        deleteRequest.value?.let {
+            onDelete(it)
+            deleteRequest.value = null
+        }
+    }
     val backgroundColor = getCurrentColorScheme().tertiaryContainer
     val tintIcon = getCurrentColorScheme().primary
     Row(
@@ -208,7 +232,7 @@ private fun MenuDictionaryItem(
                 .fillMaxHeight()
                 .clickable {
                     openItemId.value?.let {
-                        onDelete(it)
+                        deleteRequest.value = it
                     }
                     openItemId.value = null
                 },
