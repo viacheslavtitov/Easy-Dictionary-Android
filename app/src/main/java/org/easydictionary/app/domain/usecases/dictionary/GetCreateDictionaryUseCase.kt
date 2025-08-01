@@ -19,7 +19,6 @@ import javax.inject.Inject
 class GetCreateDictionaryUseCase @Inject constructor(
     private val databaseRepository: DatabaseRepository,
     private val preferenceUtils: PreferenceUtils,
-    private val languagesUseCase: GetDictionaryLanguagesUseCase,
     private val dictionaryRepository: DictionaryRepository
 ) {
     companion object {

@@ -21,6 +21,7 @@ import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
 import org.easydictionary.app.domain.repository.language.LanguageRepository
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
+import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
 import org.easydictionary.app.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import org.easydictionary.app.domain.usecases.languages.GetLanguagesStaticUseCase
@@ -82,6 +83,11 @@ object MainActivityModule {
     }
 
     @Provides
+    fun provideUpdateDictionaryUseCase(dictionaryRepository: DictionaryRepository): UpdateDictionaryUseCase {
+        return UpdateDictionaryUseCase(dictionaryRepository)
+    }
+
+    @Provides
     fun provideGetLanguagesStaticUseCase(languageRepository: LanguageRepository): GetLanguagesStaticUseCase {
         return GetLanguagesStaticUseCase(languageRepository)
     }
@@ -108,13 +114,11 @@ object MainActivityModule {
     fun provideGetCreateDictionaryUseCase(
         databaseRepository: DatabaseRepository,
         preferenceUtils: PreferenceUtils,
-        getDictionaryLanguagesUseCase: GetDictionaryLanguagesUseCase,
         dictionaryRepository: DictionaryRepository
     ): GetCreateDictionaryUseCase {
         return GetCreateDictionaryUseCase(
             databaseRepository,
             preferenceUtils,
-            getDictionaryLanguagesUseCase,
             dictionaryRepository
         )
     }

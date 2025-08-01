@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
+import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
@@ -80,6 +81,7 @@ fun DictionariesScreen(
     val onEdit: (Int) -> Unit = { itemId ->
         dictionaries.find { itemId == it.id }?.let { dictionary ->
             Log.d("DictionariesScreen", "Click on edit $itemId")
+            navController.navigate(AppNavigation.EditDictionaryScreen.createRoute(dictionary))
         }
     }
     val deleteItemId = remember { mutableStateOf<Int?>(null) }
@@ -102,6 +104,10 @@ fun DictionariesScreen(
     val onDelete: (Int) -> Unit = { itemId ->
         deleteItemId.value = itemId
     }
+    val onClick: (DictionaryDetailShort) -> Unit = { dictionary ->
+        Log.d("DictionariesScreen", "Click on ${dictionary.id}")
+        navController.navigate(AppNavigation.EditDictionaryScreen.createRoute(dictionary))
+    }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -117,7 +123,7 @@ fun DictionariesScreen(
             items = dictionaries,
             key = { it.id }
         ) { item ->
-            DictionaryListItem(item, openItemId, onEdit, onDelete)
+            DictionaryListItem(item, openItemId, onClick, onEdit, onDelete)
         }
     }
 }
@@ -126,6 +132,7 @@ fun DictionariesScreen(
 private fun DictionaryListItem(
     dictionary: DictionaryDetailShort,
     openItemId: MutableState<Int?>,
+    onClick: (DictionaryDetailShort) -> Unit,
     onEdit: (Int) -> Unit,
     onDelete: (Int) -> Unit
 ) {
@@ -141,7 +148,10 @@ private fun DictionaryListItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(backgroundColor)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .clickable{
+                        onClick(dictionary)
+                    },
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

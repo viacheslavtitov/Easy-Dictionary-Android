@@ -1,6 +1,7 @@
 package org.easydictionary.app.data.remote.dictionary
 
 import org.easydictionary.app.data.models.dictionary.DictionaryDetailShortResponse
+import org.easydictionary.app.data.models.dictionary.DictionaryEditRequest
 import org.easydictionary.app.data.models.dictionary.DictionaryRequest
 import org.easydictionary.app.data.models.dictionary.DictionaryResponse
 import retrofit2.http.Body
@@ -21,4 +22,7 @@ interface DictionaryApiService {
 
     @DELETE("dictionary/{id}")
     suspend fun delete(@Path("id") id: Int): Unit
+
+    @POST("dictionary/edit")
+    suspend fun edit(@Body dictionary: DictionaryEditRequest): Unit
 }

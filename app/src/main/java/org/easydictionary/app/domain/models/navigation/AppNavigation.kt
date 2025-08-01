@@ -18,13 +18,13 @@ sealed class AppNavigation(val route: String) {
     object LanguagesScreen : AppNavigation("languages/{langType}") {
         fun createRoute(langType: LangType) = "languages/${langType.type}"
     }
+
     object AddNewLanguageScreen : AppNavigation("languages/add")
     object DictionariesScreen : AppNavigation("dictionary")
     object AddUserDictionaryScreen : AppNavigation("dictionary/add")
     object EditDictionaryScreen : AppNavigation("dictionary/edit/{dictionary}") {
-        fun createRoute(dictionary: DictionaryDetailShort) = {
+        fun createRoute(dictionary: DictionaryDetailShort) =
             "dictionary/edit/${Json.encodeToString(dictionary)}"
-        }
     }
 
     object AddUserQuizScreen : AppNavigation("quiz/add")

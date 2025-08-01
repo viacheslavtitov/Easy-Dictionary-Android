@@ -32,6 +32,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
+import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.models.navigation.AppNavigation
@@ -50,16 +51,19 @@ fun AddOrEditDictionaryScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: AddUserDictionaryViewModel = hiltViewModel(backStackEntry),
-    sharedMainViewModel: SharedMainViewModel
+    sharedMainViewModel: SharedMainViewModel,
+    editDictionary: DictionaryDetailShort? = null
 ) {
     var showErrorDialog by remember { mutableStateOf(false) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
     val errorMessage by viewModel.errorUI.collectAsState()
+    val editedDialect by viewModel.dialect.collectAsState()
     val selectedLanguageFrom by viewModel.selectedLanguageFrom.collectAsState()
     val selectedLanguageTo by viewModel.selectedLanguageTo.collectAsState()
     LaunchedEffect(errorMessage) {
         showErrorDialog = errorMessage.isNotEmpty()
     }
+
     sharedMainViewModel.loading(loadingProgress)
     if (showErrorDialog) {
         ErrorAlertDialog(
@@ -95,33 +99,36 @@ fun AddOrEditDictionaryScreen(
             }
         }
     }
-    val languageFrom = remember { mutableStateOf<Language?>(null) }
     val shakeLanguageFrom = remember { mutableIntStateOf(0) }
     val shakeLanguageTo = remember { mutableIntStateOf(0) }
-    val languageTo = remember { mutableStateOf<Language?>(null) }
     val dialect = remember { mutableStateOf<String?>(null) }
+    viewModel.setEditMode(editDictionary)
     Scaffold(
         topBar = {
             TitleTopBar(
                 title = stringResource(R.string.add_dictionary),
                 actions = {
                     IconButton(onClick = {
-                        try {
-                            viewModel.createDictionary(dialect.value)
-                        } catch (exLanguageFrom: DictionaryValidationException.LanguageFromException) {
-                            Log.e(
-                                "AddOrEditDictionaryScreen",
-                                "Failed to edit or create dictionary",
-                                exLanguageFrom
-                            )
-                            shakeLanguageFrom.intValue += 1
-                        } catch (exLanguageTo: DictionaryValidationException.LanguageToException) {
-                            Log.e(
-                                "AddOrEditDictionaryScreen",
-                                "Failed to edit or create dictionary",
-                                exLanguageTo
-                            )
-                            shakeLanguageTo.intValue += 1
+                        if (!viewModel.isEditMode()) {
+                            try {
+                                viewModel.createDictionary(dialect.value)
+                            } catch (exLanguageFrom: DictionaryValidationException.LanguageFromException) {
+                                Log.e(
+                                    "AddOrEditDictionaryScreen",
+                                    "Failed to edit or create dictionary",
+                                    exLanguageFrom
+                                )
+                                shakeLanguageFrom.intValue += 1
+                            } catch (exLanguageTo: DictionaryValidationException.LanguageToException) {
+                                Log.e(
+                                    "AddOrEditDictionaryScreen",
+                                    "Failed to edit or create dictionary",
+                                    exLanguageTo
+                                )
+                                shakeLanguageTo.intValue += 1
+                            }
+                        } else {
+                            viewModel.updateDictionary(dialect.value)
                         }
                     }) {
                         Icon(
@@ -149,33 +156,29 @@ fun AddOrEditDictionaryScreen(
                     .fillMaxSize()
             ) {
                 ButtonFilledTonalSecondary(
+                    enabled = !viewModel.isEditMode(),
                     title = getLanguageButtonTitle(
-                        isEditMode = viewModel.isEditMode(),
                         langType = LangType.FROM,
-                        selectedLanguage = selectedLanguageFrom,
-                        existLanguage = languageFrom
+                        selectedLanguage = selectedLanguageFrom
                     ), onClick = {
                         navController.navigate(AppNavigation.LanguagesScreen.createRoute(langType = LangType.FROM))
                     }, shakeTrigger = shakeLanguageFrom
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 ButtonFilledTonalSecondary(
+                    enabled = !viewModel.isEditMode(),
                     title = getLanguageButtonTitle(
-                        isEditMode = viewModel.isEditMode(),
                         langType = LangType.TO,
-                        selectedLanguage = selectedLanguageTo,
-                        existLanguage = languageTo
+                        selectedLanguage = selectedLanguageTo
                     ), onClick = {
                         navController.navigate(AppNavigation.LanguagesScreen.createRoute(langType = LangType.TO))
                     }, shakeTrigger = shakeLanguageTo
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 TextFieldPrimary(
-                    defaultValue = "",
+                    defaultValue = editedDialect,
                     onValueChange = { newValue ->
-                        {
-                            dialect.value = newValue
-                        }
+                        dialect.value = newValue
                     },
                     label = stringResource(R.string.dialect),
                     supportingText = stringResource(R.string.optional)
@@ -187,24 +190,13 @@ fun AddOrEditDictionaryScreen(
 
 @Composable
 private fun getLanguageButtonTitle(
-    isEditMode: Boolean,
     langType: LangType,
     selectedLanguage: Language? = null,
-    existLanguage: State<Language?>
 ): String {
-    if (!isEditMode) {
-        return when (langType) {
-            LangType.FROM -> selectedLanguage?.name
-                ?: stringResource(R.string.select_language_from)
+    return when (langType) {
+        LangType.FROM -> selectedLanguage?.name
+            ?: stringResource(R.string.select_language_from)
 
-            LangType.TO -> selectedLanguage?.name ?: stringResource(R.string.select_language_to)
-        }
-    } else {
-        return if (existLanguage.value != null) existLanguage.value!!.name else {
-            return when (langType) {
-                LangType.FROM -> stringResource(R.string.select_language_from)
-                LangType.TO -> stringResource(R.string.select_language_to)
-            }
-        }
+        LangType.TO -> selectedLanguage?.name ?: stringResource(R.string.select_language_to)
     }
 }

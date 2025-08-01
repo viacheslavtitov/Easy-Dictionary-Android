@@ -27,7 +27,9 @@ import androidx.navigation.navArgument
 import coil.ImageLoader
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.json.Json
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
+import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
@@ -571,18 +573,23 @@ class MainActivity : ComponentActivity() {
                     sharedMainViewModel = sharedViewModel
                 )
             }
-            composable(route = AppNavigation.EditDictionaryScreen.route) { backStackEntry ->
+            composable(route = AppNavigation.EditDictionaryScreen.route,
+                arguments = listOf(navArgument("dictionary") { type = NavType.StringType })) { backStackEntry ->
                 WindowCompat.setDecorFitsSystemWindows(window, false)
+                val dictJson = backStackEntry.arguments?.getString("dictionary") ?: ""
+                val dictionary = Json.decodeFromString<DictionaryDetailShort>(dictJson)
                 AddOrEditDictionaryScreen(
                     backStackEntry,
                     navController,
-                    sharedMainViewModel = sharedViewModel
+                    sharedMainViewModel = sharedViewModel,
+                    editDictionary = dictionary
                 )
             }
             composable(
                 AppNavigation.LanguagesScreen.route,
                 arguments = listOf(navArgument("langType") { type = NavType.IntType })
             ) { backStackEntry ->
+                WindowCompat.setDecorFitsSystemWindows(window, false)
                 val langType = backStackEntry.arguments?.getInt("langType")
                 LangType.fromInt(langType)?.let {
                     SelectLanguageScreen(

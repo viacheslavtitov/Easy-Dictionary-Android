@@ -72,6 +72,7 @@ fun ButtonFilledTonalSecondary(
         .fillMaxWidth()
         .padding(0.dp),
     shakeTrigger: State<Int>,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -101,6 +102,7 @@ fun ButtonFilledTonalSecondary(
         contentPadding = PaddingValues(16.dp),
         shape = RoundedCornerShape(12.dp),
         onClick = onClick,
+        enabled = enabled,
         interactionSource = interactionSource
     ) {
         Text(text = title, fontSize = ButtonDimen.ButtonText)
