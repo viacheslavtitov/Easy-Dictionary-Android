@@ -11,5 +11,5 @@ interface DictionaryRepository: BaseRepository {
     suspend fun getAllDictionariesDetailShort(): Flow<DomainResult<List<DictionaryDetailShort>>>
     suspend fun createDictionary(dialect: String?, langFromId: Int, langToId: Int): Flow<DomainResult<Unit>>
     suspend fun deleteDictionary(dictionaryId: Int): Flow<DomainResult<Unit>>
-    suspend fun updateDictionary(dictionary: Dictionary): Flow<DomainResult<Unit>>
+    suspend fun updateDictionary(id: Int, dialect: String?): Flow<DomainResult<Unit>>
 }

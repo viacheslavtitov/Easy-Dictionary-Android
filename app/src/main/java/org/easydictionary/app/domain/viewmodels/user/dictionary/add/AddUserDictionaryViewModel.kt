@@ -21,6 +21,7 @@ import org.easydictionary.app.domain.models.dictionary.Dictionary
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
+import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
@@ -31,6 +32,7 @@ import javax.inject.Inject
 class AddUserDictionaryViewModel @Inject constructor(
     private val dictionaryUseCase: GetCreateDictionaryUseCase,
     private val addUserLanguageUseCase: AddUserLanguageUseCase,
+    private val deleteDictionaryUseCase: DeleteDictionaryUseCase,
     private val updateDictionaryUseCase: UpdateDictionaryUseCase
 ) : ViewModel() {
 
@@ -108,17 +110,13 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     fun updateDictionary(dialectValue: String? = null) {
-        if(!isEditMode()) return
+        if (!isEditMode()) return
         Log.d(TAG, "updateDictionary $dialectValue")
         _loadingDataUI.value = true
         viewModelScope.launch {
             updateDictionaryUseCase.invoke(
-                Dictionary(
-                    id = editDictionary!!.id,
-                    dialect = dialectValue,
-                    langToId = editDictionary!!.langFrom!!.id,
-                    langFromId = editDictionary!!.langFrom!!.id
-                )
+                id = editDictionary!!.id,
+                dialect = dialectValue,
             )
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
@@ -132,6 +130,33 @@ class AddUserDictionaryViewModel @Inject constructor(
                     when (result) {
                         is DomainResult.Success -> {
                             Log.d(TAG, "Dictionary ${editDictionary?.id} updated")
+                            _dictionaryCreated.emit(true)
+                        }
+
+                        is DomainResult.Error -> _errorUI.value = result.message
+                    }
+                }
+        }
+    }
+
+    fun delete() {
+        if (!isEditMode()) return
+        val deleteId = editDictionary?.id ?: return
+        _loadingDataUI.value = true
+        viewModelScope.launch {
+            deleteDictionaryUseCase.invoke(deleteId)
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    _errorUI.value = it.message ?: "Error"
+                }
+                .onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _loadingDataUI.value = false
+                }
+                .collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            Log.d(TAG, "Dictionary $deleteId deleted")
                             _dictionaryCreated.emit(true)
                         }
 

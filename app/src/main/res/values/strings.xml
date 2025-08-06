@@ -87,6 +87,7 @@
     <!-- Dictionary -->
     <string name="dictionary">Dictionary</string>
     <string name="add_dictionary">Add dictionary</string>
+    <string name="edit_dictionary">Edit dictionary</string>
     <string name="dialect">Dialect</string>
     <string name="select_language_from">Select language from</string>
     <string name="select_language_to">Select language to</string>

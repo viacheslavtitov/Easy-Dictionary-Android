@@ -124,15 +124,13 @@ class DictionaryRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun updateDictionary(dictionary: Dictionary): Flow<DomainResult<Unit>> {
+    override suspend fun updateDictionary(id: Int, dialect: String?): Flow<DomainResult<Unit>> {
         return flowOf(
             when (val result = wrapApi {
                 dictionaryApiService.edit(
                     DictionaryEditRequest(
-                        id = dictionary.id,
-                        dialect = dictionary.dialect,
-                        langFromId = dictionary.langFromId,
-                        langToId = dictionary.langToId
+                        id = id,
+                        dialect = dialect
                     )
                 )
             }) {

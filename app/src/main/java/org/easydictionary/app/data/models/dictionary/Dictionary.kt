@@ -28,9 +28,7 @@ data class DictionaryRequest(
 )
 data class DictionaryEditRequest(
     @SerializedName("id") val id: Int,
-    @SerializedName("dialect") val dialect: String? = null,
-    @SerializedName("lang_from_id") val langFromId: Int,
-    @SerializedName("lang_to_id") val langToId: Int
+    @SerializedName("dialect") val dialect: String? = null
 )
 
 data class DictionaryDetailShortResponse(

@@ -46,6 +46,9 @@ fun TextFieldPrimary(
     val isValid = remember(value) {
         value.isNotEmpty()
     }
+    LaunchedEffect(defaultValue) {
+        value = defaultValue
+    }
 
     val errorMessage = when {
         !required && supportingText?.isNotEmpty() == true -> supportingText

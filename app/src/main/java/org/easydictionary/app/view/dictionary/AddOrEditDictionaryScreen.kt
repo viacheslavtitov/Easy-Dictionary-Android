@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +43,7 @@ import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddUserDicti
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.DictionaryValidationException
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.languages.LanguagesViewModel
 import org.easydictionary.app.view.buttons.ButtonFilledTonalSecondary
+import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.inputs.TextFieldPrimary
 import org.easydictionary.app.view.topbars.TitleTopBar
@@ -55,6 +58,7 @@ fun AddOrEditDictionaryScreen(
     editDictionary: DictionaryDetailShort? = null
 ) {
     var showErrorDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
     val errorMessage by viewModel.errorUI.collectAsState()
     val editedDialect by viewModel.dialect.collectAsState()
@@ -74,6 +78,20 @@ fun AddOrEditDictionaryScreen(
                 showErrorDialog = false
             },
             message = errorMessage
+        )
+    }
+    if(showDeleteDialog) {
+        ButtonsAlertDialog(
+            onConfirmation = {
+                viewModel.delete()
+                showDeleteDialog = false
+            },
+            onDismissRequest = {
+                showDeleteDialog = false
+            },
+            message = stringResource(R.string.are_you_sure),
+            title = stringResource(R.string.delete_dictionary_title),
+            icon = Icons.Default.Info
         )
     }
     LaunchedEffect(backStackEntry) {
@@ -106,7 +124,7 @@ fun AddOrEditDictionaryScreen(
     Scaffold(
         topBar = {
             TitleTopBar(
-                title = stringResource(R.string.add_dictionary),
+                title = if(!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(R.string.edit_dictionary),
                 actions = {
                     IconButton(onClick = {
                         if (!viewModel.isEditMode()) {
@@ -135,6 +153,16 @@ fun AddOrEditDictionaryScreen(
                             imageVector = Icons.Filled.Save,
                             contentDescription = "Save"
                         )
+                    }
+                    if (viewModel.isEditMode()) {
+                        IconButton(onClick = {
+                            showDeleteDialog = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Delete"
+                            )
+                        }
                     }
                 }
             )
