@@ -10,15 +10,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -80,7 +82,7 @@ fun AddOrEditDictionaryScreen(
             message = errorMessage
         )
     }
-    if(showDeleteDialog) {
+    if (showDeleteDialog) {
         ButtonsAlertDialog(
             onConfirmation = {
                 viewModel.delete()
@@ -122,9 +124,26 @@ fun AddOrEditDictionaryScreen(
     val dialect = remember { mutableStateOf<String?>(null) }
     viewModel.setEditMode(editDictionary)
     Scaffold(
+        floatingActionButton = {
+            if (viewModel.isEditMode()) {
+                ExtendedFloatingActionButton(
+                    text = { Text(stringResource(R.string.add_words)) },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = "Add") },
+                    onClick = {
+                        editDictionary?.let { dictionary ->
+                            navController.navigate(
+                                AppNavigation.AddDictionaryWordScreen.createRoute(dictionary)
+                            )
+                        }
+                    }
+                )
+            }
+        },
         topBar = {
             TitleTopBar(
-                title = if(!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(R.string.edit_dictionary),
+                title = if (!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
+                    R.string.edit_dictionary
+                ),
                 actions = {
                     IconButton(onClick = {
                         if (!viewModel.isEditMode()) {

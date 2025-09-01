@@ -7,20 +7,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.easydictionary.app.R
+import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.dictionary.Dictionary
+import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
+import org.easydictionary.app.domain.models.translation.ComposedTranslation
+import org.easydictionary.app.domain.models.translation.TranslationNotCreated
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.models.words.tags.WordTag
 import org.easydictionary.app.domain.models.words.variants.TranslationVariant
@@ -28,16 +34,20 @@ import org.easydictionary.app.domain.models.words.verb_tense.WordVerbTense
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationsUseCase
-import org.easydictionary.app.domain.usecases.words.WordsUseCase
+import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.WordsUseCase
+import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import org.easydictionary.app.view.FetchDataState
 import javax.inject.Inject
 
 @HiltViewModel
 class AddDictionaryWordViewModel @Inject constructor(
     private val wordsUseCase: WordsUseCase,
+    private val addWordToDictionaryUseCase: AddWordToDictionaryUseCase,
     private val getCreateDictionaryUseCase: GetCreateDictionaryUseCase,
     private val getCreateTranslationsUseCase: GetCreateTranslationsUseCase,
     private val getCreateTranslationCategoriesUseCase: GetCreateTranslationCategoriesUseCase,
+    private val getWordTypesUseCase: GetWordTypesUseCase,
     private val uiStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -46,6 +56,19 @@ class AddDictionaryWordViewModel @Inject constructor(
         private const val KEY_STATE_TYPE = "type"
         private const val KEY_STATE_VERB_TENSES = "verb_tenses"
     }
+
+    private val _loadingDataUI = MutableStateFlow<Boolean>(false)
+    val loadingDataUI: StateFlow<Boolean> = _loadingDataUI.asStateFlow()
+
+    private val _errorMessage = MutableSharedFlow<String>(replay = 0, extraBufferCapacity = 1)
+    val errorMessage: SharedFlow<String> = _errorMessage.asSharedFlow()
+
+    private val _translations = MutableStateFlow<List<ComposedTranslation>>(emptyList())
+    val translations: StateFlow<List<ComposedTranslation>> = _translations.asStateFlow()
+    private val _wordTypes = MutableStateFlow<List<String>>(emptyList())
+    val wordTypes: StateFlow<List<String>> = _wordTypes.asStateFlow()
+    private val _wordCreated = MutableSharedFlow<Boolean>()
+    val wordCreated: SharedFlow<Boolean> = _wordCreated
 
     private val _validateWord = Channel<String>()
     val validateWord: StateFlow<String> = _validateWord.receiveAsFlow()
@@ -65,12 +88,17 @@ class AddDictionaryWordViewModel @Inject constructor(
         MutableStateFlow("")
     val phoneticUIState: StateFlow<String> = _phoneticUIState.asStateFlow()
 
-    private var dictionary: Dictionary? = null
+    private var dictionary: DictionaryDetailShort? = null
     private var editWord: Word? = null
     private var notSavingTranslations = mutableListOf<TranslationVariant>()
     private var tempDeletedTranslations = mutableListOf<TranslationVariant>()
 
-    fun loadData(context: Context?, dictionaryId: String?, word: Word?) = emptyFlow<FetchDataState<List<String>>>()
+    fun displayError(message: String) {
+        _errorMessage.tryEmit(message)
+    }
+
+    fun loadData(context: Context?, dictionaryId: String?, word: Word?) =
+        emptyFlow<FetchDataState<List<String>>>()
 //        flow<FetchDataState<List<String>>> {
 //            if (context == null) {
 //                return@flow
@@ -104,7 +132,8 @@ class AddDictionaryWordViewModel @Inject constructor(
 //                }
 //        }
 
-    private fun loadPhonetic(context: Context, dictionary: Dictionary?) = emptyFlow<FetchDataState<List<String>>>()
+    private fun loadPhonetic(context: Context, dictionary: Dictionary?) =
+        emptyFlow<FetchDataState<List<String>>>()
 //        flow<FetchDataState<List<String>>> {
 //            if (dictionary != null) {
 //                val phonetics =
@@ -246,7 +275,11 @@ class AddDictionaryWordViewModel @Inject constructor(
                 if (tags.isNotEmpty()) {
                     Log.d(TAG, "add tags ${tags.size}")
                     val addTagsResult =
-                        wordsUseCase.addTagsToWord(dictionary!!.id.toString()!!, tags, editWord!!._id!!)
+                        wordsUseCase.addTagsToWord(
+                            dictionary!!.id.toString()!!,
+                            tags,
+                            editWord!!._id!!
+                        )
                     Log.d(TAG, "tags added result $addTagsResult")
                 }
                 editWord?.tenses?.forEach {
@@ -424,6 +457,87 @@ class AddDictionaryWordViewModel @Inject constructor(
                     )
                 )
             }
+        }
+    }
+
+    fun setDictionary(dictionary: DictionaryDetailShort?) {
+        this.dictionary = dictionary
+    }
+
+    fun addTranslation(translation: TranslationNotCreated) {
+        _translations.value = _translations.value + ComposedTranslation(
+            category = translation.category,
+            translate = translation.translate,
+            description = translation.description
+        )
+    }
+
+    fun deleteTranslation(translation: ComposedTranslation) {
+        _translations.value = _translations.value.minus(translation)
+    }
+
+    fun loadWordTypes() {
+        _loadingDataUI.value = true
+        viewModelScope.launch {
+            getWordTypesUseCase.invoke()
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    displayError(it.message ?: "Error")
+                }
+                .onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _loadingDataUI.value = false
+                }
+                .collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            Log.d(TAG, "collected ${result.data.size} word types")
+                            _wordTypes.value = result.data
+                        }
+
+                        is DomainResult.Error -> displayError(result.message)
+                    }
+                }
+        }
+    }
+
+    fun createWord(
+        original: String,
+        phonetic: String?,
+        type: String?
+    ) {
+        val dictionary = dictionary ?: return
+        _loadingDataUI.value = true
+        viewModelScope.launch {
+            addWordToDictionaryUseCase.invoke(
+                dictionary.id,
+                original,
+                phonetic,
+                type,
+                translations.value.map {
+                    TranslationNotCreated(
+                        category = it.category,
+                        translate = it.translate,
+                        description = it.description
+                    )
+                })
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    displayError(it.message ?: "Error")
+                }
+                .onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _loadingDataUI.value = false
+                }
+                .collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            _wordCreated.emit(true)
+                        }
+
+                        is DomainResult.Error -> displayError(result.message)
+                    }
+                }
         }
     }
 

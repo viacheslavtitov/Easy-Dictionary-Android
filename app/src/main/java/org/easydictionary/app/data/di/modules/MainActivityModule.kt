@@ -11,14 +11,23 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.easydictionary.app.BuildConfig
+import org.easydictionary.app.data.remote.category.CategoryApiService
 import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
 import org.easydictionary.app.data.remote.language.LanguageApiService
 import org.easydictionary.app.data.remote.language.LanguageStaticApiService
+import org.easydictionary.app.data.remote.word.WordApiService
+import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.data.repositories.DatabaseRepository
+import org.easydictionary.app.data.repositories.category.CategoryRepositoryImpl
 import org.easydictionary.app.data.repositories.dictionary.DictionaryRepositoryImpl
 import org.easydictionary.app.data.repositories.language.LanguageRepositoryImpl
+import org.easydictionary.app.data.repositories.word.WordRepositoryImpl
+import org.easydictionary.app.domain.repository.category.CategoryRepository
 import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
 import org.easydictionary.app.domain.repository.language.LanguageRepository
+import org.easydictionary.app.domain.repository.word.WordRepository
+import org.easydictionary.app.domain.usecases.category.AddCategoryUseCase
+import org.easydictionary.app.domain.usecases.category.GetUserDictionaryCategoriesUseCase
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
@@ -30,7 +39,9 @@ import org.easydictionary.app.domain.usecases.quize.GetCreateQuizUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationsUseCase
 import org.easydictionary.app.domain.usecases.users.GetUpdateUsersUseCase
-import org.easydictionary.app.domain.usecases.words.WordsUseCase
+import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.WordsUseCase
+import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import javax.inject.Singleton
 
@@ -61,6 +72,30 @@ object MainActivityModule {
             context.resources,
             languageStaticApiService,
             languageApiService
+        )
+    }
+
+    @Provides
+    fun provideCategoryRepository(
+        @ApplicationContext context: Context,
+        categoryApiService: CategoryApiService
+    ): CategoryRepository {
+        return CategoryRepositoryImpl(
+            context.resources,
+            categoryApiService
+        )
+    }
+
+    @Provides
+    fun provideWordRepository(
+        @ApplicationContext context: Context,
+        wordTypesStaticApiService: WordTypesStaticApiService,
+        wordApiService: WordApiService
+    ): WordRepository {
+        return WordRepositoryImpl(
+            context.resources,
+            wordTypesStaticApiService,
+            wordApiService
         )
     }
 
@@ -103,11 +138,35 @@ object MainActivityModule {
     }
 
     @Provides
+    fun provideAddCategoryUseCase(categoryRepository: CategoryRepository): AddCategoryUseCase {
+        return AddCategoryUseCase(categoryRepository)
+    }
+
+    @Provides
+    fun provideGetUserCategoriesUseCase(categoryRepository: CategoryRepository): GetUserDictionaryCategoriesUseCase {
+        return GetUserDictionaryCategoriesUseCase(categoryRepository)
+    }
+
+    @Provides
     fun provideWordsUseCase(
         databaseRepository: DatabaseRepository,
         preferenceUtils: PreferenceUtils
     ): WordsUseCase {
         return WordsUseCase(databaseRepository, preferenceUtils)
+    }
+
+    @Provides
+    fun provideGetWordTypesUseCase(
+        wordRepository: WordRepository
+    ): GetWordTypesUseCase {
+        return GetWordTypesUseCase(wordRepository)
+    }
+
+    @Provides
+    fun provideAddWordToDictionaryUseCase(
+        wordRepository: WordRepository
+    ): AddWordToDictionaryUseCase {
+        return AddWordToDictionaryUseCase(wordRepository)
     }
 
     @Provides

@@ -32,6 +32,7 @@ import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.navigation.AppNavigation
+import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.view.dictionary.AddOrEditDictionaryScreen
 import org.easydictionary.app.view.dictionary.DictionariesScreen
@@ -45,6 +46,10 @@ import org.easydictionary.app.view.register.SignUpScreen
 import org.easydictionary.app.view.signin.SignInScreen
 import org.easydictionary.app.view.splash.SplashScreen
 import org.easydictionary.app.view.widget.global.EasyDictionaryTheme
+import org.easydictionary.app.view.word.AddOrEditWordScreen
+import org.easydictionary.app.view.word.translation.AddNewCategoryDialogScreen
+import org.easydictionary.app.view.word.translation.AddOrEditWordTranslationScreen
+import org.easydictionary.app.view.word.translation.BUNDLE_NEW_CATEGORY
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -573,8 +578,10 @@ class MainActivity : ComponentActivity() {
                     sharedMainViewModel = sharedViewModel
                 )
             }
-            composable(route = AppNavigation.EditDictionaryScreen.route,
-                arguments = listOf(navArgument("dictionary") { type = NavType.StringType })) { backStackEntry ->
+            composable(
+                route = AppNavigation.EditDictionaryScreen.route,
+                arguments = listOf(navArgument("dictionary") { type = NavType.StringType })
+            ) { backStackEntry ->
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 val dictJson = backStackEntry.arguments?.getString("dictionary") ?: ""
                 val dictionary = Json.decodeFromString<DictionaryDetailShort>(dictJson)
@@ -614,14 +621,60 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
-
-//            composable(
-//                route = Screen.Detail.route,
-//                arguments = listOf(navArgument("itemId") { type = NavType.IntType })
-//            ) { backStackEntry ->
-//                val itemId = backStackEntry.arguments?.getInt("itemId") ?: 0
-//                DetailScreen(itemId)
-//            }
+            composable(
+                route = AppNavigation.AddDictionaryWordScreen.route,
+                arguments = listOf(navArgument("dictionary") { type = NavType.StringType })
+            ) { backStackEntry ->
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                val dictJson = backStackEntry.arguments?.getString("dictionary") ?: ""
+                val dictionary = Json.decodeFromString<DictionaryDetailShort>(dictJson)
+                AddOrEditWordScreen(
+                    backStackEntry,
+                    navController,
+                    sharedMainViewModel = sharedViewModel,
+                    dictionary = dictionary
+                )
+            }
+            composable(route = AppNavigation.AddDictionaryWordTranslationsScreen.route,
+                arguments = listOf(navArgument("dictionaryId") { type = NavType.IntType })) { backStackEntry ->
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                val dictionaryId = backStackEntry.arguments?.getInt("dictionaryId") ?: -1
+                AddOrEditWordTranslationScreen(
+                    backStackEntry,
+                    navController,
+                    dictionaryId = dictionaryId,
+                    sharedMainViewModel = sharedViewModel
+                )
+            }
+            composable(
+                route = AppNavigation.EditDictionaryWordTranslationsScreen.route,
+                arguments = listOf(navArgument("dictionaryId") { type = NavType.IntType }, navArgument("translation") { type = NavType.StringType })
+            ) { backStackEntry ->
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                val dictJson = backStackEntry.arguments?.getString("translation") ?: ""
+                val dictionaryId = backStackEntry.arguments?.getInt("dictionaryId") ?: -1
+                val translation = Json.decodeFromString<ComposedTranslation>(dictJson)
+                AddOrEditWordTranslationScreen(
+                    backStackEntry,
+                    navController,
+                    sharedMainViewModel = sharedViewModel,
+                    dictionaryId = dictionaryId,
+                    editTranslation = translation
+                )
+            }
+            dialog(AppNavigation.AddNewCategoryScreen.route) { backStackEntry ->
+                AddNewCategoryDialogScreen(
+                    onDismiss = {
+                        navController.popBackStack()
+                    },
+                    onConfirm = { value ->
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(BUNDLE_NEW_CATEGORY, value)
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 

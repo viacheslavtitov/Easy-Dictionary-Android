@@ -1,4 +1,4 @@
-package org.easydictionary.app.domain.usecases.words
+package org.easydictionary.app.domain.usecases.word
 
 import android.content.Context
 import android.util.Log

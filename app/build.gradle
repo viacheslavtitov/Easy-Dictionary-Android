@@ -36,7 +36,7 @@ android {
         }
     }
     namespace 'org.easydictionary.app'
-    compileSdk 35
+    compileSdkVersion 35
 
     defaultConfig {
         applicationId "org.easydictionary.app"
@@ -55,6 +55,7 @@ android {
             buildConfigField "String", "SECURE_KEY_ALIAS", "\"debug_secure_key_alias\""
             buildConfigField "String", "BASE_API_URL", "\"http://dev.easydictionary.org/api/\""
             buildConfigField "String", "LANGUAGES_BASE_API_URL", "\"https://languages.dictionaryeasy.workers.dev/\""
+            buildConfigField "String", "WORD_TYPES_BASE_API_URL", "\"https://word-types.dictionaryeasy.workers.dev/\""
         }
         staging {
             signingConfig signingConfigs.qa

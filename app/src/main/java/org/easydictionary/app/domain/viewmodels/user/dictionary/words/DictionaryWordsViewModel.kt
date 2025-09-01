@@ -6,15 +6,13 @@ import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onCompletion
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.Dictionary
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
-import org.easydictionary.app.domain.usecases.words.WordsUseCase
+import org.easydictionary.app.domain.usecases.word.WordsUseCase
 import org.easydictionary.app.view.FetchDataState
 import javax.inject.Inject
 

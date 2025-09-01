@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -36,7 +34,6 @@ import org.easydictionary.app.view.ext.clearStack
 import org.easydictionary.app.view.inputs.EmailTextField
 import org.easydictionary.app.view.inputs.PasswordTextField
 import org.easydictionary.app.view.texts.TextFieldLabel
-import org.easydictionary.app.view.widget.global.TextDimen
 
 @Composable
 fun SignInScreen(
@@ -52,9 +49,9 @@ fun SignInScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        var email  by remember { mutableStateOf("") }
-        var password  by remember { mutableStateOf("") }
-        var errorMessage  by remember { mutableStateOf("") }
+        var email by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
+        var errorMessage by remember { mutableStateOf("") }
         var isEmailValid by remember { mutableStateOf(false) }
         var isPasswordValid by remember { mutableStateOf(false) }
         val isFormValid by remember(isEmailValid, isPasswordValid) {
@@ -95,7 +92,7 @@ fun SignInScreen(
                         }
 
                         is FetchDataState.ErrorState -> {
-                            Log.e("SignInScreen", {it.exception.message}.toString())
+                            Log.e("SignInScreen", { it.exception.message }.toString())
                             errorMessage = it.exception.message.toString()
                             showErrorDialog = true
                         }
@@ -112,7 +109,11 @@ fun SignInScreen(
             }
         }
         Spacer(modifier = Modifier.height(6.dp))
-        TextFieldLabel(stringResource(R.string.or))
+        TextFieldLabel(
+            label = stringResource(R.string.or), modifier = Modifier
+                .wrapContentSize()
+                .padding(horizontal = 6.dp)
+        )
         Spacer(modifier = Modifier.height(6.dp))
         ButtonPrimary(title = stringResource(R.string.sign_up), enabled = true) {
             navController.navigate(AppNavigation.SignUpScreen.route)

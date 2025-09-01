@@ -17,7 +17,6 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.words.variants.TranslationCategory
@@ -76,7 +75,7 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
         view.findViewById<View>(R.id.add_category_variant).setOnClickListener {
             val dialog = DialogBuilders.InputDialogBuilder
                 .cancelButtonTitle(getString(R.string.cancel))
-                .title(getString(R.string.add_category_name))
+                .title(getString(R.string.category_name))
                 .okButtonTitle(getString(R.string.ok))
                 .listener(object : InputDialogListener {
                     var categoryName: String? = null
@@ -99,35 +98,35 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
 
     private fun createCategory(name: String?) {
         lifecycleScope.launch {
-            viewModel.createCategory(context, name).collect {
-                when (it) {
-                    is FetchDataState.StartLoadingState -> {
-                        sharedViewModel.loading(true)
-                    }
-
-                    is FetchDataState.FinishLoadingState -> {
-                        sharedViewModel.loading(false)
-                    }
-
-                    is FetchDataState.ErrorState -> {
-                        displayError(
-                            it.exception.message
-                                ?: context?.getString(R.string.unknown_error),
-                            rootView
-                        )
-                    }
-
-                    is FetchDataState.DataState -> {
-                        if (it.data) {
-                            loadCategories()
-                        }
-                    }
-
-                    is FetchDataState.ErrorStateString -> {
-                        displayError(it.error, rootView)
-                    }
-                }
-            }
+//            viewModel.createCategory(context, name).collect {
+//                when (it) {
+//                    is FetchDataState.StartLoadingState -> {
+//                        sharedViewModel.loading(true)
+//                    }
+//
+//                    is FetchDataState.FinishLoadingState -> {
+//                        sharedViewModel.loading(false)
+//                    }
+//
+//                    is FetchDataState.ErrorState -> {
+//                        displayError(
+//                            it.exception.message
+//                                ?: context?.getString(R.string.unknown_error),
+//                            rootView
+//                        )
+//                    }
+//
+//                    is FetchDataState.DataState -> {
+//                        if (it.data) {
+//                            loadCategories()
+//                        }
+//                    }
+//
+//                    is FetchDataState.ErrorStateString -> {
+//                        displayError(it.error, rootView)
+//                    }
+//                }
+//            }
         }
     }
 
@@ -229,62 +228,62 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
             TranslationVariant::class.java
         ) else arguments?.getParcelable(BUNDLE_TRANSLATION) as? TranslationVariant
         editTranslationVariant?.dictionaryId = dictionaryId
-        viewModel.setEditModel(editTranslationVariant)
-        if (viewModel.isEditMode()) {
-            textInputEditTextExample.setText(viewModel.getExample())
-            textInputEditTextTranslation.setText(viewModel.getTranslation())
-        }
+//        viewModel.setEditModel(editTranslationVariant)
+//        if (viewModel.isEditMode()) {
+//            textInputEditTextExample.setText(viewModel.getExample())
+//            textInputEditTextTranslation.setText(viewModel.getTranslation())
+//        }
         loadCategories()
     }
 
     private fun loadCategories() {
-        lifecycleScope.launch {
-            categoryAdapter?.clear()
-            viewModel.loadCategories(context)
-                .onCompletion {
-                    val categories = categoryAdapter?.getItems()
-                    if (!categories.isNullOrEmpty()) {
-                        viewModel.getEditModel()?.categoryId.let { id ->
-                            val existCategory = categories.find { it._id == id }
-                            existCategory?.let { category ->
-                                viewModel.getEditModel()?.category = category
-                                Log.d(TAG, "found category $category")
-                                val categoryPosition =
-                                    categoryAdapter?.findPositionItem(category) ?: 0
-                                Log.d(TAG, "category loaded by position $categoryPosition")
-                                chooseCategorySpinner.setSelection(categoryPosition)
-                            }
-                        }
-                    }
-                }
-                .collect {
-                    when (it) {
-                        is FetchDataState.StartLoadingState -> {
-                            sharedViewModel.loading(true)
-                        }
-
-                        is FetchDataState.FinishLoadingState -> {
-                            sharedViewModel.loading(false)
-                        }
-
-                        is FetchDataState.ErrorState -> {
-                            displayError(
-                                it.exception.message
-                                    ?: context?.getString(R.string.unknown_error),
-                                rootView
-                            )
-                        }
-
-                        is FetchDataState.DataState -> {
-                            categoryAdapter?.add(it.data)
-                        }
-
-                        is FetchDataState.ErrorStateString -> {
-                            displayError(it.error, rootView)
-                        }
-                    }
-                }
-        }
+//        lifecycleScope.launch {
+//            categoryAdapter?.clear()
+//            viewModel.loadCategories(context)
+//                .onCompletion {
+//                    val categories = categoryAdapter?.getItems()
+//                    if (!categories.isNullOrEmpty()) {
+//                        viewModel.getEditModel()?.categoryId.let { id ->
+//                            val existCategory = categories.find { it._id == id }
+//                            existCategory?.let { category ->
+//                                viewModel.getEditModel()?.category = category
+//                                Log.d(TAG, "found category $category")
+//                                val categoryPosition =
+//                                    categoryAdapter?.findPositionItem(category) ?: 0
+//                                Log.d(TAG, "category loaded by position $categoryPosition")
+//                                chooseCategorySpinner.setSelection(categoryPosition)
+//                            }
+//                        }
+//                    }
+//                }
+//                .collect {
+//                    when (it) {
+//                        is FetchDataState.StartLoadingState -> {
+//                            sharedViewModel.loading(true)
+//                        }
+//
+//                        is FetchDataState.FinishLoadingState -> {
+//                            sharedViewModel.loading(false)
+//                        }
+//
+//                        is FetchDataState.ErrorState -> {
+//                            displayError(
+//                                it.exception.message
+//                                    ?: context?.getString(R.string.unknown_error),
+//                                rootView
+//                            )
+//                        }
+//
+//                        is FetchDataState.DataState -> {
+//                            categoryAdapter?.add(it.data)
+//                        }
+//
+//                        is FetchDataState.ErrorStateString -> {
+//                            displayError(it.error, rootView)
+//                        }
+//                    }
+//                }
+//        }
     }
 
     private fun updateTranslation(translation: String, category: TranslationCategory?) {
@@ -315,7 +314,7 @@ class AddTranslationVariantFragment : AbstractBaseFragment() {
                     is FetchDataState.DataState -> {
                         Log.d(TAG, "translation was updated")
                         if (viewModel.isEditMode()) {
-                            fillResultAndPopFragment(viewModel.getEditModel())
+//                            fillResultAndPopFragment(viewModel.getEditModel())
                         }
                     }
 

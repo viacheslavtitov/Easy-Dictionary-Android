@@ -15,11 +15,14 @@ import org.easydictionary.app.data.remote.auth.AuthApiService
 import org.easydictionary.app.data.remote.auth.AuthInterceptor
 import org.easydictionary.app.data.remote.auth.RefreshInterceptor
 import org.easydictionary.app.data.remote.auth.TokenAuthenticator
+import org.easydictionary.app.data.remote.category.CategoryApiService
 import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.data.remote.language.LanguageApiService
 import org.easydictionary.app.data.remote.language.LanguageStaticApiService
 import org.easydictionary.app.data.remote.provideGsonDateConvertor
+import org.easydictionary.app.data.remote.word.WordApiService
+import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.REFRESH_ACCESS_TOKEN_KEY
@@ -109,6 +112,27 @@ object NetworkModule {
             .build()
         return retrofit.create(LanguageStaticApiService::class.java)
     }
+    @Provides
+    fun provideWordTypesStaticApiService(loggingInterceptor: HttpLoggingInterceptor): WordTypesStaticApiService {
+        val client =
+            OkHttpClient.Builder()
+                .addInterceptor(loggingInterceptor)
+                .build()
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BuildConfig.WORD_TYPES_BASE_API_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(provideGsonDateConvertor()))
+            .build()
+        return retrofit.create(WordTypesStaticApiService::class.java)
+    }
+
+    @Provides
+    fun provideCategoryApiService(retrofit: Retrofit): CategoryApiService =
+        retrofit.create(CategoryApiService::class.java)
+
+    @Provides
+    fun provideWordApiService(retrofit: Retrofit): WordApiService =
+        retrofit.create(WordApiService::class.java)
 
     @Provides
     fun provideTokenAuthenticator(

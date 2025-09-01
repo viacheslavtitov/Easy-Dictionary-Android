@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.map
 import org.easydictionary.app.domain.models.quiz.Quiz
 import org.easydictionary.app.domain.usecases.quize.GetCreateQuizUseCase
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
-import org.easydictionary.app.domain.usecases.words.WordsUseCase
+import org.easydictionary.app.domain.usecases.word.WordsUseCase
 import org.easydictionary.app.view.FetchDataState
 import javax.inject.Inject
 
