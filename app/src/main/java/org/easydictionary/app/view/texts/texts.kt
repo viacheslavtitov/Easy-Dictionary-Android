@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import org.easydictionary.app.view.widget.global.TextDimen
 import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
@@ -30,5 +31,20 @@ fun SecondaryTextFieldLabel(
         modifier = modifier,
         fontSize = TextDimen.TextFieldText,
         style = MaterialTheme.typography.titleMedium
+    )
+}
+
+@Composable
+fun Secondary2TextFieldLabel(
+    label: String,
+    modifier: Modifier
+) {
+    Text(
+        text = label,
+        color = getCurrentColorScheme().secondary,
+        modifier = modifier,
+        fontSize = TextDimen.TextFieldText,
+        style = MaterialTheme.typography.titleMedium,
+        fontFamily = FontFamily.Cursive
     )
 }

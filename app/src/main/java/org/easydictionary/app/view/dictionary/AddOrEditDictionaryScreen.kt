@@ -2,13 +2,18 @@ package org.easydictionary.app.view.dictionary
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -27,6 +32,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -40,6 +46,7 @@ import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.models.navigation.AppNavigation
+import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.DictionaryValidationException
@@ -47,7 +54,10 @@ import org.easydictionary.app.domain.viewmodels.user.dictionary.add.languages.La
 import org.easydictionary.app.view.buttons.ButtonFilledTonalSecondary
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
+import org.easydictionary.app.view.dividers.Divider
 import org.easydictionary.app.view.inputs.TextFieldPrimary
+import org.easydictionary.app.view.texts.Secondary2TextFieldLabel
+import org.easydictionary.app.view.texts.TextFieldLabel
 import org.easydictionary.app.view.topbars.TitleTopBar
 import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
@@ -66,6 +76,8 @@ fun AddOrEditDictionaryScreen(
     val editedDialect by viewModel.dialect.collectAsState()
     val selectedLanguageFrom by viewModel.selectedLanguageFrom.collectAsState()
     val selectedLanguageTo by viewModel.selectedLanguageTo.collectAsState()
+    val words by viewModel.words.collectAsState()
+    viewModel.setEditMode(editDictionary)
     LaunchedEffect(errorMessage) {
         showErrorDialog = errorMessage.isNotEmpty()
     }
@@ -119,10 +131,15 @@ fun AddOrEditDictionaryScreen(
             }
         }
     }
+    LaunchedEffect(Unit) {
+        viewModel.loadWords()
+    }
     val shakeLanguageFrom = remember { mutableIntStateOf(0) }
     val shakeLanguageTo = remember { mutableIntStateOf(0) }
     val dialect = remember { mutableStateOf<String?>(null) }
-    viewModel.setEditMode(editDictionary)
+    val onSelectWord: (WordDetail) -> Unit = { item ->
+
+    }
     Scaffold(
         floatingActionButton = {
             if (viewModel.isEditMode()) {
@@ -194,13 +211,13 @@ fun AddOrEditDictionaryScreen(
                     top = innerPadding.calculateTopPadding()
                 )
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+//                .verticalScroll(rememberScrollState())
                 .background(backgroundColor)
         ) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
-                    .fillMaxSize()
+                    .wrapContentSize()
             ) {
                 ButtonFilledTonalSecondary(
                     enabled = !viewModel.isEditMode(),
@@ -231,8 +248,57 @@ fun AddOrEditDictionaryScreen(
                     supportingText = stringResource(R.string.optional)
                 )
             }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                items(
+                    items = words,
+                    key = { it.original + it.id }
+                ) { item ->
+                    WordListItem(item, onSelectWord)
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun WordListItem(
+    word: WordDetail,
+    onSelect: (WordDetail) -> Unit
+) {
+    val backgroundColor = getCurrentColorScheme().primaryContainer
+    var translations = ""
+    word.translations.forEachIndexed { index, item ->
+        translations += if(index == word.translations.size - 1) {
+            " ${item.translate}"
+        } else {
+            " ${item.translate},"
+        }
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor)
+            .clickable {
+                onSelect(word)
+            },
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextFieldLabel(word.original, Modifier.wrapContentSize())
+            Secondary2TextFieldLabel(" - $translations", Modifier.fillMaxWidth())
+        }
+    }
+    Divider()
 }
 
 @Composable

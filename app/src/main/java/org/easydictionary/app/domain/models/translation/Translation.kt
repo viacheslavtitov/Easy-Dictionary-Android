@@ -37,8 +37,16 @@ data class TranslationNotCreated(
 @Serializable
 data class Translation(
     val id: Int,
-    val categoryId: Int,
-    val wordId: Int,
+    val categoryId: Int? = null,
+    val translate: String,
+    val description: String? = null,
+) {
+    fun toJson(): String = Json.encodeToString(this)
+}
+@Serializable
+data class TranslationWithCategory(
+    val id: Int,
+    val category: Category? = null,
     val translate: String,
     val description: String? = null,
 ) {

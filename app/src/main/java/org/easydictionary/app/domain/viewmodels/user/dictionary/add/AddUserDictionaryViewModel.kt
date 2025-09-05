@@ -14,18 +14,22 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.easydictionary.app.domain.models.DomainResult
-import org.easydictionary.app.domain.models.dictionary.Dictionary
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
+import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
-import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
+import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryParams
+import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryParams
+import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,13 +37,18 @@ class AddUserDictionaryViewModel @Inject constructor(
     private val dictionaryUseCase: GetCreateDictionaryUseCase,
     private val addUserLanguageUseCase: AddUserLanguageUseCase,
     private val deleteDictionaryUseCase: DeleteDictionaryUseCase,
-    private val updateDictionaryUseCase: UpdateDictionaryUseCase
+    private val updateDictionaryUseCase: UpdateDictionaryUseCase,
+    private val getAllWordsForDictionaryUseCase: GetAllWordsForDictionaryUseCase,
+    private val searchWordsForDictionaryUseCase: SearchWordsForDictionaryUseCase
 ) : ViewModel() {
 
     companion object {
         private val TAG = AddUserDictionaryViewModel::class.simpleName
+        private const val WORDS_PAGE_SIZE = 20
     }
 
+    private var latestWordsPagId: Int = 0
+    private var latestSearchWordsPagId: Int = 0
     private var editDictionary: DictionaryDetailShort? = null
     private val _selectedLanguageFrom = MutableStateFlow<Language?>(null)
     val selectedLanguageFrom: StateFlow<Language?> = _selectedLanguageFrom.asStateFlow()
@@ -53,6 +62,8 @@ class AddUserDictionaryViewModel @Inject constructor(
     val errorUI: StateFlow<String> = _errorUI.asStateFlow()
     private val _dictionaryCreated = MutableSharedFlow<Boolean>()
     val dictionaryCreated: SharedFlow<Boolean> = _dictionaryCreated
+    private val _words = MutableStateFlow<List<WordDetail>>(emptyList())
+    val words: StateFlow<List<WordDetail>> = _words.asStateFlow()
 
     fun setLanguage(langType: LangType, json: String) {
         val language: Language = Json.decodeFromString(json)
@@ -173,6 +184,76 @@ class AddUserDictionaryViewModel @Inject constructor(
         _selectedLanguageFrom.value = editDictionary?.langFrom
         _selectedLanguageTo.value = editDictionary?.langTo
         _dialect.value = editDictionary?.dialect ?: ""
+    }
+
+    fun loadWords() {
+        val dictionaryId = editDictionary?.id ?: return
+        Log.d(TAG, "loadWords($latestWordsPagId)")
+        _loadingDataUI.value = true
+        latestSearchWordsPagId = 0
+        viewModelScope.launch {
+            getAllWordsForDictionaryUseCase(
+                GetAllWordsForDictionaryParams(
+                    lastPageId = latestWordsPagId,
+                    pageSize = WORDS_PAGE_SIZE,
+                    dictionaryId = dictionaryId
+                )
+            ).catch {
+                Log.d(TAG, "catch ${it.message}")
+                _errorUI.value = it.message ?: "Error"
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _loadingDataUI.value = false
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        Log.d(TAG, "Words downloaded ${result.data.words.size}")
+                        latestWordsPagId = result.data.latestId
+                        _words.update { current ->
+                            (current + result.data.words).distinctBy { it.id }
+                        }
+                    }
+
+                    is DomainResult.Error -> _errorUI.value = result.message
+                }
+            }
+        }
+    }
+
+    fun searchWords(query: String) {
+        val dictionaryId = editDictionary?.id ?: return
+        Log.d(TAG, "searchWords($query - $latestSearchWordsPagId)")
+        _loadingDataUI.value = true
+        latestWordsPagId = 0
+        _words.value = emptyList()
+        viewModelScope.launch {
+            searchWordsForDictionaryUseCase(
+                SearchWordsForDictionaryParams(
+                    query = query,
+                    lastPageId = latestSearchWordsPagId,
+                    pageSize = WORDS_PAGE_SIZE,
+                    dictionaryId = dictionaryId
+                )
+            ).catch {
+                Log.d(TAG, "catch ${it.message}")
+                _errorUI.value = it.message ?: "Error"
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _loadingDataUI.value = false
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        Log.d(TAG, "Words downloaded ${result.data.words.size}")
+                        latestSearchWordsPagId = result.data.latestId
+                        _words.update { current ->
+                            (current + result.data.words).distinctBy { it.id }
+                        }
+                    }
+
+                    is DomainResult.Error -> _errorUI.value = result.message
+                }
+            }
+        }
     }
 }
 

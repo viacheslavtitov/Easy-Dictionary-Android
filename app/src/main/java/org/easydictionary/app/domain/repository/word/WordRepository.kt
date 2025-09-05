@@ -3,6 +3,7 @@ package org.easydictionary.app.domain.repository.word
 import kotlinx.coroutines.flow.Flow
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
+import org.easydictionary.app.domain.models.word.WordsResponse
 import org.easydictionary.app.domain.repository.BaseRepository
 
 interface WordRepository : BaseRepository {
@@ -14,4 +15,17 @@ interface WordRepository : BaseRepository {
         type: String?,
         translations: List<TranslationNotCreated>
     ): Flow<DomainResult<Unit>>
+
+    suspend fun getAllWordsForDictionary(
+        dictionaryId: Int,
+        latestPagId: Int,
+        pageSize: Int
+    ): Flow<DomainResult<WordsResponse>>
+
+    suspend fun searchWordsForDictionary(
+        query: String,
+        dictionaryId: Int,
+        latestPagId: Int,
+        pageSize: Int
+    ): Flow<DomainResult<WordsResponse>>
 }

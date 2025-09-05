@@ -40,6 +40,8 @@ import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationC
 import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationsUseCase
 import org.easydictionary.app.domain.usecases.users.GetUpdateUsersUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.WordsUseCase
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import org.easydictionary.app.domain.utils.PreferenceUtils
@@ -97,6 +99,20 @@ object MainActivityModule {
             wordTypesStaticApiService,
             wordApiService
         )
+    }
+
+    @Provides
+    fun provideGetAllWordsForDictionaryUseCase(
+        wordRepository: WordRepository
+    ): GetAllWordsForDictionaryUseCase {
+        return GetAllWordsForDictionaryUseCase(wordRepository)
+    }
+
+    @Provides
+    fun provideSearchWordsForDictionaryUseCase(
+        wordRepository: WordRepository
+    ): SearchWordsForDictionaryUseCase {
+        return SearchWordsForDictionaryUseCase(wordRepository)
     }
 
     @Provides

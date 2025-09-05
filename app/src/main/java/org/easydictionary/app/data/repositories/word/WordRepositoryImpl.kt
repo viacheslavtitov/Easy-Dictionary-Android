@@ -11,6 +11,8 @@ import org.easydictionary.app.data.remote.word.WordApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
+import org.easydictionary.app.domain.models.word.Word
+import org.easydictionary.app.domain.models.word.WordsResponse
 import org.easydictionary.app.domain.repository.word.WordRepository
 import javax.inject.Inject
 
@@ -64,6 +66,78 @@ class WordRepositoryImpl @Inject constructor(
             }) {
                 is ApiResult.Success -> {
                     DomainResult.Success(Unit)
+                }
+
+                is ApiResult.ApiError -> {
+                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
+                }
+
+                is ApiResult.NetworkError -> {
+                    DomainResult.Error(resources.getString(R.string.network_error))
+                }
+
+                is ApiResult.UnknownError -> {
+                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                }
+            }
+        )
+    }
+
+    override suspend fun getAllWordsForDictionary(
+        dictionaryId: Int,
+        latestPagId: Int,
+        pageSize: Int
+    ): Flow<DomainResult<WordsResponse>> {
+        return flowOf(
+            when (val result = wrapApi {
+                wordApiService.getAllForDictionary(
+                    dictionaryId = dictionaryId, lastId = latestPagId, pageSize = pageSize
+                )
+            }) {
+                is ApiResult.Success -> {
+                    DomainResult.Success(
+                        WordsResponse(
+                            latestId = result.data.latestId,
+                            words = result.data.words.map { it.toDomain() }
+                        ))
+                }
+
+                is ApiResult.ApiError -> {
+                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
+                }
+
+                is ApiResult.NetworkError -> {
+                    DomainResult.Error(resources.getString(R.string.network_error))
+                }
+
+                is ApiResult.UnknownError -> {
+                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                }
+            }
+        )
+    }
+
+    override suspend fun searchWordsForDictionary(
+        query: String,
+        dictionaryId: Int,
+        latestPagId: Int,
+        pageSize: Int
+    ): Flow<DomainResult<WordsResponse>> {
+        return flowOf(
+            when (val result = wrapApi {
+                wordApiService.searchWordsForDictionary(
+                    dictionaryId = dictionaryId,
+                    lastId = latestPagId,
+                    pageSize = pageSize,
+                    query = query
+                )
+            }) {
+                is ApiResult.Success -> {
+                    DomainResult.Success(
+                        WordsResponse(
+                            latestId = result.data.latestId,
+                            words = result.data.words.map { it.toDomain() }
+                        ))
                 }
 
                 is ApiResult.ApiError -> {

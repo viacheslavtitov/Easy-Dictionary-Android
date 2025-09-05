@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             val navController = rememberNavController()
             LaunchedEffect(Unit) {
@@ -551,27 +552,22 @@ class MainActivity : ComponentActivity() {
             startDestination = AppNavigation.SplashScreen.route
         ) {
             composable(route = AppNavigation.SplashScreen.route) {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
+
                 SplashScreen(navController)
             }
             composable(route = AppNavigation.SignInScreen.route) {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 SignInScreen(navController, sharedMainViewModel = sharedViewModel)
             }
             composable(route = AppNavigation.SignUpScreen.route) {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 SignUpScreen(navController, sharedMainViewModel = sharedViewModel)
             }
             composable(route = AppNavigation.HomeScreen.route) {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 HomeScreen(navController, sharedMainViewModel = sharedViewModel)
             }
             composable(route = AppNavigation.DictionariesScreen.route) {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 DictionariesScreen(navController, sharedMainViewModel = sharedViewModel)
             }
             composable(route = AppNavigation.AddUserDictionaryScreen.route) { backStackEntry ->
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 AddOrEditDictionaryScreen(
                     backStackEntry,
                     navController,
@@ -582,7 +578,6 @@ class MainActivity : ComponentActivity() {
                 route = AppNavigation.EditDictionaryScreen.route,
                 arguments = listOf(navArgument("dictionary") { type = NavType.StringType })
             ) { backStackEntry ->
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 val dictJson = backStackEntry.arguments?.getString("dictionary") ?: ""
                 val dictionary = Json.decodeFromString<DictionaryDetailShort>(dictJson)
                 AddOrEditDictionaryScreen(
@@ -596,7 +591,6 @@ class MainActivity : ComponentActivity() {
                 AppNavigation.LanguagesScreen.route,
                 arguments = listOf(navArgument("langType") { type = NavType.IntType })
             ) { backStackEntry ->
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 val langType = backStackEntry.arguments?.getInt("langType")
                 LangType.fromInt(langType)?.let {
                     SelectLanguageScreen(
@@ -625,7 +619,6 @@ class MainActivity : ComponentActivity() {
                 route = AppNavigation.AddDictionaryWordScreen.route,
                 arguments = listOf(navArgument("dictionary") { type = NavType.StringType })
             ) { backStackEntry ->
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 val dictJson = backStackEntry.arguments?.getString("dictionary") ?: ""
                 val dictionary = Json.decodeFromString<DictionaryDetailShort>(dictJson)
                 AddOrEditWordScreen(
@@ -637,7 +630,6 @@ class MainActivity : ComponentActivity() {
             }
             composable(route = AppNavigation.AddDictionaryWordTranslationsScreen.route,
                 arguments = listOf(navArgument("dictionaryId") { type = NavType.IntType })) { backStackEntry ->
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 val dictionaryId = backStackEntry.arguments?.getInt("dictionaryId") ?: -1
                 AddOrEditWordTranslationScreen(
                     backStackEntry,
@@ -650,7 +642,6 @@ class MainActivity : ComponentActivity() {
                 route = AppNavigation.EditDictionaryWordTranslationsScreen.route,
                 arguments = listOf(navArgument("dictionaryId") { type = NavType.IntType }, navArgument("translation") { type = NavType.StringType })
             ) { backStackEntry ->
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 val dictJson = backStackEntry.arguments?.getString("translation") ?: ""
                 val dictionaryId = backStackEntry.arguments?.getInt("dictionaryId") ?: -1
                 val translation = Json.decodeFromString<ComposedTranslation>(dictJson)
