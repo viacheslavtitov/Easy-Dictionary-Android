@@ -221,6 +221,10 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     fun searchWords(query: String) {
+        if(query.isEmpty()) {
+            loadWords()
+            return
+        }
         val dictionaryId = editDictionary?.id ?: return
         Log.d(TAG, "searchWords($query - $latestSearchWordsPagId)")
         _loadingDataUI.value = true

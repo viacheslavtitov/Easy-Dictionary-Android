@@ -117,7 +117,7 @@ fun SelectLanguageScreen(
         topBar = {
             SearchTopBar(
                 title = toolBarTitle,
-                placeHolderText = stringResource(R.string.search_hint),
+                placeHolderText = stringResource(R.string.language_search_hint),
                 query = query,
                 onQueryChange = { query = it },
                 isSearching = isSearching,

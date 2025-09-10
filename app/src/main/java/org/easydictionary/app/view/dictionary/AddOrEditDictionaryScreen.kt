@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,6 +59,7 @@ import org.easydictionary.app.view.dividers.Divider
 import org.easydictionary.app.view.inputs.TextFieldPrimary
 import org.easydictionary.app.view.texts.Secondary2TextFieldLabel
 import org.easydictionary.app.view.texts.TextFieldLabel
+import org.easydictionary.app.view.topbars.SearchTopBar
 import org.easydictionary.app.view.topbars.TitleTopBar
 import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
@@ -77,6 +79,11 @@ fun AddOrEditDictionaryScreen(
     val selectedLanguageFrom by viewModel.selectedLanguageFrom.collectAsState()
     val selectedLanguageTo by viewModel.selectedLanguageTo.collectAsState()
     val words by viewModel.words.collectAsState()
+    var query by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+    LaunchedEffect(query) {
+        viewModel.searchWords(query)
+    }
     viewModel.setEditMode(editDictionary)
     LaunchedEffect(errorMessage) {
         showErrorDialog = errorMessage.isNotEmpty()
@@ -140,6 +147,34 @@ fun AddOrEditDictionaryScreen(
     val onSelectWord: (WordDetail) -> Unit = { item ->
 
     }
+    val onCreateDictionary: () -> Unit = {
+        try {
+            viewModel.createDictionary(dialect.value)
+        } catch (exLanguageFrom: DictionaryValidationException.LanguageFromException) {
+            Log.e(
+                "AddOrEditDictionaryScreen",
+                "Failed to edit or create dictionary",
+                exLanguageFrom
+            )
+            shakeLanguageFrom.intValue += 1
+        } catch (exLanguageTo: DictionaryValidationException.LanguageToException) {
+            Log.e(
+                "AddOrEditDictionaryScreen",
+                "Failed to edit or create dictionary",
+                exLanguageTo
+            )
+            shakeLanguageTo.intValue += 1
+        }
+    }
+    val onUpdateDictionary: () -> Unit = {
+        viewModel.updateDictionary(dialect.value)
+    }
+    val onDeleteDictionary: () -> Unit = {
+        showDeleteDialog = true
+    }
+    val title = if (!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
+        R.string.edit_dictionary
+    )
     Scaffold(
         floatingActionButton = {
             if (viewModel.isEditMode()) {
@@ -157,51 +192,40 @@ fun AddOrEditDictionaryScreen(
             }
         },
         topBar = {
-            TitleTopBar(
-                title = if (!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
-                    R.string.edit_dictionary
-                ),
-                actions = {
-                    IconButton(onClick = {
-                        if (!viewModel.isEditMode()) {
-                            try {
-                                viewModel.createDictionary(dialect.value)
-                            } catch (exLanguageFrom: DictionaryValidationException.LanguageFromException) {
-                                Log.e(
-                                    "AddOrEditDictionaryScreen",
-                                    "Failed to edit or create dictionary",
-                                    exLanguageFrom
-                                )
-                                shakeLanguageFrom.intValue += 1
-                            } catch (exLanguageTo: DictionaryValidationException.LanguageToException) {
-                                Log.e(
-                                    "AddOrEditDictionaryScreen",
-                                    "Failed to edit or create dictionary",
-                                    exLanguageTo
-                                )
-                                shakeLanguageTo.intValue += 1
-                            }
-                        } else {
-                            viewModel.updateDictionary(dialect.value)
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Save,
-                            contentDescription = "Save"
+            if(viewModel.isEditMode()) {
+                SearchTopBar(
+                    title = title,
+                    placeHolderText = stringResource(R.string.words_search_hint),
+                    query = query,
+                    onQueryChange = { query = it },
+                    isSearching = isSearching,
+                    onSearchToggle = { isSearching = true },
+                    onClearQuery = {
+                        query = ""
+                        isSearching = false
+                    },
+                    actions = {
+                        toolBarActions(
+                            viewModel.isEditMode(),
+                            onCreateDictionary,
+                            onUpdateDictionary,
+                            onDeleteDictionary
                         )
                     }
-                    if (viewModel.isEditMode()) {
-                        IconButton(onClick = {
-                            showDeleteDialog = true
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Delete,
-                                contentDescription = "Delete"
-                            )
-                        }
+                )
+            } else {
+                TitleTopBar(
+                    title = title,
+                    actions = {
+                        toolBarActions(
+                            viewModel.isEditMode(),
+                            onCreateDictionary,
+                            onUpdateDictionary,
+                            onDeleteDictionary
+                        )
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         val backgroundColor = getCurrentColorScheme().surface
@@ -271,7 +295,7 @@ private fun WordListItem(
     val backgroundColor = getCurrentColorScheme().primaryContainer
     var translations = ""
     word.translations.forEachIndexed { index, item ->
-        translations += if(index == word.translations.size - 1) {
+        translations += if (index == word.translations.size - 1) {
             " ${item.translate}"
         } else {
             " ${item.translate},"
@@ -311,5 +335,36 @@ private fun getLanguageButtonTitle(
             ?: stringResource(R.string.select_language_from)
 
         LangType.TO -> selectedLanguage?.name ?: stringResource(R.string.select_language_to)
+    }
+}
+
+@Composable
+private fun toolBarActions(
+    isEditMode: Boolean,
+    onCreateDictionaryClick: () -> Unit,
+    onUpdateDictionaryClick: () -> Unit,
+    onDeleteDictionaryClick: () -> Unit,
+) {
+    IconButton(onClick = {
+        if (!isEditMode) {
+            onCreateDictionaryClick()
+        } else {
+            onUpdateDictionaryClick()
+        }
+    }) {
+        Icon(
+            imageVector = Icons.Filled.Save,
+            contentDescription = "Save"
+        )
+    }
+    if (isEditMode) {
+        IconButton(onClick = {
+            onDeleteDictionaryClick()
+        }) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "Delete"
+            )
+        }
     }
 }

@@ -102,12 +102,13 @@
     <string name="add_language">Add language</string>
     <string name="add_your_own_language">Add your own language</string>
     <string name="or_add_your_own_language">Or add your own language</string>
-    <string name="search_hint">English</string>
+    <string name="language_search_hint">English</string>
     <!-- Words -->
     <string name="words">Words</string>
     <string name="words_count">Words %d</string>
     <string name="add_word">Add word</string>
     <string name="edit_word">Edit word</string>
+    <string name="words_search_hint">Hello</string>
     <string name="edit_translation">Edit translation</string>
     <string name="delete_word_title">Delete word</string>
     <string name="delete_translation_title">Delete word</string>

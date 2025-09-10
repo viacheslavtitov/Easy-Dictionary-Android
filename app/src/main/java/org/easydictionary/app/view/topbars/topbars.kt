@@ -112,7 +112,8 @@ fun SearchTopBar(
     onQueryChange: (String) -> Unit,
     isSearching: Boolean,
     onSearchToggle: () -> Unit,
-    onClearQuery: () -> Unit
+    onClearQuery: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
         title = {
@@ -148,7 +149,8 @@ fun SearchTopBar(
                 IconButton(onClick = onSearchToggle) {
                     Icon(Icons.Default.Search, contentDescription = "Search")
                 }
+                actions()
             }
-        }
+        },
     )
 }
