@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -28,11 +28,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -40,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
@@ -81,6 +85,29 @@ fun AddOrEditDictionaryScreen(
     val words by viewModel.words.collectAsState()
     var query by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val total = layoutInfo.totalItemsCount
+            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisible >= total - 1 - 5
+        }
+    }
+
+    LaunchedEffect(listState, loadingProgress) {
+        snapshotFlow { shouldLoadMore }
+            .distinctUntilChanged()
+            .filter { it && !loadingProgress }
+            .collect {
+                if (query.isEmpty()) {
+                    viewModel.loadWords()
+                } else {
+                    viewModel.searchWords(query)
+                }
+            }
+    }
     LaunchedEffect(query) {
         viewModel.searchWords(query)
     }
@@ -145,7 +172,11 @@ fun AddOrEditDictionaryScreen(
     val shakeLanguageTo = remember { mutableIntStateOf(0) }
     val dialect = remember { mutableStateOf<String?>(null) }
     val onSelectWord: (WordDetail) -> Unit = { item ->
-
+        editDictionary?.let { dict ->
+            navController.navigate(
+                AppNavigation.EditDictionaryWordScreen.createRoute(dict, item)
+            )
+        }
     }
     val onCreateDictionary: () -> Unit = {
         try {
@@ -172,9 +203,10 @@ fun AddOrEditDictionaryScreen(
     val onDeleteDictionary: () -> Unit = {
         showDeleteDialog = true
     }
-    val title = if (!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
-        R.string.edit_dictionary
-    )
+    val title =
+        if (!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
+            R.string.edit_dictionary
+        )
     Scaffold(
         floatingActionButton = {
             if (viewModel.isEditMode()) {
@@ -192,7 +224,7 @@ fun AddOrEditDictionaryScreen(
             }
         },
         topBar = {
-            if(viewModel.isEditMode()) {
+            if (viewModel.isEditMode()) {
                 SearchTopBar(
                     title = title,
                     placeHolderText = stringResource(R.string.words_search_hint),

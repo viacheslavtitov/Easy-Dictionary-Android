@@ -53,12 +53,14 @@ import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
+import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.dividers.Divider
+import org.easydictionary.app.view.inputs.TextFieldPhonetic
 import org.easydictionary.app.view.inputs.TextFieldPrimary
 import org.easydictionary.app.view.texts.SecondaryTextFieldLabel
 import org.easydictionary.app.view.texts.TextFieldLabel
@@ -67,20 +69,24 @@ import org.easydictionary.app.view.widget.global.TextDimen
 import org.easydictionary.app.view.widget.global.categoryLight
 import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddOrEditWordScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: AddDictionaryWordViewModel = hiltViewModel(backStackEntry),
     sharedMainViewModel: SharedMainViewModel,
-    dictionary: DictionaryDetailShort? = null
+    dictionary: DictionaryDetailShort? = null,
+    wordDetail: WordDetail? = null
 ) {
     var showError by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
     val translations by viewModel.translations.collectAsState()
     val wordTypes by viewModel.wordTypes.collectAsState()
+    val phonetics by viewModel.phonetics.collectAsState()
     var wordValue by rememberSaveable { mutableStateOf("") }
+    var phonetic by rememberSaveable { mutableStateOf("") }
     var selectedWordType by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
         viewModel.errorMessage.collect { msg ->
@@ -97,6 +103,10 @@ fun AddOrEditWordScreen(
             }
         }
     }
+    fun onPhoneticsChanged(symbol: String) {
+        phonetic += symbol
+    }
+
     val translationExistErrorMessage = stringResource(R.string.error_translation_exist)
     sharedMainViewModel.loading(loadingProgress)
     if (showError.isNotEmpty()) {
@@ -176,7 +186,7 @@ fun AddOrEditWordScreen(
                         if (!viewModel.isEditMode()) {
                             viewModel.createWord(
                                 original = wordValue,
-                                phonetic = null,
+                                phonetic = phonetic,
                                 type = selectedWordType
                             )
                         } else {
@@ -223,6 +233,12 @@ fun AddOrEditWordScreen(
                     label = stringResource(R.string.add_word),
                     supportingText = stringResource(R.string.tap_your_word),
                     errorMessage = stringResource(R.string.field_required)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                TextFieldPhonetic(
+                    symbols = phonetics.map { it.symbol },
+                    defaultValue = "",
+                    onValueChange = ::onPhoneticsChanged
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 WordTypesDropDown(

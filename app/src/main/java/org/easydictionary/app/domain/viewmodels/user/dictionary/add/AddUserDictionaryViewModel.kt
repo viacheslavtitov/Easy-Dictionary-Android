@@ -22,9 +22,12 @@ import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.models.word.WordDetail
+import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryParams
+import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
-import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
+import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryParams
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
+import org.easydictionary.app.domain.usecases.languages.AddUserLanguageParams
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryParams
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
@@ -34,7 +37,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddUserDictionaryViewModel @Inject constructor(
-    private val dictionaryUseCase: GetCreateDictionaryUseCase,
+    private val createDictionaryUseCase: CreateDictionaryUseCase,
     private val addUserLanguageUseCase: AddUserLanguageUseCase,
     private val deleteDictionaryUseCase: DeleteDictionaryUseCase,
     private val updateDictionaryUseCase: UpdateDictionaryUseCase,
@@ -64,6 +67,7 @@ class AddUserDictionaryViewModel @Inject constructor(
     val dictionaryCreated: SharedFlow<Boolean> = _dictionaryCreated
     private val _words = MutableStateFlow<List<WordDetail>>(emptyList())
     val words: StateFlow<List<WordDetail>> = _words.asStateFlow()
+    private var isAllWordsLoaded  = false
 
     fun setLanguage(langType: LangType, json: String) {
         val language: Language = Json.decodeFromString(json)
@@ -88,16 +92,20 @@ class AddUserDictionaryViewModel @Inject constructor(
         _loadingDataUI.value = true
         viewModelScope.launch {
             combine(
-                addUserLanguageUseCase.invoke(languageFrom.code, languageFrom.name),
-                addUserLanguageUseCase.invoke(languageTo.code, languageTo.name)
+                addUserLanguageUseCase(
+                    AddUserLanguageParams(languageFrom.code, languageFrom.name)
+                ),
+                addUserLanguageUseCase(AddUserLanguageParams(languageTo.code, languageTo.name))
             ) { langFrom, langTo ->
                 langFrom to langTo
             }.flatMapLatest { langs ->
                 if (langs.first is DomainResult.Success && langs.second is DomainResult.Success)
-                    return@flatMapLatest dictionaryUseCase.createDictionary(
-                        dialectValue,
-                        (langs.first as DomainResult.Success<Language>).data.id,
-                        (langs.second as DomainResult.Success<Language>).data.id
+                    return@flatMapLatest createDictionaryUseCase(
+                        CreateDictionaryParams(
+                            dialectValue,
+                            (langs.first as DomainResult.Success<Language>).data.id,
+                            (langs.second as DomainResult.Success<Language>).data.id
+                        )
                     ) else {
                     throw IllegalStateException("Languages wasn't created")
                 }
@@ -125,9 +133,11 @@ class AddUserDictionaryViewModel @Inject constructor(
         Log.d(TAG, "updateDictionary $dialectValue")
         _loadingDataUI.value = true
         viewModelScope.launch {
-            updateDictionaryUseCase.invoke(
-                id = editDictionary!!.id,
-                dialect = dialectValue,
+            updateDictionaryUseCase(
+                UpdateDictionaryParams(
+                    id = editDictionary!!.id,
+                    dialect = dialectValue
+                )
             )
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
@@ -187,6 +197,7 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     fun loadWords() {
+        if(isAllWordsLoaded) return
         val dictionaryId = editDictionary?.id ?: return
         Log.d(TAG, "loadWords($latestWordsPagId)")
         _loadingDataUI.value = true
@@ -208,23 +219,29 @@ class AddUserDictionaryViewModel @Inject constructor(
                 when (result) {
                     is DomainResult.Success -> {
                         Log.d(TAG, "Words downloaded ${result.data.words.size}")
+                        isAllWordsLoaded = latestSearchWordsPagId == result.data.latestId
                         latestWordsPagId = result.data.latestId
                         _words.update { current ->
                             (current + result.data.words).distinctBy { it.id }
                         }
                     }
 
-                    is DomainResult.Error -> _errorUI.value = result.message
+                    is DomainResult.Error -> {
+                        latestWordsPagId = 0
+                        isAllWordsLoaded = false
+                        _errorUI.value = result.message
+                    }
                 }
             }
         }
     }
 
     fun searchWords(query: String) {
-        if(query.isEmpty()) {
+        if (query.isEmpty()) {
             loadWords()
             return
         }
+        if(isAllWordsLoaded) return
         val dictionaryId = editDictionary?.id ?: return
         Log.d(TAG, "searchWords($query - $latestSearchWordsPagId)")
         _loadingDataUI.value = true
@@ -248,13 +265,18 @@ class AddUserDictionaryViewModel @Inject constructor(
                 when (result) {
                     is DomainResult.Success -> {
                         Log.d(TAG, "Words downloaded ${result.data.words.size}")
+                        isAllWordsLoaded = latestSearchWordsPagId == result.data.latestId
                         latestSearchWordsPagId = result.data.latestId
                         _words.update { current ->
                             (current + result.data.words).distinctBy { it.id }
                         }
                     }
 
-                    is DomainResult.Error -> _errorUI.value = result.message
+                    is DomainResult.Error -> {
+                        latestSearchWordsPagId = 0
+                        isAllWordsLoaded = false
+                        _errorUI.value = result.message
+                    }
                 }
             }
         }

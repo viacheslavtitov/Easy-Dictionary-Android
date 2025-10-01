@@ -2,29 +2,30 @@ package org.easydictionary.app.domain.usecases.register
 
 import kotlinx.coroutines.flow.Flow
 import org.easydictionary.app.domain.models.DomainResult
-import org.easydictionary.app.domain.models.auth.Auth
 import org.easydictionary.app.domain.models.users.User
-import org.easydictionary.app.domain.repository.auth.AuthRepository
 import org.easydictionary.app.domain.repository.register.SignUpRepository
+import org.easydictionary.app.domain.usecases.BaseUseCase
 import javax.inject.Inject
 
-class SignUpUseCase @Inject constructor(private val signUpRepository: SignUpRepository) {
+data class SignUpParams(
+    val email: String?,
+    val password: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val provider: String,
+    val providerToken: String?
+)
 
-    suspend operator fun invoke(
-        email: String?,
-        password: String?,
-        firstName: String?,
-        lastName: String?,
-        provider: String,
-        providerToken: String?
-    ): Flow<DomainResult<User>> {
+class SignUpUseCase @Inject constructor(private val signUpRepository: SignUpRepository) :
+    BaseUseCase<SignUpParams, DomainResult<User>> {
+    override suspend fun invoke(params: SignUpParams): Flow<DomainResult<User>> {
         return signUpRepository.signUp(
-            email = email,
-            password = password,
-            firstName = firstName,
-            lastName = lastName,
-            provider = provider,
-            providerToken = providerToken
+            email = params.email,
+            password = params.password,
+            firstName = params.firstName,
+            lastName = params.lastName,
+            provider = params.provider,
+            providerToken = params.providerToken
         )
     }
 

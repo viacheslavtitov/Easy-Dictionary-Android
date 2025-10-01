@@ -19,9 +19,9 @@ import org.easydictionary.app.domain.models.category.Category
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.words.variants.TranslationCategory
 import org.easydictionary.app.domain.models.words.variants.TranslationVariant
+import org.easydictionary.app.domain.usecases.category.AddCategoryParams
 import org.easydictionary.app.domain.usecases.category.AddCategoryUseCase
 import org.easydictionary.app.domain.usecases.category.GetUserDictionaryCategoriesUseCase
-import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationsUseCase
 import org.easydictionary.app.view.FetchDataState
 import javax.inject.Inject
 
@@ -29,7 +29,6 @@ import javax.inject.Inject
 class AddTranslationVariantViewModel @Inject constructor(
     private val addCategoryUseCase: AddCategoryUseCase,
     private val getUserDictionaryCategoriesUseCase: GetUserDictionaryCategoriesUseCase,
-    private val getCreateTranslationsUseCase: GetCreateTranslationsUseCase,
     private val uiStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -51,11 +50,6 @@ class AddTranslationVariantViewModel @Inject constructor(
     val categories: StateFlow<List<Category>> =
         _categories.asStateFlow()
 
-    val translationSavedUIState: StateFlow<String> =
-        uiStateHandle.getStateFlow(KEY_STATE_TRANSLATION, "")
-    val exampleSavedUIState: StateFlow<String> = uiStateHandle.getStateFlow(KEY_STATE_EXAMPLE, "")
-    val categorySavedUIState: StateFlow<Int> = uiStateHandle.getStateFlow(KEY_STATE_CATEGORY, -1)
-
     private var editModel: ComposedTranslation? = null
     private var dictionaryId: Int? = null
 
@@ -63,7 +57,7 @@ class AddTranslationVariantViewModel @Inject constructor(
         val dictionaryId = dictionaryId ?: return
         _loadingDataUI.value = true
         viewModelScope.launch {
-            getUserDictionaryCategoriesUseCase.invoke(dictionaryId)
+            getUserDictionaryCategoriesUseCase(dictionaryId)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
                     _errorUI.value = it.message ?: "Error"
@@ -95,7 +89,7 @@ class AddTranslationVariantViewModel @Inject constructor(
         val dictionaryId = dictionaryId ?: return
         _loadingDataUI.value = true
         viewModelScope.launch {
-            addCategoryUseCase.invoke(dictionaryId, categoryName)
+            addCategoryUseCase(AddCategoryParams(dictionaryId, categoryName))
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
                     _errorUI.value = it.message ?: "Error"

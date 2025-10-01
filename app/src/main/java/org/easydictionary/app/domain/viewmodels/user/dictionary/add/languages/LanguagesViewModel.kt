@@ -16,15 +16,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.language.Language
-import org.easydictionary.app.domain.models.language.LanguageListItem
-import org.easydictionary.app.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import org.easydictionary.app.domain.usecases.languages.GetLanguagesStaticUseCase
 import org.easydictionary.app.domain.usecases.languages.GetLanguagesUserUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class LanguagesViewModel @Inject constructor(
-    private val languagesUseCase: GetDictionaryLanguagesUseCase,
     private val getLanguagesStaticUseCase: GetLanguagesStaticUseCase,
     private val getLanguagesUserUseCase: GetLanguagesUserUseCase,
 ) : ViewModel() {
@@ -58,8 +55,8 @@ class LanguagesViewModel @Inject constructor(
         _loadingDataUI.value = true
         viewModelScope.launch {
             combine(
-                getLanguagesStaticUseCase.invoke(),
-                getLanguagesUserUseCase.invoke()
+                getLanguagesStaticUseCase(Unit),
+                getLanguagesUserUseCase(Unit)
             ) { staticLanguages, userLanguages ->
                 if (staticLanguages is DomainResult.Success && userLanguages is DomainResult.Success) {
                     val merged = (userLanguages.data + staticLanguages.data.map { language ->

@@ -4,21 +4,25 @@ import kotlinx.coroutines.flow.Flow
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.auth.Auth
 import org.easydictionary.app.domain.repository.auth.AuthRepository
+import org.easydictionary.app.domain.usecases.BaseUseCase
 import javax.inject.Inject
 
-class AuthUseCase @Inject constructor(private val authRepository: AuthRepository) {
+data class AuthParams(
+    val email: String?,
+    val password: String?,
+    val provider: String,
+    val providerToken: String?
+)
 
-    suspend operator fun invoke(
-        email: String?,
-        password: String?,
-        provider: String,
-        providerToken: String?
-    ): Flow<DomainResult<Auth>> {
+class AuthUseCase @Inject constructor(private val authRepository: AuthRepository) :
+    BaseUseCase<AuthParams, DomainResult<Auth>> {
+
+    override suspend fun invoke(params: AuthParams): Flow<DomainResult<Auth>> {
         return authRepository.signIn(
-            email = email,
-            password = password,
-            provider = provider,
-            providerToken = providerToken
+            email = params.email,
+            password = params.password,
+            provider = params.provider,
+            providerToken = params.providerToken
         )
     }
 

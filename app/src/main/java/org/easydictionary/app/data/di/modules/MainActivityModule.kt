@@ -3,46 +3,42 @@ package org.easydictionary.app.data.di.modules
 import android.content.Context
 import coil.ImageLoader
 import coil.decode.SvgDecoder
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import org.easydictionary.app.BuildConfig
 import org.easydictionary.app.data.remote.category.CategoryApiService
 import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
 import org.easydictionary.app.data.remote.language.LanguageApiService
 import org.easydictionary.app.data.remote.language.LanguageStaticApiService
+import org.easydictionary.app.data.remote.language.PhoneticsStaticApiService
 import org.easydictionary.app.data.remote.word.WordApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
-import org.easydictionary.app.data.repositories.DatabaseRepository
 import org.easydictionary.app.data.repositories.category.CategoryRepositoryImpl
 import org.easydictionary.app.data.repositories.dictionary.DictionaryRepositoryImpl
 import org.easydictionary.app.data.repositories.language.LanguageRepositoryImpl
+import org.easydictionary.app.data.repositories.language.PhoneticsRepositoryImpl
 import org.easydictionary.app.data.repositories.word.WordRepositoryImpl
 import org.easydictionary.app.domain.repository.category.CategoryRepository
 import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
 import org.easydictionary.app.domain.repository.language.LanguageRepository
+import org.easydictionary.app.domain.repository.language.PhoneticsRepository
 import org.easydictionary.app.domain.repository.word.WordRepository
 import org.easydictionary.app.domain.usecases.category.AddCategoryUseCase
 import org.easydictionary.app.domain.usecases.category.GetUserDictionaryCategoriesUseCase
+import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
-import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
+import org.easydictionary.app.domain.usecases.dictionary.GetAllDetailShortUseCase
+import org.easydictionary.app.domain.usecases.dictionary.GetAllDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
-import org.easydictionary.app.domain.usecases.languages.GetDictionaryLanguagesUseCase
 import org.easydictionary.app.domain.usecases.languages.GetLanguagesStaticUseCase
 import org.easydictionary.app.domain.usecases.languages.GetLanguagesUserUseCase
-import org.easydictionary.app.domain.usecases.quize.GetCreateQuizUseCase
-import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationCategoriesUseCase
-import org.easydictionary.app.domain.usecases.translations.GetCreateTranslationsUseCase
-import org.easydictionary.app.domain.usecases.users.GetUpdateUsersUseCase
+import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
-import org.easydictionary.app.domain.usecases.word.WordsUseCase
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import javax.inject.Singleton
@@ -50,11 +46,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object MainActivityModule {
-
-    @Provides
-    fun provideDatabaseRepository(): DatabaseRepository {
-        return DatabaseRepository(Firebase.database(BuildConfig.FIREBASE_DATABASE_URL))
-    }
 
     @Provides
     fun provideDictionaryRepository(
@@ -102,6 +93,17 @@ object MainActivityModule {
     }
 
     @Provides
+    fun providePhoneticsRepository(
+        @ApplicationContext context: Context,
+        phoneticsStaticApiService: PhoneticsStaticApiService
+    ): PhoneticsRepository {
+        return PhoneticsRepositoryImpl(
+            context.resources,
+            phoneticsStaticApiService
+        )
+    }
+
+    @Provides
     fun provideGetAllWordsForDictionaryUseCase(
         wordRepository: WordRepository
     ): GetAllWordsForDictionaryUseCase {
@@ -116,16 +118,10 @@ object MainActivityModule {
     }
 
     @Provides
-    fun provideGetUpdateUsersUseCase(
-        databaseRepository: DatabaseRepository,
-        preferenceUtils: PreferenceUtils
-    ): GetUpdateUsersUseCase {
-        return GetUpdateUsersUseCase(databaseRepository, preferenceUtils)
-    }
-
-    @Provides
-    fun provideGetDictionaryLanguagesUseCase(): GetDictionaryLanguagesUseCase {
-        return GetDictionaryLanguagesUseCase()
+    fun provideGetPhoneticsUseCase(
+        phoneticsRepository: PhoneticsRepository
+    ): GetPhoneticsUseCase {
+        return GetPhoneticsUseCase(phoneticsRepository)
     }
 
     @Provides
@@ -164,14 +160,6 @@ object MainActivityModule {
     }
 
     @Provides
-    fun provideWordsUseCase(
-        databaseRepository: DatabaseRepository,
-        preferenceUtils: PreferenceUtils
-    ): WordsUseCase {
-        return WordsUseCase(databaseRepository, preferenceUtils)
-    }
-
-    @Provides
     fun provideGetWordTypesUseCase(
         wordRepository: WordRepository
     ): GetWordTypesUseCase {
@@ -186,50 +174,29 @@ object MainActivityModule {
     }
 
     @Provides
-    fun provideGetCreateDictionaryUseCase(
-        databaseRepository: DatabaseRepository,
-        preferenceUtils: PreferenceUtils,
+    fun provideGetAllDictionaryUseCase(
         dictionaryRepository: DictionaryRepository
-    ): GetCreateDictionaryUseCase {
-        return GetCreateDictionaryUseCase(
-            databaseRepository,
-            preferenceUtils,
+    ): GetAllDictionaryUseCase {
+        return GetAllDictionaryUseCase(
             dictionaryRepository
         )
     }
 
     @Provides
-    fun provideGetCreateTranslationsUseCase(
-        databaseRepository: DatabaseRepository,
-        preferenceUtils: PreferenceUtils
-    ): GetCreateTranslationsUseCase {
-        return GetCreateTranslationsUseCase(
-            databaseRepository,
-            preferenceUtils
+    fun provideGetAllDetailShortUseCase(
+        dictionaryRepository: DictionaryRepository
+    ): GetAllDetailShortUseCase {
+        return GetAllDetailShortUseCase(
+            dictionaryRepository
         )
     }
 
     @Provides
-    fun provideGetCreateTranslationCategoriesUseCase(
-        databaseRepository: DatabaseRepository,
-        preferenceUtils: PreferenceUtils
-    ): GetCreateTranslationCategoriesUseCase {
-        return GetCreateTranslationCategoriesUseCase(
-            databaseRepository,
-            preferenceUtils
-        )
-    }
-
-    @Provides
-    fun provideGetCreateQuizeUseCase(
-        databaseRepository: DatabaseRepository,
-        getCreateDictionaryUseCase: GetCreateDictionaryUseCase,
-        preferenceUtils: PreferenceUtils
-    ): GetCreateQuizUseCase {
-        return GetCreateQuizUseCase(
-            databaseRepository,
-            getCreateDictionaryUseCase,
-            preferenceUtils
+    fun provideCreateDictionaryUseCase(
+        dictionaryRepository: DictionaryRepository
+    ): CreateDictionaryUseCase {
+        return CreateDictionaryUseCase(
+            dictionaryRepository
         )
     }
 

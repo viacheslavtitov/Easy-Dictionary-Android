@@ -1,7 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.New.EasyDictionary" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- або Theme.Material3.Light.NoActionBar -->
+        <!-- Theme.Material3.Light.NoActionBar -->
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
     </style>
@@ -26,103 +26,8 @@
         <item name="textAppearanceBodyLarge">@style/TextAppearance.Material3.BodyLarge</item>
         <item name="textAppearanceTitleMedium">@style/TextAppearance.Material3.TitleMedium</item>
         <item name="shapeAppearanceCornerExtraSmall">@style/ShapeAppearance.Material3.Corner.ExtraSmall</item>
-        <item name="editTextStyle">@style/Widget.TextInputEditText.OutlinedBox</item>
         <!-- Toolbar -->
         <item name="windowActionModeOverlay">true</item>
-        <item name="actionModeStyle">@style/Widget.App.ActionMode</item>
-        <item name="actionModeCloseDrawable">@drawable/ic_baseline_close_24</item>
         <item name="actionBarTheme">@style/ThemeOverlay.MaterialComponents.Dark.ActionBar</item>
-        <!-- Snackbar -->
-        <item name="snackbarStyle">@style/Widget.App.Snackbar</item>
-        <item name="snackbarButtonStyle">@style/Widget.App.SnackbarButton</item>
-        <!-- Spinner -->
-        <item name="spinnerStyle">@style/Widget.App.Spinner</item>
-        <item name="buttonStyle">@style/Widget.App.Button</item>
-        <!-- CheckBox -->
-        <item name="checkboxStyle">@style/Widget.App.CheckBox</item>
-    </style>
-
-    <style name="SplashTheme" parent="@style/Theme.AppCompat.NoActionBar">
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowBackground">@color/main_light</item>
-    </style>
-
-    <style name="Toolbar.Style" parent="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="titleTextAppearance">@style/Toolbar.Title.TextAppearance</item>
-        <item name="titleTextColor">@color/white</item>
-        <item name="navigationIconTint">@color/white</item>
-        <item name="titleCentered">true</item>
-    </style>
-
-    <style name="Toolbar.Title.TextAppearance" parent="@style/TextAppearance.MaterialComponents.Headline6">
-        <item name="android:textSize">16dp</item>
-        <item name="android:textColor">@color/white</item>
-        <item name="android:gravity">center</item>
-        <item name="android:layout_gravity">center</item>
-    </style>
-
-    <style name="Widget.Button.Tonal" parent="@style/Widget.Material3.Button.TonalButton">
-        <item name="android:textColor">@color/main_text</item>
-        <item name="elevation">1dp</item>
-        <item name="backgroundTint">@color/light_blue_200</item>
-        <item name="rippleColor">@color/main_light</item>
-        <item name="android:textSize">16dp</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:ellipsize">end</item>
-        <item name="android:lines">1</item>
-    </style>
-
-    <style name="Widget.TextInputLayout.OutlinedBox" parent="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/main_light</item>
-        <item name="boxStrokeErrorColor">@color/error</item>
-        <item name="errorTextColor">@color/error</item>
-        <item name="helperTextTextColor">@color/secondary_text</item>
-        <item name="boxStrokeWidth">1dp</item>
-        <item name="boxStrokeWidthFocused">2dp</item>
-        <item name="android:textColor">@color/main_text</item>
-        <item name="endIconTint">@color/main_dark</item>
-    </style>
-
-    <style name="Widget.TextInputEditText.OutlinedBox" parent="@style/Widget.Material3.TextInputEditText.OutlinedBox">
-        <item name="android:textColor">@color/main_text</item>
-        <item name="android:textSize">16dp</item>
-    </style>
-
-    <style name="Widget.App.Snackbar" parent="Widget.MaterialComponents.Snackbar">
-        <item name="materialThemeOverlay">@style/ThemeOverlay.App.Snackbar</item>
-        <item name="actionTextColorAlpha">1</item>
-    </style>
-
-    <style name="Widget.App.SnackbarButton" parent="Widget.MaterialComponents.Button.TextButton.Snackbar">
-        <item name="android:textColor">@color/white</item>
-    </style>
-
-    <style name="ThemeOverlay.App.Snackbar" parent="">
-        <item name="colorPrimary">@color/main_dark</item>
-        <item name="colorOnSurface">@color/black</item>
-    </style>
-
-    <style name="Widget.App.ActionMode" parent="Widget.AppCompat.ActionMode">
-        <item name="titleTextStyle">?attr/textAppearanceHeadline6</item>
-        <item name="subtitleTextStyle">?attr/textAppearanceSubtitle1</item>
-        <item name="background">@color/gray_500</item>
-    </style>
-
-    <style name="Widget.App.Spinner" parent="Widget.AppCompat.Spinner">
-        <item name="background">@drawable/ic_baseline_arrow_drop_down_24</item>
-    </style>
-
-    <style name="Widget.App.Button" parent="Widget.AppCompat.Button.Borderless.Colored">
-        <item name="android:background">@drawable/button_selector</item>
-        <item name="android:textColor">@color/white</item>
-        <item name="android:textSize">18dp</item>
-    </style>
-
-    <style name="Widget.App.CheckBox" parent="Widget.AppCompat.CompoundButton.CheckBox">
-        <item name="android:background">@drawable/background_checkbox</item>
-        <item name="buttonTint">@color/checkbox_tint</item>
-        <item name="buttonIconTint">@color/checkbox_icon_tint</item>
-
-        <item name="buttonIcon">@null</item>
     </style>
 </resources>

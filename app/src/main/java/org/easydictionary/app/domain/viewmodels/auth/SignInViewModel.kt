@@ -3,18 +3,15 @@ package org.easydictionary.app.domain.viewmodels.auth
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import org.easydictionary.app.domain.models.DomainResult
-import org.easydictionary.app.domain.models.auth.Auth
+import org.easydictionary.app.domain.usecases.auth.AuthParams
 import org.easydictionary.app.domain.usecases.auth.AuthUseCase
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.REFRESH_ACCESS_TOKEN_KEY
-import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.view.FetchDataState
 import javax.inject.Inject
 
@@ -38,7 +35,7 @@ class SignInViewModel @Inject constructor(
             "signIn: email=$email | password = $password | provider = $provider | providerToken = $providerToken"
         )
         emit(FetchDataState.StartLoadingState)
-        authUseCase(email, password, provider, providerToken)
+        authUseCase(AuthParams(email, password, provider, providerToken))
             .catch {
                 Log.d(TAG, "catch ${it.message}")
                 emit(FetchDataState.ErrorState(it))

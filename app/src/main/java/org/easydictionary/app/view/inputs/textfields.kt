@@ -6,28 +6,38 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardAlt
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.view.widget.global.TextDimen
+import org.easydictionary.app.view.widget.phonetic.PhoneticsView
 
 @Composable
 fun TextFieldPrimary(
@@ -211,4 +221,70 @@ private fun OutlinedTextFieldLabel(label: String) {
         fontSize = TextDimen.TextFieldLabel,
         style = MaterialTheme.typography.titleSmall
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TextFieldPhonetic(
+    symbols: List<String>,
+    defaultValue: String,
+    onValueChange: (String) -> Unit,
+) {
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    var value by rememberSaveable { mutableStateOf(defaultValue) }
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(defaultValue) {
+        value = defaultValue
+    }
+    fun openSheet() {
+        focusManager.clearFocus(force = true)
+        keyboard?.hide()
+        showSheet = true
+        scope.launch { sheetState.show() }
+    }
+    OutlinedTextField(
+        onValueChange = { newValue ->
+            value = newValue
+            onValueChange(value)
+        },
+        value = value,
+        label = { OutlinedTextFieldLabel(stringResource(R.string.phonetic)) },
+        textStyle = TextStyle(
+            fontSize = TextDimen.TextFieldText,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(6.dp),
+        supportingText = {
+            Text(
+                text = stringResource(R.string.tap_to_add_phonetics),
+                fontSize = TextDimen.TextFieldLabel
+            )
+        },
+        trailingIcon = {
+            IconButton(onClick = ::openSheet) {
+                Icon(Icons.Default.KeyboardAlt, contentDescription = null)
+            }
+        },
+    )
+    fun onPhoneticsChanged(symbol: String) {
+        value += symbol
+        onValueChange(value)
+    }
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState,
+        ) {
+            PhoneticsView(
+                defaultValue = value,
+                symbols = symbols,
+                onInsert = ::onPhoneticsChanged,
+                onClose = { showSheet = false }
+            )
+        }
+    }
 }

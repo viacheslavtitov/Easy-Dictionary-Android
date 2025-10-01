@@ -20,6 +20,7 @@ import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.data.remote.language.LanguageApiService
 import org.easydictionary.app.data.remote.language.LanguageStaticApiService
+import org.easydictionary.app.data.remote.language.PhoneticsStaticApiService
 import org.easydictionary.app.data.remote.provideGsonDateConvertor
 import org.easydictionary.app.data.remote.word.WordApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
@@ -124,6 +125,20 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(provideGsonDateConvertor()))
             .build()
         return retrofit.create(WordTypesStaticApiService::class.java)
+    }
+
+    @Provides
+    fun providePhoneticsStaticApiService(loggingInterceptor: HttpLoggingInterceptor): PhoneticsStaticApiService {
+        val client =
+            OkHttpClient.Builder()
+                .addInterceptor(loggingInterceptor)
+                .build()
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BuildConfig.PHONETICS_BASE_API_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(provideGsonDateConvertor()))
+            .build()
+        return retrofit.create(PhoneticsStaticApiService::class.java)
     }
 
     @Provides

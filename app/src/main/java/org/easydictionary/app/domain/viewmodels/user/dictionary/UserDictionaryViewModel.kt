@@ -8,20 +8,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.dictionary.Dictionary
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
-import org.easydictionary.app.domain.usecases.dictionary.GetCreateDictionaryUseCase
-import org.easydictionary.app.view.FetchDataState
+import org.easydictionary.app.domain.usecases.dictionary.GetAllDetailShortUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class UserDictionaryViewModel @Inject constructor(
-    private val dictionaryUseCase: GetCreateDictionaryUseCase,
+    private val getAllDictionaryDetailShortUseCase: GetAllDetailShortUseCase,
     private val deleteDictionaryUseCase: DeleteDictionaryUseCase
 ) : ViewModel() {
 
@@ -38,34 +36,11 @@ class UserDictionaryViewModel @Inject constructor(
     private val _errorUI = MutableStateFlow<String>("")
     val errorUI: StateFlow<String> = _errorUI.asStateFlow()
 
-    fun loadDictionaries() = flow<FetchDataState<List<Dictionary>>> {
-        Log.d(TAG, "loadDictionaries()")
-        emit(FetchDataState.StartLoadingState)
-        dictionaryUseCase.getDictionaries()
-            .catch {
-                Log.d(TAG, "catch ${it.message}")
-                emit(FetchDataState.ErrorState(it))
-            }
-            .onCompletion {
-                Log.d(TAG, "onCompletion")
-                emit(FetchDataState.FinishLoadingState)
-            }
-            .collect { result ->
-                when (result) {
-                    is DomainResult.Success -> {
-                        emit(FetchDataState.DataState(result.data))
-                    }
-
-                    is DomainResult.Error -> emit(FetchDataState.ErrorStateString(result.message))
-                }
-            }
-    }
-
     fun loadDictionariesDetailShort() {
         Log.d(TAG, "loadDictionariesDetailShort()")
         _loadingDataUI.value = true
         viewModelScope.launch {
-            dictionaryUseCase.getDictionariesDetailShort()
+            getAllDictionaryDetailShortUseCase(Unit)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
                     _errorUI.value = it.message ?: "Error"

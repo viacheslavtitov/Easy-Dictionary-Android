@@ -5,8 +5,8 @@ import org.easydictionary.app.domain.models.dictionary.Dictionary
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.filter.FilterModel
 import org.easydictionary.app.domain.models.language.LangType
-import org.easydictionary.app.domain.models.quiz.Quiz
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
+import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.models.words.variants.TranslationVariant
 
@@ -28,38 +28,27 @@ sealed class AppNavigation(val route: String) {
             "dictionary/edit/${Json.encodeToString(dictionary)}"
     }
 
-    object AddUserQuizScreen : AppNavigation("quiz/add")
-
-    object EditQuizScreenFromDetail : AppNavigation("quiz/edit/{quiz}") {
-        fun createRoute(quiz: Quiz) = "quiz/edit/$quiz"
-    }
-
-    object EditQuizScreenFromQuizList : AppNavigation("quiz/edit/{quiz}") {
-        fun createRoute(quiz: Quiz) = "quiz/edit/$quiz"
-    }
-
-    object UserQuizScreen : AppNavigation("quiz/{quiz}") {
-        fun createRoute(quiz: Quiz) = "quiz/$quiz"
-    }
-
-    object RunQuizScreen : AppNavigation("quiz/run/{quiz}") {
-        fun createRoute(quiz: Quiz) = "quiz/run/$quiz"
-    }
-
     object AddDictionaryWordScreen : AppNavigation("dictionary/words/{dictionary}") {
-        fun createRoute(dictionary: DictionaryDetailShort) = "dictionary/words/${Json.encodeToString(dictionary)}"
+        fun createRoute(dictionary: DictionaryDetailShort) =
+            "dictionary/words/${Json.encodeToString(dictionary)}"
     }
 
-    object AddDictionaryWordTranslationsScreen : AppNavigation("dictionary/words/translation/add/{dictionaryId}") {
+    object AddDictionaryWordTranslationsScreen :
+        AppNavigation("dictionary/words/translation/add/{dictionaryId}") {
         fun createRoute(dictionaryId: Int) = "dictionary/words/translation/add/${dictionaryId}"
     }
-    object EditDictionaryWordTranslationsScreen : AppNavigation("dictionary/words/translation/edit/{dictionaryId}/{translation}") {
-        fun createRoute(translation: ComposedTranslation, dictionaryId: Int) = "dictionary/words/translation/edit/${dictionaryId}/${Json.encodeToString(translation)}"
+
+    object EditDictionaryWordTranslationsScreen :
+        AppNavigation("dictionary/words/translation/edit/{dictionaryId}/{translation}") {
+        fun createRoute(translation: ComposedTranslation, dictionaryId: Int) =
+            "dictionary/words/translation/edit/${dictionaryId}/${Json.encodeToString(translation)}"
     }
+
     object AddNewCategoryScreen : AppNavigation("dictionary/category/add")
 
-    object EditDictionaryWordScreen : AppNavigation("dictionary/words/edit/{word}") {
-        fun createRoute(word: Word) = "dictionary/words/edit/$word"
+    object EditDictionaryWordScreen : AppNavigation("{dictionary}/words/edit/{word}") {
+        fun createRoute(dictionary: DictionaryDetailShort, word: WordDetail) =
+        "${Json.encodeToString(dictionary)}/words/edit/${Json.encodeToString(word)}"
     }
 
     object WordsMultiChooseScreen : AppNavigation("dictionary/words/multi/{dictionaryId}/{words}") {
@@ -92,4 +81,6 @@ sealed class AppNavigation(val route: String) {
         fun createRoute(word: String?, dictionaryId: String, translation: TranslationVariant) =
             "translation/variant/edit/$dictionaryId/$word/$translation"
     }
+
+    object UserQuizScreen : AppNavigation("quiz")
 }
