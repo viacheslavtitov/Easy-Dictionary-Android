@@ -18,6 +18,8 @@ import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.Phonetic
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
+import org.easydictionary.app.domain.models.translation.TranslationWithCategory
+import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryParams
@@ -52,7 +54,7 @@ class AddDictionaryWordViewModel @Inject constructor(
     val wordCreated: SharedFlow<Boolean> = _wordCreated
 
     private var dictionary: DictionaryDetailShort? = null
-    private var editWord: Word? = null
+    private var editWord: WordDetail? = null
 
     fun displayError(message: String) {
         _errorMessage.tryEmit(message)
@@ -63,6 +65,13 @@ class AddDictionaryWordViewModel @Inject constructor(
     fun setDictionary(dictionary: DictionaryDetailShort?) {
         this.dictionary = dictionary
         loadPhonetics()
+    }
+
+    fun setWord(word: WordDetail?) {
+        this.editWord = word
+        editWord?.translations?.forEach {
+            addTranslation(it)
+        }
     }
 
     private fun loadPhonetics() {
@@ -93,6 +102,15 @@ class AddDictionaryWordViewModel @Inject constructor(
             category = translation.category,
             translate = translation.translate,
             description = translation.description
+        )
+    }
+
+    fun addTranslation(translation: TranslationWithCategory) {
+        _translations.value = _translations.value + ComposedTranslation(
+            category = translation.category,
+            translate = translation.translate,
+            description = translation.description,
+            id = translation.id
         )
     }
 

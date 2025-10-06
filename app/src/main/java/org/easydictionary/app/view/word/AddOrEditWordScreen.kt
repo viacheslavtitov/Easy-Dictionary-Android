@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -85,9 +86,9 @@ fun AddOrEditWordScreen(
     val translations by viewModel.translations.collectAsState()
     val wordTypes by viewModel.wordTypes.collectAsState()
     val phonetics by viewModel.phonetics.collectAsState()
-    var wordValue by rememberSaveable { mutableStateOf("") }
-    var phonetic by rememberSaveable { mutableStateOf("") }
-    var selectedWordType by rememberSaveable { mutableStateOf<String?>(null) }
+    var wordValue by rememberSaveable { mutableStateOf(wordDetail?.original ?: "") }
+    var phonetic by rememberSaveable { mutableStateOf(wordDetail?.phonetic ?: "") }
+    var selectedWordType by rememberSaveable { mutableStateOf(wordDetail?.type) }
     LaunchedEffect(Unit) {
         viewModel.errorMessage.collect { msg ->
             showError = msg
@@ -97,6 +98,10 @@ fun AddOrEditWordScreen(
         viewModel.loadWordTypes()
     }
     LaunchedEffect(Unit) {
+        viewModel.setDictionary(dictionary)
+        viewModel.setWord(wordDetail)
+    }
+    LaunchedEffect(Unit) {
         viewModel.wordCreated.collect { created ->
             if (created) {
                 navController.popBackStack()
@@ -104,7 +109,7 @@ fun AddOrEditWordScreen(
         }
     }
     fun onPhoneticsChanged(symbol: String) {
-        phonetic += symbol
+        phonetic = symbol
     }
 
     val translationExistErrorMessage = stringResource(R.string.error_translation_exist)
@@ -150,7 +155,6 @@ fun AddOrEditWordScreen(
                 }
         }
     }
-    viewModel.setDictionary(dictionary)
     val onEditTranslation: (ComposedTranslation) -> Unit = { item ->
         navController.navigate(
             AppNavigation.EditDictionaryWordTranslationsScreen.createRoute(
@@ -237,7 +241,7 @@ fun AddOrEditWordScreen(
                 Spacer(modifier = Modifier.height(6.dp))
                 TextFieldPhonetic(
                     symbols = phonetics.map { it.symbol },
-                    defaultValue = "",
+                    defaultValue = phonetic,
                     onValueChange = ::onPhoneticsChanged
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -376,7 +380,7 @@ fun WordTypesDropDown(
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, false)
                 .fillMaxWidth()
         )
 
