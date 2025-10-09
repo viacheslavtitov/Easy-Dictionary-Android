@@ -21,7 +21,7 @@ class DictionaryRepositoryImpl @Inject constructor(
     override suspend fun getAllDictionaries(): Flow<DomainResult<List<Dictionary>>> {
         return flowOf(
             when (val result = wrapApi {
-                dictionaryApiService.getAll()
+                dictionaryApiService.getAll().body().orEmpty()
             }) {
                 is ApiResult.Success -> {
                     DomainResult.Success(result.data.map { it.toDomain() })
@@ -45,7 +45,7 @@ class DictionaryRepositoryImpl @Inject constructor(
     override suspend fun getAllDictionariesDetailShort(): Flow<DomainResult<List<DictionaryDetailShort>>> {
         return flowOf(
             when (val result = wrapApi {
-                dictionaryApiService.getAllDetailShort()
+                dictionaryApiService.getAllDetailShort().body().orEmpty()
             }) {
                 is ApiResult.Success -> {
                     DomainResult.Success(result.data.map { it.toDomain() })

@@ -48,7 +48,7 @@ class LanguageRepositoryImpl @Inject constructor(
     override suspend fun getAllUserLanguages(): Flow<DomainResult<List<Language>>> {
         return flowOf(
             when (val result = wrapApi {
-                languageApiService.getAll()
+                languageApiService.getAll().body().orEmpty()
             }) {
                 is ApiResult.Success -> {
                     DomainResult.Success(result.data.map { it.toDomain() }.sortedBy {
