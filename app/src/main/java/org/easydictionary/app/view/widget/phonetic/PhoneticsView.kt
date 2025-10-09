@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.easydictionary.app.R
-import org.easydictionary.app.view.widget.global.notoSans
+import org.easydictionary.app.view.widget.global.notoSansBold
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -72,7 +72,7 @@ fun PhoneticsView(
                     Text(
                         symbols[i],
                         style = MaterialTheme.typography.titleMedium,
-                        fontFamily = notoSans
+                        fontFamily = notoSansBold
                     )
                 }
             }

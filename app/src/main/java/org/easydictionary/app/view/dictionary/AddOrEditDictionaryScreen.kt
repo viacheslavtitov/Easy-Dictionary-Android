@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.modifier.modifierLocalProvider
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -77,6 +80,7 @@ fun AddOrEditDictionaryScreen(
 ) {
     var showErrorDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showPhonetics by remember { mutableStateOf(true) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
     val errorMessage by viewModel.errorUI.collectAsState()
     val editedDialect by viewModel.dialect.collectAsState()
@@ -237,7 +241,7 @@ fun AddOrEditDictionaryScreen(
                         isSearching = false
                     },
                     actions = {
-                        toolBarActions(
+                        ToolBarActions(
                             viewModel.isEditMode(),
                             onCreateDictionary,
                             onUpdateDictionary,
@@ -249,7 +253,7 @@ fun AddOrEditDictionaryScreen(
                 TitleTopBar(
                     title = title,
                     actions = {
-                        toolBarActions(
+                        ToolBarActions(
                             viewModel.isEditMode(),
                             onCreateDictionary,
                             onUpdateDictionary,
@@ -304,6 +308,27 @@ fun AddOrEditDictionaryScreen(
                     supportingText = stringResource(R.string.optional)
                 )
             }
+            if (viewModel.isEditMode()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .clickable {
+                            showPhonetics = !showPhonetics
+                        }, verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextFieldLabel(
+                        stringResource(R.string.show_phonetics),
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1.0.toFloat())
+                    )
+                    Checkbox(
+                        checked = showPhonetics,
+                        onCheckedChange = { showPhonetics = it }
+                    )
+                }
+            }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -312,7 +337,7 @@ fun AddOrEditDictionaryScreen(
                     items = words,
                     key = { it.original + it.id }
                 ) { item ->
-                    WordListItem(item, onSelectWord)
+                    WordListItem(item, showPhonetics, onSelectWord)
                 }
             }
         }
@@ -322,6 +347,7 @@ fun AddOrEditDictionaryScreen(
 @Composable
 private fun WordListItem(
     word: WordDetail,
+    showPhonetics: Boolean,
     onSelect: (WordDetail) -> Unit
 ) {
     val backgroundColor = getCurrentColorScheme().primaryContainer
@@ -351,7 +377,12 @@ private fun WordListItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextFieldLabel(word.original, Modifier.wrapContentSize())
-            Secondary2TextFieldLabel(" - $translations", Modifier.fillMaxWidth())
+            if (word.phonetic?.isNotEmpty() == true && showPhonetics) {
+                Secondary2TextFieldLabel(" - [${word.phonetic}]", Modifier.wrapContentWidth())
+                Secondary2TextFieldLabel(" $translations", Modifier.fillMaxWidth())
+            } else {
+                Secondary2TextFieldLabel(" - $translations", Modifier.fillMaxWidth())
+            }
         }
     }
     Divider()
@@ -371,7 +402,7 @@ private fun getLanguageButtonTitle(
 }
 
 @Composable
-private fun toolBarActions(
+private fun ToolBarActions(
     isEditMode: Boolean,
     onCreateDictionaryClick: () -> Unit,
     onUpdateDictionaryClick: () -> Unit,

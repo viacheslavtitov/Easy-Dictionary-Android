@@ -114,7 +114,6 @@ class MainActivity : ComponentActivity() {
             startDestination = AppNavigation.SplashScreen.route
         ) {
             composable(route = AppNavigation.SplashScreen.route) {
-
                 SplashScreen(navController)
             }
             composable(route = AppNavigation.SignInScreen.route) {

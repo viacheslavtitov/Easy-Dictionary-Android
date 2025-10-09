@@ -96,3 +96,11 @@ lint/tmp/
 /build
 /captures
 .cxx
+/.idea/.name
+/.idea/AndroidProjectSystem.xml
+/.idea/compiler.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/misc.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/runConfigurations.xml

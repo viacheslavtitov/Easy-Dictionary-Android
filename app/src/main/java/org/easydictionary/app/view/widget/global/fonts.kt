@@ -12,6 +12,9 @@ val googleProvider = GoogleFont.Provider(
     certificates     = R.array.com_google_android_gms_fonts_certs
 )
 
-val notoSans = FontFamily(
+val notoSansBold = FontFamily(
     Font(googleFont = GoogleFont("Noto Sans"), fontProvider = googleProvider, weight = FontWeight.Bold)
+)
+val notoSansMedium = FontFamily(
+    Font(googleFont = GoogleFont("Noto Sans"), fontProvider = googleProvider, weight = FontWeight.Medium)
 )
