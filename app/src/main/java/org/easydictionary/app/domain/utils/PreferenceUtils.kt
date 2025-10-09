@@ -8,6 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
 import android.util.Base64
+import android.util.Log
 import org.easydictionary.app.BuildConfig
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -78,9 +79,13 @@ class PreferenceUtils @Inject constructor(
         val spec = GCMParameterSpec(128, iv)
 
         cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
-        val decryptedBytes = cipher.doFinal(Base64.decode(encrypted, Base64.DEFAULT))
-
-        return String(decryptedBytes, Charsets.UTF_8)
+        try {
+            val decryptedBytes = cipher.doFinal(Base64.decode(encrypted, Base64.DEFAULT))
+            return String(decryptedBytes, Charsets.UTF_8)
+        } catch (ex: Exception) {
+            Log.e("PreferenceUtils", "Failed to decrypt key $key", ex)
+            return null
+        }
     }
 
     fun checkAccessTokenExist() : Boolean {
