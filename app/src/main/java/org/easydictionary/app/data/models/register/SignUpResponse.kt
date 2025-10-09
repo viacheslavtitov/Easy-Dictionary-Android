@@ -23,7 +23,7 @@ data class SignUpResponse(
 data class ProviderResponse(
     @SerializedName("email") val email: String,
     @SerializedName("name") val name: String,
-    @SerializedName("providerToken") val providerToken: String,
+    @SerializedName("providerToken") val providerToken: String?,
     @SerializedName("id") val id: Int
 ) {
     fun toDomain(): Provider {

@@ -4,5 +4,5 @@ data class Provider(
     val email: String,
     val id: Int,
     val name: String,
-    val providerToken: String,
+    val providerToken: String?,
 )
