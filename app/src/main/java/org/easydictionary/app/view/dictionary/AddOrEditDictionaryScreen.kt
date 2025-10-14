@@ -39,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.modifier.modifierLocalProvider
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,6 +48,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import org.easydictionary.app.BuildConfig
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
@@ -168,9 +168,6 @@ fun AddOrEditDictionaryScreen(
                 navController.popBackStack()
             }
         }
-    }
-    LaunchedEffect(Unit) {
-        viewModel.loadWords()
     }
     val shakeLanguageFrom = remember { mutableIntStateOf(0) }
     val shakeLanguageTo = remember { mutableIntStateOf(0) }
@@ -376,7 +373,11 @@ private fun WordListItem(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextFieldLabel(word.original, Modifier.wrapContentSize())
+            if (BuildConfig.DEBUG) {
+                TextFieldLabel("${word.id} ${word.original}", Modifier.wrapContentSize())
+            } else {
+                TextFieldLabel(word.original, Modifier.wrapContentSize())
+            }
             if (word.phonetic?.isNotEmpty() == true && showPhonetics) {
                 Secondary2TextFieldLabel(" - [${word.phonetic}]", Modifier.wrapContentWidth())
                 Secondary2TextFieldLabel(" $translations", Modifier.fillMaxWidth())

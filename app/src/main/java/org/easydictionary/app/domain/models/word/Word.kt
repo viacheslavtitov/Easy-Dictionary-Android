@@ -32,6 +32,7 @@ data class WordDetail(
 @Serializable
 data class WordsResponse(
     val latestId: Int,
+    val hasMore: Boolean,
     val words: List<WordDetail> = emptyList()
 ) {
     fun toJson(): String = Json.encodeToString(this)

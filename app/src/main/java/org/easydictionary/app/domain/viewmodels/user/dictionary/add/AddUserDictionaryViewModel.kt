@@ -67,7 +67,9 @@ class AddUserDictionaryViewModel @Inject constructor(
     val dictionaryCreated: SharedFlow<Boolean> = _dictionaryCreated
     private val _words = MutableStateFlow<List<WordDetail>>(emptyList())
     val words: StateFlow<List<WordDetail>> = _words.asStateFlow()
-    private var isAllWordsLoaded  = false
+    private var hasMore = true
+    private var latestFetchType: FetchWordsType = FetchWordsType.All
+    private val lockLoadWords = kotlinx.coroutines.sync.Semaphore(1, acquiredPermits = 0)
 
     fun setLanguage(langType: LangType, json: String) {
         val language: Language = Json.decodeFromString(json)
@@ -197,8 +199,17 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     fun loadWords() {
-        if(isAllWordsLoaded) return
-        val dictionaryId = editDictionary?.id ?: return
+        if (!lockLoadWords.tryAcquire()) return
+        if (!hasMore && latestFetchType == FetchWordsType.All) {
+            lockLoadWords.release()
+            return
+        }
+        val dictionaryId = editDictionary?.id
+        if (dictionaryId == null) {
+            lockLoadWords.release()
+            return
+        }
+        latestFetchType = FetchWordsType.All
         Log.d(TAG, "loadWords($latestWordsPagId)")
         _loadingDataUI.value = true
         latestSearchWordsPagId = 0
@@ -215,11 +226,12 @@ class AddUserDictionaryViewModel @Inject constructor(
             }.onCompletion {
                 Log.d(TAG, "onCompletion")
                 _loadingDataUI.value = false
+                lockLoadWords.release()
             }.collect { result ->
                 when (result) {
                     is DomainResult.Success -> {
                         Log.d(TAG, "Words downloaded ${result.data.words.size}")
-                        isAllWordsLoaded = latestSearchWordsPagId == result.data.latestId
+                        hasMore = result.data.hasMore
                         latestWordsPagId = result.data.latestId
                         _words.update { current ->
                             (current + result.data.words).distinctBy { it.id }
@@ -228,7 +240,7 @@ class AddUserDictionaryViewModel @Inject constructor(
 
                     is DomainResult.Error -> {
                         latestWordsPagId = 0
-                        isAllWordsLoaded = false
+                        hasMore = false
                         _errorUI.value = result.message
                     }
                 }
@@ -237,12 +249,21 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     fun searchWords(query: String) {
+        if (!lockLoadWords.tryAcquire()) return
         if (query.isEmpty()) {
-            loadWords()
+//            loadWords()
             return
         }
-        if(isAllWordsLoaded) return
-        val dictionaryId = editDictionary?.id ?: return
+        if (!hasMore && latestFetchType == FetchWordsType.Search) {
+            lockLoadWords.release()
+            return
+        }
+        val dictionaryId = editDictionary?.id
+        if (dictionaryId == null) {
+            lockLoadWords.release()
+            return
+        }
+        latestFetchType = FetchWordsType.Search
         Log.d(TAG, "searchWords($query - $latestSearchWordsPagId)")
         _loadingDataUI.value = true
         latestWordsPagId = 0
@@ -261,11 +282,12 @@ class AddUserDictionaryViewModel @Inject constructor(
             }.onCompletion {
                 Log.d(TAG, "onCompletion")
                 _loadingDataUI.value = false
+                lockLoadWords.release()
             }.collect { result ->
                 when (result) {
                     is DomainResult.Success -> {
                         Log.d(TAG, "Words downloaded ${result.data.words.size}")
-                        isAllWordsLoaded = latestSearchWordsPagId == result.data.latestId
+                        hasMore = latestSearchWordsPagId == result.data.latestId
                         latestSearchWordsPagId = result.data.latestId
                         _words.update { current ->
                             (current + result.data.words).distinctBy { it.id }
@@ -274,7 +296,7 @@ class AddUserDictionaryViewModel @Inject constructor(
 
                     is DomainResult.Error -> {
                         latestSearchWordsPagId = 0
-                        isAllWordsLoaded = false
+                        hasMore = false
                         _errorUI.value = result.message
                     }
                 }
@@ -286,4 +308,8 @@ class AddUserDictionaryViewModel @Inject constructor(
 sealed class DictionaryValidationException(message: String) : Exception(message) {
     object LanguageFromException : Exception("Language from is not valid or empty")
     object LanguageToException : Exception("Language to is not valid or empty")
+}
+
+enum class FetchWordsType {
+    All, Search
 }

@@ -98,6 +98,7 @@ class WordRepositoryImpl @Inject constructor(
                     DomainResult.Success(
                         WordsResponse(
                             latestId = result.data.latestId,
+                            hasMore = result.data.hasMore,
                             words = result.data.words.map { it.toDomain() }
                         ))
                 }
@@ -136,6 +137,7 @@ class WordRepositoryImpl @Inject constructor(
                     DomainResult.Success(
                         WordsResponse(
                             latestId = result.data.latestId,
+                            hasMore = result.data.hasMore,
                             words = result.data.words.map { it.toDomain() }
                         ))
                 }

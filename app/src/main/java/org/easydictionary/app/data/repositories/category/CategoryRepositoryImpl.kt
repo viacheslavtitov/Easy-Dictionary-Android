@@ -19,7 +19,7 @@ class CategoryRepositoryImpl @Inject constructor(
     override suspend fun getAllCategories(): Flow<DomainResult<List<Category>>> {
         return flowOf(
             when (val result = wrapApi {
-                categoryApiService.getAll()
+                categoryApiService.getAll().body().orEmpty()
             }) {
                 is ApiResult.Success -> {
                     DomainResult.Success(result.data.map { it.toDomain() }.sortedBy {
@@ -45,7 +45,7 @@ class CategoryRepositoryImpl @Inject constructor(
     override suspend fun getAllCategoriesForDictionary(dictionaryId: Int): Flow<DomainResult<List<Category>>> {
         return flowOf(
             when (val result = wrapApi {
-                categoryApiService.getAllForDictionary(dictionaryId)
+                categoryApiService.getAllForDictionary(dictionaryId).body().orEmpty()
             }) {
                 is ApiResult.Success -> {
                     DomainResult.Success(result.data.map { it.toDomain() }.sortedBy {
