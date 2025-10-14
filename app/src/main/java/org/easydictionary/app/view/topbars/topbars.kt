@@ -19,6 +19,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -113,6 +114,7 @@ fun SearchTopBar(
     isSearching: Boolean,
     onSearchToggle: () -> Unit,
     onClearQuery: () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
@@ -152,5 +154,6 @@ fun SearchTopBar(
                 actions()
             }
         },
+        scrollBehavior = scrollBehavior
     )
 }

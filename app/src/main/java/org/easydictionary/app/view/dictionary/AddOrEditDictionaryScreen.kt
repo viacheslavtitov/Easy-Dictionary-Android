@@ -22,11 +22,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -70,6 +73,7 @@ import org.easydictionary.app.view.topbars.SearchTopBar
 import org.easydictionary.app.view.topbars.TitleTopBar
 import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddOrEditDictionaryScreen(
     backStackEntry: NavBackStackEntry,
@@ -90,6 +94,7 @@ fun AddOrEditDictionaryScreen(
     var query by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val shouldLoadMore by remember {
         derivedStateOf {
@@ -244,7 +249,8 @@ fun AddOrEditDictionaryScreen(
                             onUpdateDictionary,
                             onDeleteDictionary
                         )
-                    }
+                    },
+                    scrollBehavior = scrollBehavior
                 )
             } else {
                 TitleTopBar(
@@ -262,80 +268,87 @@ fun AddOrEditDictionaryScreen(
         }
     ) { innerPadding ->
         val backgroundColor = getCurrentColorScheme().surface
-        Column(
+        LazyColumn(
+            state = listState,
             modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(
+                    bottom = innerPadding.calculateBottomPadding(),
                     top = innerPadding.calculateTopPadding()
                 )
-                .fillMaxSize()
-//                .verticalScroll(rememberScrollState())
                 .background(backgroundColor)
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .wrapContentSize()
-            ) {
-                ButtonFilledTonalSecondary(
-                    enabled = !viewModel.isEditMode(),
-                    title = getLanguageButtonTitle(
-                        langType = LangType.FROM,
-                        selectedLanguage = selectedLanguageFrom
-                    ), onClick = {
-                        navController.navigate(AppNavigation.LanguagesScreen.createRoute(langType = LangType.FROM))
-                    }, shakeTrigger = shakeLanguageFrom
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                ButtonFilledTonalSecondary(
-                    enabled = !viewModel.isEditMode(),
-                    title = getLanguageButtonTitle(
-                        langType = LangType.TO,
-                        selectedLanguage = selectedLanguageTo
-                    ), onClick = {
-                        navController.navigate(AppNavigation.LanguagesScreen.createRoute(langType = LangType.TO))
-                    }, shakeTrigger = shakeLanguageTo
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                TextFieldPrimary(
-                    defaultValue = editedDialect,
-                    onValueChange = { newValue ->
-                        dialect.value = newValue
-                    },
-                    label = stringResource(R.string.dialect),
-                    supportingText = stringResource(R.string.optional)
-                )
-            }
-            if (viewModel.isEditMode()) {
-                Row(
+            item {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .clickable {
-                            showPhonetics = !showPhonetics
-                        }, verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp)
+                        .wrapContentSize()
                 ) {
-                    TextFieldLabel(
-                        stringResource(R.string.show_phonetics),
-                        Modifier
+                    ButtonFilledTonalSecondary(
+                        enabled = !viewModel.isEditMode(),
+                        title = getLanguageButtonTitle(
+                            langType = LangType.FROM,
+                            selectedLanguage = selectedLanguageFrom
+                        ), onClick = {
+                            navController.navigate(
+                                AppNavigation.LanguagesScreen.createRoute(
+                                    langType = LangType.FROM
+                                )
+                            )
+                        }, shakeTrigger = shakeLanguageFrom
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ButtonFilledTonalSecondary(
+                        enabled = !viewModel.isEditMode(),
+                        title = getLanguageButtonTitle(
+                            langType = LangType.TO,
+                            selectedLanguage = selectedLanguageTo
+                        ), onClick = {
+                            navController.navigate(
+                                AppNavigation.LanguagesScreen.createRoute(
+                                    langType = LangType.TO
+                                )
+                            )
+                        }, shakeTrigger = shakeLanguageTo
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TextFieldPrimary(
+                        defaultValue = editedDialect,
+                        onValueChange = { newValue ->
+                            dialect.value = newValue
+                        },
+                        label = stringResource(R.string.dialect),
+                        supportingText = stringResource(R.string.optional)
+                    )
+                }
+                if (viewModel.isEditMode()) {
+                    Row(
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1.0.toFloat())
-                    )
-                    Checkbox(
-                        checked = showPhonetics,
-                        onCheckedChange = { showPhonetics = it }
-                    )
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .clickable {
+                                showPhonetics = !showPhonetics
+                            }, verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextFieldLabel(
+                            stringResource(R.string.show_phonetics),
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1.0.toFloat())
+                        )
+                        Checkbox(
+                            checked = showPhonetics,
+                            onCheckedChange = { showPhonetics = it }
+                        )
+                    }
                 }
             }
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                items(
-                    items = words,
-                    key = { it.original + it.id }
-                ) { item ->
-                    WordListItem(item, showPhonetics, onSelectWord)
-                }
+            items(
+                items = words,
+                key = { it.original + it.id }
+            ) { item ->
+                WordListItem(item, showPhonetics, onSelectWord)
             }
         }
     }
