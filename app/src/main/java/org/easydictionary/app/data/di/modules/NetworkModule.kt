@@ -179,14 +179,15 @@ object NetworkModule {
         val authApi = retrofit.create(AuthApiService::class.java)
         try {
             val response = authApi.refreshToken(RefreshTokenRequest(refreshToken))
-            return when (response) {
-                is ApiResult.Success -> {
-                    response.data.accessToken
-                }
-
-                else -> {
-                    null
-                }
+            if(response.isSuccessful) {
+                Log.d("NetworkModule", "Token refreshed successful")
+                preferenceUtils.putSecureString(ACCESS_TOKEN_KEY, response.body()?.accessToken ?: "")
+                preferenceUtils.putSecureString(REFRESH_ACCESS_TOKEN_KEY, response.body()?.refreshToken ?: "")
+                return response.body()?.accessToken
+            } else {
+                Log.e("NetworkModule", "Failed to update refresh token with code ${response.code()}")
+                preferenceUtils.clear()
+                return null
             }
         } catch (ex: Exception) {
             Log.e("NetworkModule", "Failed to update refresh token", ex)

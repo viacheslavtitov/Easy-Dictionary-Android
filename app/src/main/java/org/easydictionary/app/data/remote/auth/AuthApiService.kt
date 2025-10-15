@@ -6,6 +6,7 @@ import org.easydictionary.app.data.models.auth.refresh_token.RefreshTokenRequest
 import org.easydictionary.app.data.models.auth.refresh_token.RefreshTokenResponse
 import org.easydictionary.app.data.remote.ApiResult
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -15,6 +16,6 @@ interface AuthApiService {
     suspend fun login(@Body request: AuthRequest): AuthResponse
 
     @POST("refresh")
-    suspend fun refreshToken(@Body request: RefreshTokenRequest): ApiResult<RefreshTokenResponse>
+    suspend fun refreshToken(@Body request: RefreshTokenRequest): Response<RefreshTokenResponse>
 
 }
