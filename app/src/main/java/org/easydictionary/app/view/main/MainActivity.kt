@@ -122,11 +122,11 @@ class MainActivity : ComponentActivity() {
             composable(route = AppNavigation.SignUpScreen.route) {
                 SignUpScreen(navController, sharedMainViewModel = sharedViewModel)
             }
-            composable(route = AppNavigation.HomeScreen.route) {
-                HomeScreen(navController, sharedMainViewModel = sharedViewModel)
+            composable(route = AppNavigation.HomeScreen.route) { backStackEntry ->
+                HomeScreen(backStackEntry, navController, sharedMainViewModel = sharedViewModel)
             }
-            composable(route = AppNavigation.DictionariesScreen.route) {
-                DictionariesScreen(navController, sharedMainViewModel = sharedViewModel)
+            composable(route = AppNavigation.DictionariesScreen.route) { backStackEntry ->
+                DictionariesScreen(backStackEntry, navController, sharedMainViewModel = sharedViewModel)
             }
             composable(route = AppNavigation.AddUserDictionaryScreen.route) { backStackEntry ->
                 AddOrEditDictionaryScreen(

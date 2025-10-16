@@ -4,14 +4,12 @@ import android.content.res.Resources
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.easydictionary.app.R
-import org.easydictionary.app.data.models.dictionary.DictionaryRequest
 import org.easydictionary.app.data.models.word.WordRequest
 import org.easydictionary.app.data.remote.ApiResult
 import org.easydictionary.app.data.remote.word.WordApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
-import org.easydictionary.app.domain.models.word.Word
 import org.easydictionary.app.domain.models.word.WordsResponse
 import org.easydictionary.app.domain.repository.word.WordRepository
 import javax.inject.Inject
@@ -140,6 +138,30 @@ class WordRepositoryImpl @Inject constructor(
                             hasMore = result.data.hasMore,
                             words = result.data.words.map { it.toDomain() }
                         ))
+                }
+
+                is ApiResult.ApiError -> {
+                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
+                }
+
+                is ApiResult.NetworkError -> {
+                    DomainResult.Error(resources.getString(R.string.network_error))
+                }
+
+                is ApiResult.UnknownError -> {
+                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                }
+            }
+        )
+    }
+
+    override suspend fun deleteWord(wordId: Int): Flow<DomainResult<Unit>> {
+        return flowOf(
+            when (val result = wrapApi {
+                wordApiService.delete(wordId)
+            }) {
+                is ApiResult.Success -> {
+                    DomainResult.Success(Unit)
                 }
 
                 is ApiResult.ApiError -> {

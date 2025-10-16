@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
@@ -51,6 +52,7 @@ import org.easydictionary.app.view.topbars.DrawerTitleTopBar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: HomeViewModel = hiltViewModel(),
     defaultSelectedRoute: String = AppNavigation.DictionariesScreen.route,
@@ -156,6 +158,7 @@ fun HomeScreen(
             ) {
                 when (selectedSection.value) {
                     AppNavigation.DictionariesScreen.route -> DictionariesScreen(
+                        backStackEntry = backStackEntry,
                         navController = navController,
                         sharedMainViewModel = sharedMainViewModel
                     )

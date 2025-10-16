@@ -3,8 +3,10 @@ package org.easydictionary.app.data.remote.word
 import org.easydictionary.app.data.models.word.WordRequest
 import org.easydictionary.app.data.models.word.WordsResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface WordApiService {
@@ -31,4 +33,7 @@ interface WordApiService {
         @Query(value = "pageSize", encoded = false) pageSize: Int,
         @Query(value = "query", encoded = true) query: String
     ): WordsResponse
+
+    @DELETE("word/{id}")
+    suspend fun delete(@Path("id") id: Int): Unit
 }

@@ -28,4 +28,6 @@ interface WordRepository : BaseRepository {
         latestPagId: Int,
         pageSize: Int
     ): Flow<DomainResult<WordsResponse>>
+
+    suspend fun deleteWord(wordId: Int): Flow<DomainResult<Unit>>
 }

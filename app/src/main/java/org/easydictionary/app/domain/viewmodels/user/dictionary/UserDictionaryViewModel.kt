@@ -25,6 +25,7 @@ class UserDictionaryViewModel @Inject constructor(
 
     companion object {
         private val TAG = UserDictionaryViewModel::class.simpleName
+        const val BUNDLE_NEED_UPDATE_DICTIONARIES = "org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES"
     }
 
     private val _dictionariesDetailShort =

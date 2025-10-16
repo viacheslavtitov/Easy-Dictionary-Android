@@ -59,9 +59,11 @@ import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
+import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.DictionaryValidationException
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.languages.LanguagesViewModel
+import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import org.easydictionary.app.view.buttons.ButtonFilledTonalSecondary
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
@@ -166,10 +168,23 @@ fun AddOrEditDictionaryScreen(
                 viewModel.setLanguage(LangType.TO, json)
             }
         }
+        launch {
+            backStackEntry.savedStateHandle.getStateFlow<Boolean>(
+                AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, false
+            ).filterNotNull().collect { shouldUpdate ->
+                if (shouldUpdate) {
+                    query = ""
+                    viewModel.loadWords()
+                }
+            }
+        }
     }
     LaunchedEffect(Unit) {
         viewModel.dictionaryCreated.collect { created ->
             if (created) {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES, true)
                 navController.popBackStack()
             }
         }

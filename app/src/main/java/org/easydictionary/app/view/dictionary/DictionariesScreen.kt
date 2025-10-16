@@ -15,11 +15,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +34,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.navigation.AppNavigation
@@ -51,6 +52,7 @@ import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
 @Composable
 fun DictionariesScreen(
+    backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: UserDictionaryViewModel = hiltViewModel(),
     sharedMainViewModel: SharedMainViewModel
@@ -76,6 +78,17 @@ fun DictionariesScreen(
             },
             message = errorMessage
         )
+    }
+    LaunchedEffect(backStackEntry) {
+        launch {
+            backStackEntry.savedStateHandle.getStateFlow<Boolean>(
+                UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES, false
+            ).filterNotNull().collect { shouldUpdate ->
+                if (shouldUpdate) {
+                    viewModel.loadDictionariesDetailShort()
+                }
+            }
+        }
     }
     val openItemId = remember { mutableStateOf<Int?>(null) }
     val onEdit: (Int) -> Unit = { itemId ->
@@ -149,7 +162,7 @@ private fun DictionaryListItem(
                     .fillMaxWidth()
                     .background(backgroundColor)
                     .padding(16.dp)
-                    .clickable{
+                    .clickable {
                         onClick(dictionary)
                     },
                 verticalArrangement = Arrangement.Center,

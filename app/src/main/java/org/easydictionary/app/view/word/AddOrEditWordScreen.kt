@@ -90,23 +90,34 @@ fun AddOrEditWordScreen(
     var phonetic by rememberSaveable { mutableStateOf(wordDetail?.phonetic ?: "") }
     var selectedWordType by rememberSaveable { mutableStateOf(wordDetail?.type) }
     LaunchedEffect(Unit) {
-        viewModel.errorMessage.collect { msg ->
-            showError = msg
-        }
-    }
-    LaunchedEffect(Unit) {
-        viewModel.loadWordTypes()
-    }
-    LaunchedEffect(Unit) {
-        viewModel.setDictionary(dictionary)
-        viewModel.setWord(wordDetail)
-    }
-    LaunchedEffect(Unit) {
-        viewModel.wordCreated.collect { created ->
-            if (created) {
-                navController.popBackStack()
+        launch {
+            viewModel.errorMessage.collect { msg ->
+                showError = msg
             }
         }
+        launch {
+            viewModel.wordCreated.collect { created ->
+                if (created) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
+                    navController.popBackStack()
+                }
+            }
+        }
+        launch {
+            viewModel.wordDeleted.collect { deleted ->
+                if (deleted) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
+                    navController.popBackStack()
+                }
+            }
+        }
+        viewModel.loadWordTypes()
+        viewModel.setDictionary(dictionary)
+        viewModel.setWord(wordDetail)
     }
     fun onPhoneticsChanged(symbol: String) {
         phonetic = symbol
@@ -128,7 +139,7 @@ fun AddOrEditWordScreen(
     if (showDeleteDialog) {
         ButtonsAlertDialog(
             onConfirmation = {
-//                viewModel.delete()
+                viewModel.delete()
                 showDeleteDialog = false
             },
             onDismissRequest = {

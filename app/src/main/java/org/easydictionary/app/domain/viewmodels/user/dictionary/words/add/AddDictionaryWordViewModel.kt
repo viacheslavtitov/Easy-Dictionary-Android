@@ -24,18 +24,21 @@ import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryParams
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class AddDictionaryWordViewModel @Inject constructor(
     private val addWordToDictionaryUseCase: AddWordToDictionaryUseCase,
+    private val deleteWordUseCase: DeleteWordUseCase,
     private val getPhoneticsUseCase: GetPhoneticsUseCase,
     private val getWordTypesUseCase: GetWordTypesUseCase,
 ) : ViewModel() {
 
     companion object {
         private val TAG = AddDictionaryWordViewModel::class.simpleName
+        const val BUNDLE_NEED_UPDATE_WORDS = "org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS"
     }
 
     private val _loadingDataUI = MutableStateFlow<Boolean>(false)
@@ -52,6 +55,8 @@ class AddDictionaryWordViewModel @Inject constructor(
     val phonetics: StateFlow<List<Phonetic>> = _phonetics.asStateFlow()
     private val _wordCreated = MutableSharedFlow<Boolean>()
     val wordCreated: SharedFlow<Boolean> = _wordCreated
+    private val _wordDeleted = MutableSharedFlow<Boolean>()
+    val wordDeleted: SharedFlow<Boolean> = _wordDeleted
 
     private var dictionary: DictionaryDetailShort? = null
     private var editWord: WordDetail? = null
@@ -177,6 +182,35 @@ class AddDictionaryWordViewModel @Inject constructor(
                     when (result) {
                         is DomainResult.Success -> {
                             _wordCreated.emit(true)
+                        }
+
+                        is DomainResult.Error -> displayError(result.message)
+                    }
+                }
+        }
+    }
+
+    fun delete() {
+        if(!isEditMode()) {
+            Log.e(TAG, "Can't delete word because you are not in edit mode")
+            return
+        }
+        val wordId = editWord?.id ?: return
+        _loadingDataUI.value = true
+        viewModelScope.launch {
+            deleteWordUseCase(wordId)
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    displayError(it.message ?: "Error")
+                }
+                .onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _loadingDataUI.value = false
+                }
+                .collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            _wordDeleted.emit(true)
                         }
 
                         is DomainResult.Error -> displayError(result.message)
