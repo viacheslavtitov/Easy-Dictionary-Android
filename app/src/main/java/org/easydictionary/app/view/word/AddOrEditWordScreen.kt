@@ -391,7 +391,7 @@ fun WordTypesDropDown(
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
             modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, false)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
                 .fillMaxWidth()
         )
 

@@ -10,7 +10,6 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.easydictionary.app.BuildConfig
 import org.easydictionary.app.data.models.auth.refresh_token.RefreshTokenRequest
-import org.easydictionary.app.data.remote.ApiResult
 import org.easydictionary.app.data.remote.auth.AuthApiService
 import org.easydictionary.app.data.remote.auth.AuthInterceptor
 import org.easydictionary.app.data.remote.auth.RefreshInterceptor
@@ -23,6 +22,7 @@ import org.easydictionary.app.data.remote.language.LanguageStaticApiService
 import org.easydictionary.app.data.remote.language.PhoneticsStaticApiService
 import org.easydictionary.app.data.remote.provideGsonDateConvertor
 import org.easydictionary.app.data.remote.word.WordApiService
+import org.easydictionary.app.data.remote.word.translations.TranslationVariantApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
@@ -113,6 +113,7 @@ object NetworkModule {
             .build()
         return retrofit.create(LanguageStaticApiService::class.java)
     }
+
     @Provides
     fun provideWordTypesStaticApiService(loggingInterceptor: HttpLoggingInterceptor): WordTypesStaticApiService {
         val client =
@@ -150,6 +151,10 @@ object NetworkModule {
         retrofit.create(WordApiService::class.java)
 
     @Provides
+    fun provideTranslationVariantApiService(retrofit: Retrofit): TranslationVariantApiService =
+        retrofit.create(TranslationVariantApiService::class.java)
+
+    @Provides
     fun provideTokenAuthenticator(
         preferenceUtils: PreferenceUtils,
         refreshInterceptor: RefreshInterceptor,
@@ -179,13 +184,22 @@ object NetworkModule {
         val authApi = retrofit.create(AuthApiService::class.java)
         try {
             val response = authApi.refreshToken(RefreshTokenRequest(refreshToken))
-            if(response.isSuccessful) {
+            if (response.isSuccessful) {
                 Log.d("NetworkModule", "Token refreshed successful")
-                preferenceUtils.putSecureString(ACCESS_TOKEN_KEY, response.body()?.accessToken ?: "")
-                preferenceUtils.putSecureString(REFRESH_ACCESS_TOKEN_KEY, response.body()?.refreshToken ?: "")
+                preferenceUtils.putSecureString(
+                    ACCESS_TOKEN_KEY,
+                    response.body()?.accessToken ?: ""
+                )
+                preferenceUtils.putSecureString(
+                    REFRESH_ACCESS_TOKEN_KEY,
+                    response.body()?.refreshToken ?: ""
+                )
                 return response.body()?.accessToken
             } else {
-                Log.e("NetworkModule", "Failed to update refresh token with code ${response.code()}")
+                Log.e(
+                    "NetworkModule",
+                    "Failed to update refresh token with code ${response.code()}"
+                )
                 preferenceUtils.clear()
                 return null
             }

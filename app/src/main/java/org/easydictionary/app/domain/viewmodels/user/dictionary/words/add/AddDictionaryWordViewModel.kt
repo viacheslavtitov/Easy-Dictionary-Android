@@ -25,6 +25,7 @@ import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryParams
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
+import org.easydictionary.app.domain.usecases.word.translations.DeleteTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import javax.inject.Inject
 
@@ -34,6 +35,7 @@ class AddDictionaryWordViewModel @Inject constructor(
     private val deleteWordUseCase: DeleteWordUseCase,
     private val getPhoneticsUseCase: GetPhoneticsUseCase,
     private val getWordTypesUseCase: GetWordTypesUseCase,
+    private val deleteTranslationUseCase: DeleteTranslationUseCase,
 ) : ViewModel() {
 
     companion object {
@@ -120,10 +122,15 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     fun deleteTranslation(translation: ComposedTranslation) {
-        _translations.value = _translations.value.minus(translation)
+        if(translation.id == null) {
+            _translations.value = _translations.value.minus(translation)
+        } else {
+            deleteTranslationForever(translation)
+        }
     }
 
     fun loadWordTypes() {
+        Log.d(TAG, "loadWordTypes")
         _loadingDataUI.value = true
         viewModelScope.launch {
             getWordTypesUseCase(Unit)
@@ -211,6 +218,35 @@ class AddDictionaryWordViewModel @Inject constructor(
                     when (result) {
                         is DomainResult.Success -> {
                             _wordDeleted.emit(true)
+                        }
+
+                        is DomainResult.Error -> displayError(result.message)
+                    }
+                }
+        }
+    }
+
+    private fun deleteTranslationForever(translation: ComposedTranslation) {
+        if(!isEditMode()) {
+            Log.e(TAG, "Can't delete translation(${translation.translate}) because you are not in edit mode")
+            return
+        }
+        val translationId = translation.id ?: return
+        _loadingDataUI.value = true
+        viewModelScope.launch {
+            deleteTranslationUseCase(translationId)
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    displayError(it.message ?: "Error")
+                }
+                .onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _loadingDataUI.value = false
+                }
+                .collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            _translations.value = _translations.value.minus(translation)
                         }
 
                         is DomainResult.Error -> displayError(result.message)
