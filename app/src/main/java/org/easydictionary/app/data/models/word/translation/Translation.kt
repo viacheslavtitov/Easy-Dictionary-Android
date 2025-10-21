@@ -9,6 +9,13 @@ data class TranslationRequest(
     @SerializedName("description") val description: String? = null,
     @SerializedName("translate") val translate: String
 )
+data class EditTranslationRequest(
+    @SerializedName("category_id") val categoryId: Int? = null,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("translate") val translate: String,
+    @SerializedName("id") val id: Int,
+    @SerializedName("word_id") val wordId: Int
+)
 
 data class Translation(
     @SerializedName("id") val id: Int,

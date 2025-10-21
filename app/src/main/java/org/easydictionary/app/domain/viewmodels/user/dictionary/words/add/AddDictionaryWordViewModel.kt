@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
@@ -252,6 +253,12 @@ class AddDictionaryWordViewModel @Inject constructor(
                         is DomainResult.Error -> displayError(result.message)
                     }
                 }
+        }
+    }
+
+    fun updateTranslation(translation: ComposedTranslation) {
+        _translations.update { list ->
+            list.map { if (it.id == translation.id) translation else it }
         }
     }
 

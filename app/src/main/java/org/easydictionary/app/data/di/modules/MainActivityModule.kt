@@ -44,6 +44,7 @@ import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.translations.DeleteTranslationUseCase
+import org.easydictionary.app.domain.usecases.word.translations.EditTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import javax.inject.Singleton
@@ -228,6 +229,15 @@ object MainActivityModule {
         translationVariantRepository: TranslationVariantRepository
     ): DeleteTranslationUseCase {
         return DeleteTranslationUseCase(
+            translationVariantRepository
+        )
+    }
+
+    @Provides
+    fun provideEditTranslationUseCase(
+        translationVariantRepository: TranslationVariantRepository
+    ): EditTranslationUseCase {
+        return EditTranslationUseCase(
             translationVariantRepository
         )
     }

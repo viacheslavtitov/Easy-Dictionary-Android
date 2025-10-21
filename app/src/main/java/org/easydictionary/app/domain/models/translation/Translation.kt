@@ -13,6 +13,7 @@ data class ComposedTranslation(
     val description: String? = null,
     val id: Int? = null
 ) {
+    fun toJson(): String = Json.encodeToString(this)
     fun toRequest(): TranslationRequest = TranslationRequest(
         categoryId = category?.id,
         description = description,

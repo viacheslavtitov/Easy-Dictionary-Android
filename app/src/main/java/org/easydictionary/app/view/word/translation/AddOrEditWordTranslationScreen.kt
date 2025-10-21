@@ -114,6 +114,19 @@ fun AddOrEditWordTranslationScreen(
         viewModel.setEditModel(editTranslation)
         viewModel.loadCategories()
     }
+    LaunchedEffect(Unit) {
+        launch {
+            viewModel.translationUpdated.collect { entity ->
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(
+                        AddTranslationVariantViewModel.BUNDLE_NEED_UPDATE_TRANSLATION,
+                        entity.toJson()
+                    )
+                navController.popBackStack()
+            }
+        }
+    }
     Scaffold(
         topBar = {
             TitleTopBar(
@@ -136,7 +149,11 @@ fun AddOrEditWordTranslationScreen(
                                 )
                             navController.popBackStack()
                         } else {
-
+                            viewModel.editTranslation(
+                                translate = translationValue,
+                                description = descriptionValue,
+                                category = selectedCategory
+                            )
                         }
                     }) {
                         Icon(
