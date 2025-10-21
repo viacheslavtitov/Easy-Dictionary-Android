@@ -110,7 +110,7 @@ object MainActivityModule {
     }
 
     @Provides
-    fun providePhoneticsRepository(
+    fun provideTranslationVariantRepository(
         @ApplicationContext context: Context,
         translationVariantApiService: TranslationVariantApiService
     ): TranslationVariantRepository {
