@@ -47,6 +47,7 @@ import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
+import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.inputs.TextFieldPrimary
@@ -63,17 +64,13 @@ fun AddOrEditWordTranslationScreen(
     dictionaryId: Int,
     editTranslation: ComposedTranslation? = null
 ) {
-    var showErrorDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
-    val errorMessage by viewModel.errorUI.collectAsState()
+    var showError by remember { mutableStateOf("") }
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     var translationValue by remember { mutableStateOf(editTranslation?.translate ?: "") }
     var descriptionValue by remember { mutableStateOf(editTranslation?.description ?: "") }
     var selectedCategory by remember { mutableStateOf<Category?>(editTranslation?.category) }
-    LaunchedEffect(errorMessage) {
-        showErrorDialog = errorMessage.isNotEmpty()
-    }
     sharedMainViewModel.loading(loadingProgress)
     LaunchedEffect(backStackEntry) {
         launch {
@@ -84,21 +81,21 @@ fun AddOrEditWordTranslationScreen(
             }
         }
     }
-    if (showErrorDialog) {
+    if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {
-                showErrorDialog = false
+                showError = ""
             },
             onConfirmation = {
-                showErrorDialog = false
+                showError = ""
             },
-            message = errorMessage
+            message = showError
         )
     }
     if (showDeleteDialog) {
         ButtonsAlertDialog(
             onConfirmation = {
-//                viewModel.delete()
+                viewModel.delete()
                 showDeleteDialog = false
             },
             onDismissRequest = {
@@ -124,6 +121,24 @@ fun AddOrEditWordTranslationScreen(
                         entity.toJson()
                     )
                 navController.popBackStack()
+            }
+        }
+        launch {
+            viewModel.errorMessage.collect { msg ->
+                showError = msg
+            }
+        }
+        launch {
+            viewModel.translationDeleted.collect { deleted ->
+                if (deleted) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(
+                            AddTranslationVariantViewModel.BUNDLE_NEED_DELETE_TRANSLATION,
+                            editTranslation?.toJson()
+                        )
+                    navController.popBackStack()
+                }
             }
         }
     }

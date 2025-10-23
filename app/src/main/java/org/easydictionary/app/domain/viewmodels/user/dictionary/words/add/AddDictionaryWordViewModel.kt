@@ -77,6 +77,7 @@ class AddDictionaryWordViewModel @Inject constructor(
 
     fun setWord(word: WordDetail?) {
         this.editWord = word
+        _translations.value = emptyList()
         editWord?.translations?.forEach {
             addTranslation(it)
         }
@@ -118,7 +119,8 @@ class AddDictionaryWordViewModel @Inject constructor(
             category = translation.category,
             translate = translation.translate,
             description = translation.description,
-            id = translation.id
+            id = translation.id,
+            wordId = editWord?.id
         )
     }
 

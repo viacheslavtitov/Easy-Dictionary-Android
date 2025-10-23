@@ -175,6 +175,16 @@ fun AddOrEditWordScreen(
                     backStackEntry.savedStateHandle.remove<String>(AddTranslationVariantViewModel.BUNDLE_NEED_UPDATE_TRANSLATION)
                 }
         }
+        launch {
+            backStackEntry.savedStateHandle.getStateFlow<String?>(
+                AddTranslationVariantViewModel.BUNDLE_NEED_DELETE_TRANSLATION, null
+            ).filterNotNull()
+                .collect { json ->
+                    val translation: ComposedTranslation = Json.decodeFromString(json)
+                    viewModel.deleteTranslation(translation)
+                    backStackEntry.savedStateHandle.remove<String>(AddTranslationVariantViewModel.BUNDLE_NEED_DELETE_TRANSLATION)
+                }
+        }
     }
     val onEditTranslation: (ComposedTranslation) -> Unit = { item ->
         navController.navigate(

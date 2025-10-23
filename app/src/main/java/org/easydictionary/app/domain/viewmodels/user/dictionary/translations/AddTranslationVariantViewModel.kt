@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
@@ -32,14 +33,19 @@ class AddTranslationVariantViewModel @Inject constructor(
     companion object {
         private val TAG = AddTranslationVariantViewModel::class.simpleName
         const val BUNDLE_NEW_TRANSLATION = "BUNDLE_NEW_TRANSLATION"
-        const val BUNDLE_NEED_UPDATE_TRANSLATION = "org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel.BUNDLE_NEED_UPDATE_TRANSLATION"
+        const val BUNDLE_NEED_UPDATE_TRANSLATION =
+            "org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel.BUNDLE_NEED_UPDATE_TRANSLATION"
+        const val BUNDLE_NEED_DELETE_TRANSLATION =
+            "org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel.BUNDLE_NEED_DELETE_TRANSLATION"
     }
 
     private val _loadingDataUI = MutableStateFlow<Boolean>(false)
     val loadingDataUI: StateFlow<Boolean> = _loadingDataUI.asStateFlow()
 
-    private val _errorUI = MutableStateFlow<String>("")
-    val errorUI: StateFlow<String> = _errorUI.asStateFlow()
+    private val _errorMessage = MutableSharedFlow<String>(replay = 0, extraBufferCapacity = 1)
+    val errorMessage: SharedFlow<String> = _errorMessage.asSharedFlow()
+    private val _translationDeleted = MutableSharedFlow<Boolean>()
+    val translationDeleted: SharedFlow<Boolean> = _translationDeleted
     private val _categories =
         MutableStateFlow<List<Category>>(emptyList())
     val categories: StateFlow<List<Category>> =
@@ -50,6 +56,10 @@ class AddTranslationVariantViewModel @Inject constructor(
     private val _translationUpdated = MutableSharedFlow<ComposedTranslation>()
     val translationUpdated: SharedFlow<ComposedTranslation> = _translationUpdated
 
+    fun displayError(message: String) {
+        _errorMessage.tryEmit(message)
+    }
+
     fun loadCategories() {
         val dictionaryId = dictionaryId ?: return
         _loadingDataUI.value = true
@@ -57,7 +67,7 @@ class AddTranslationVariantViewModel @Inject constructor(
             getUserDictionaryCategoriesUseCase(dictionaryId)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _errorUI.value = it.message ?: "Error"
+                    displayError(it.message ?: "Error")
                 }
                 .onCompletion {
                     Log.d(TAG, "onCompletion")
@@ -70,7 +80,7 @@ class AddTranslationVariantViewModel @Inject constructor(
                             _categories.value = result.data
                         }
 
-                        is DomainResult.Error -> _errorUI.value = result.message
+                        is DomainResult.Error -> displayError(result.message)
                     }
                 }
         }
@@ -89,7 +99,7 @@ class AddTranslationVariantViewModel @Inject constructor(
             addCategoryUseCase(AddCategoryParams(dictionaryId, categoryName))
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _errorUI.value = it.message ?: "Error"
+                    displayError(it.message ?: "Error")
                 }.onCompletion {
                     Log.d(TAG, "onCompletion")
                     _loadingDataUI.value = false
@@ -100,7 +110,7 @@ class AddTranslationVariantViewModel @Inject constructor(
                             loadCategories()
                         }
 
-                        is DomainResult.Error -> _errorUI.value = result.message
+                        is DomainResult.Error -> displayError(result.message)
                     }
                 }
         }
@@ -138,7 +148,7 @@ class AddTranslationVariantViewModel @Inject constructor(
                 )
             ).catch {
                 Log.d(TAG, "catch ${it.message}")
-                _errorUI.value = it.message ?: "Error"
+                displayError(it.message ?: "Error")
             }.onCompletion {
                 Log.d(TAG, "onCompletion")
                 _loadingDataUI.value = false
@@ -146,18 +156,33 @@ class AddTranslationVariantViewModel @Inject constructor(
                 when (result) {
                     is DomainResult.Success -> {
                         Log.d(TAG, "Translation updated")
-                        _translationUpdated.emit(ComposedTranslation(
-                            wordId = wordId,
-                            id = id,
-                            translate = translate,
-                            description = description,
-                            category = category
-                        ))
+                        _translationUpdated.emit(
+                            ComposedTranslation(
+                                wordId = wordId,
+                                id = id,
+                                translate = translate,
+                                description = description,
+                                category = category
+                            )
+                        )
                     }
 
-                    is DomainResult.Error -> _errorUI.value = result.message
+                    is DomainResult.Error -> displayError(result.message)
                 }
             }
+        }
+    }
+
+    fun delete() {
+        if (!isEditMode()) {
+            Log.e(
+                TAG,
+                "Can't delete translation(${editModel?.translate}) because you are not in edit mode"
+            )
+            return
+        }
+        viewModelScope.launch {
+            _translationDeleted.emit(true)
         }
     }
 

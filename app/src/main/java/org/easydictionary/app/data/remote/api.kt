@@ -15,7 +15,7 @@ suspend fun <T> safeApiCall(
         if(e.code() != 404) {
             ApiResult.ApiError(ErrorParser.parse(errorMsg), e.code())
         } else {
-            ApiResult.ApiError(e.message(), e.code())
+            ApiResult.ApiError(errorMsg ?: e.message(), e.code())
         }
     } catch (e: IOException) {
         ApiResult.NetworkError(e)
