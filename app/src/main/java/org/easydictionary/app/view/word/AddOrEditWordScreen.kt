@@ -1,5 +1,6 @@
 package org.easydictionary.app.view.word
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -80,6 +81,7 @@ fun AddOrEditWordScreen(
     dictionary: DictionaryDetailShort? = null,
     wordDetail: WordDetail? = null
 ) {
+    val LOG_TAG = "AddOrEditWordScreen"
     var showError by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
@@ -157,6 +159,7 @@ fun AddOrEditWordScreen(
             ).filterNotNull()
                 .collect { json ->
                     val translation: TranslationNotCreated = Json.decodeFromString(json)
+                    Log.d(LOG_TAG, "received new translation ${translation.translate}")
                     if (translations.find { it.translate == translation.translate } != null) {
                         viewModel.displayError(translationExistErrorMessage)
                     } else {
@@ -171,6 +174,7 @@ fun AddOrEditWordScreen(
             ).filterNotNull()
                 .collect { json ->
                     val translation: ComposedTranslation = Json.decodeFromString(json)
+                    Log.d(LOG_TAG, "received translation to update ${translation.translate} by id ${translation.id}")
                     viewModel.updateTranslation(translation)
                     backStackEntry.savedStateHandle.remove<String>(AddTranslationVariantViewModel.BUNDLE_NEED_UPDATE_TRANSLATION)
                 }
@@ -181,6 +185,7 @@ fun AddOrEditWordScreen(
             ).filterNotNull()
                 .collect { json ->
                     val translation: ComposedTranslation = Json.decodeFromString(json)
+                    Log.d(LOG_TAG, "received translation to delete ${translation.translate}")
                     viewModel.deleteTranslation(translation)
                     backStackEntry.savedStateHandle.remove<String>(AddTranslationVariantViewModel.BUNDLE_NEED_DELETE_TRANSLATION)
                 }

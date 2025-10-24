@@ -15,8 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val signUpUseCase: SignUpUseCase,
-    private val preferenceUtils: PreferenceUtils
+    private val signUpUseCase: SignUpUseCase
 ) : ViewModel() {
     companion object {
         private val TAG = SignUpViewModel::class.simpleName

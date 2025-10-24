@@ -14,4 +14,11 @@ interface TranslationVariantRepository : BaseRepository {
         description: String?,
         categoryId: Int?
     ): Flow<DomainResult<Unit>>
+
+    suspend fun addTranslation(
+        wordId: Int,
+        translate: String,
+        description: String?,
+        categoryId: Int?
+    ): Flow<DomainResult<Int>>
 }

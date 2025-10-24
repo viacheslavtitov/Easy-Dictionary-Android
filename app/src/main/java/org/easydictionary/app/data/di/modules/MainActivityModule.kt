@@ -43,6 +43,7 @@ import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.translations.AddTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.translations.DeleteTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.translations.EditTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
@@ -238,6 +239,15 @@ object MainActivityModule {
         translationVariantRepository: TranslationVariantRepository
     ): EditTranslationUseCase {
         return EditTranslationUseCase(
+            translationVariantRepository
+        )
+    }
+
+    @Provides
+    fun provideAddTranslationUseCase(
+        translationVariantRepository: TranslationVariantRepository
+    ): AddTranslationUseCase {
+        return AddTranslationUseCase(
             translationVariantRepository
         )
     }

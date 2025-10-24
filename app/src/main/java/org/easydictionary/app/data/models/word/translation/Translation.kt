@@ -7,7 +7,8 @@ import org.easydictionary.app.domain.models.translation.Translation
 data class TranslationRequest(
     @SerializedName("category_id") val categoryId: Int? = null,
     @SerializedName("description") val description: String? = null,
-    @SerializedName("translate") val translate: String
+    @SerializedName("translate") val translate: String,
+    @SerializedName("word_id") val wordId: Int? = null,
 )
 data class EditTranslationRequest(
     @SerializedName("category_id") val categoryId: Int? = null,

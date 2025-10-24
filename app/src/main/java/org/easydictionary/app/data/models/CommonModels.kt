@@ -8,3 +8,8 @@ data class CreatedResponse(
     @SerializedName("message")
     val message: String?
 )
+
+data class CreatedIdResponse(
+    @SerializedName("id")
+    val id: Int
+)

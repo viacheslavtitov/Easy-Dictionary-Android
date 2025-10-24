@@ -21,11 +21,12 @@ import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
 import org.easydictionary.app.domain.models.translation.TranslationWithCategory
 import org.easydictionary.app.domain.models.word.WordDetail
-import org.easydictionary.app.domain.models.words.Word
 import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryParams
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
+import org.easydictionary.app.domain.usecases.word.translations.AddTranslationParams
+import org.easydictionary.app.domain.usecases.word.translations.AddTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.translations.DeleteTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import javax.inject.Inject
@@ -37,11 +38,13 @@ class AddDictionaryWordViewModel @Inject constructor(
     private val getPhoneticsUseCase: GetPhoneticsUseCase,
     private val getWordTypesUseCase: GetWordTypesUseCase,
     private val deleteTranslationUseCase: DeleteTranslationUseCase,
+    private val addTranslationUseCase: AddTranslationUseCase,
 ) : ViewModel() {
 
     companion object {
         private val TAG = AddDictionaryWordViewModel::class.simpleName
-        const val BUNDLE_NEED_UPDATE_WORDS = "org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS"
+        const val BUNDLE_NEED_UPDATE_WORDS =
+            "org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS"
     }
 
     private val _loadingDataUI = MutableStateFlow<Boolean>(false)
@@ -107,11 +110,49 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     fun addTranslation(translation: TranslationNotCreated) {
-        _translations.value = _translations.value + ComposedTranslation(
-            category = translation.category,
-            translate = translation.translate,
-            description = translation.description
-        )
+        Log.d(TAG, "addTranslation ${translation.translate} for existing word ${isEditMode()}")
+        if (!isEditMode()) {
+            _translations.value = _translations.value + ComposedTranslation(
+                category = translation.category,
+                translate = translation.translate,
+                description = translation.description
+            )
+        } else {
+            val wordId = editWord?.id ?: return
+            _loadingDataUI.value = true
+            viewModelScope.launch {
+                addTranslationUseCase(
+                    AddTranslationParams(
+                        wordId = wordId,
+                        translate = translation.translate,
+                        description = translation.description,
+                        categoryId = translation.category?.id
+                    )
+                )
+                    .catch {
+                        Log.d(TAG, "catch ${it.message}")
+                        displayError(it.message ?: "Error")
+                    }
+                    .onCompletion {
+                        Log.d(TAG, "onCompletion")
+                        _loadingDataUI.value = false
+                    }
+                    .collect { result ->
+                        when (result) {
+                            is DomainResult.Success -> {
+                                _translations.value = _translations.value + ComposedTranslation(
+                                    category = translation.category,
+                                    translate = translation.translate,
+                                    description = translation.description,
+                                    id = result.data
+                                )
+                            }
+
+                            is DomainResult.Error -> displayError(result.message)
+                        }
+                    }
+            }
+        }
     }
 
     fun addTranslation(translation: TranslationWithCategory) {
@@ -125,7 +166,7 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     fun deleteTranslation(translation: ComposedTranslation) {
-        if(translation.id == null) {
+        if (translation.id == null) {
             _translations.value = _translations.value.minus(translation)
         } else {
             deleteTranslationForever(translation)
@@ -201,7 +242,7 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     fun delete() {
-        if(!isEditMode()) {
+        if (!isEditMode()) {
             Log.e(TAG, "Can't delete word because you are not in edit mode")
             return
         }
@@ -230,8 +271,11 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     private fun deleteTranslationForever(translation: ComposedTranslation) {
-        if(!isEditMode()) {
-            Log.e(TAG, "Can't delete translation(${translation.translate}) because you are not in edit mode")
+        if (!isEditMode()) {
+            Log.e(
+                TAG,
+                "Can't delete translation(${translation.translate}) because you are not in edit mode"
+            )
             return
         }
         val translationId = translation.id ?: return
