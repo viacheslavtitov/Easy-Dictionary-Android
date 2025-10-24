@@ -375,7 +375,7 @@ private fun WordListItem(
     showPhonetics: Boolean,
     onSelect: (WordDetail) -> Unit
 ) {
-    val backgroundColor = getCurrentColorScheme().primaryContainer
+    val backgroundColor = getCurrentColorScheme().secondaryContainer
     var translations = ""
     word.translations.forEachIndexed { index, item ->
         translations += if (index == word.translations.size - 1) {
@@ -401,16 +401,16 @@ private fun WordListItem(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (BuildConfig.DEBUG) {
-                TextFieldLabel("${word.id} ${word.original}", Modifier.wrapContentSize())
-            } else {
+//            if (BuildConfig.DEBUG) {
+//                TextFieldLabel("${word.id} ${word.original}", Modifier.wrapContentSize())
+//            } else {
                 TextFieldLabel(word.original, Modifier.wrapContentSize())
-            }
+//            }
             if (word.phonetic?.isNotEmpty() == true && showPhonetics) {
-                Secondary2TextFieldLabel(" - [${word.phonetic}]", Modifier.wrapContentWidth())
-                Secondary2TextFieldLabel(" $translations", Modifier.fillMaxWidth())
+                Secondary2TextFieldLabel(label = " - [${word.phonetic}]", modifier = Modifier.wrapContentWidth())
+                Secondary2TextFieldLabel(label = " $translations", modifier = Modifier.fillMaxWidth(), singleLine = true)
             } else {
-                Secondary2TextFieldLabel(" - $translations", Modifier.fillMaxWidth())
+                Secondary2TextFieldLabel(label = " - $translations", modifier = Modifier.fillMaxWidth(), singleLine = true)
             }
         }
     }
