@@ -199,14 +199,18 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     fun loadWords() {
-        if (!lockLoadWords.tryAcquire()) return
+        Log.d(TAG, "loadWords: hasMore = $hasMore | latestFetchType = ${latestFetchType.name}")
         if (!hasMore && latestFetchType == FetchWordsType.All) {
-            lockLoadWords.release()
+            Log.e(TAG, "loadWords blocked because hasMore is false or latestFetchType is ALL")
             return
         }
         val dictionaryId = editDictionary?.id
         if (dictionaryId == null) {
-            lockLoadWords.release()
+            Log.e(TAG, "dictionaryId is null")
+            return
+        }
+        if (!lockLoadWords.tryAcquire()) {
+            Log.e(TAG, "loadWords blocked because it's already running")
             return
         }
         latestFetchType = FetchWordsType.All
@@ -224,7 +228,7 @@ class AddUserDictionaryViewModel @Inject constructor(
                 Log.d(TAG, "catch ${it.message}")
                 _errorUI.value = it.message ?: "Error"
             }.onCompletion {
-                Log.d(TAG, "onCompletion")
+                Log.d(TAG, "loadWords onCompletion")
                 _loadingDataUI.value = false
                 lockLoadWords.release()
             }.collect { result ->
@@ -249,18 +253,26 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     fun searchWords(query: String) {
-        if (!lockLoadWords.tryAcquire()) return
-        if (query.isEmpty()) {
-//            loadWords()
-            return
-        }
+        Log.d(
+            TAG,
+            "searchWords($query): hasMore = $hasMore | latestFetchType = ${latestFetchType.name}"
+        )
         if (!hasMore && latestFetchType == FetchWordsType.Search) {
-            lockLoadWords.release()
+            Log.e(TAG, "loadWords blocked because hasMore is false or latestFetchType is Search")
             return
         }
         val dictionaryId = editDictionary?.id
         if (dictionaryId == null) {
-            lockLoadWords.release()
+            Log.e(TAG, "dictionaryId is null")
+            return
+        }
+        if (query.isEmpty()) {
+            Log.e(TAG, "Query is empty")
+            loadWords()
+            return
+        }
+        if (!lockLoadWords.tryAcquire()) {
+            Log.e(TAG, "searchWords blocked because it's already running")
             return
         }
         latestFetchType = FetchWordsType.Search
@@ -280,9 +292,9 @@ class AddUserDictionaryViewModel @Inject constructor(
                 Log.d(TAG, "catch ${it.message}")
                 _errorUI.value = it.message ?: "Error"
             }.onCompletion {
-                Log.d(TAG, "onCompletion")
-                _loadingDataUI.value = false
+                Log.d(TAG, "searchWords onCompletion")
                 lockLoadWords.release()
+                _loadingDataUI.value = false
             }.collect { result ->
                 when (result) {
                     is DomainResult.Success -> {

@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -44,14 +45,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
-import org.easydictionary.app.BuildConfig
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.language.LangType
@@ -80,21 +81,21 @@ import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 fun AddOrEditDictionaryScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
-    viewModel: AddUserDictionaryViewModel = hiltViewModel(backStackEntry),
+    viewModel: AddUserDictionaryViewModel = hiltViewModel(backStackEntry, "AddOrEditDictionaryScreen"),
     sharedMainViewModel: SharedMainViewModel,
     editDictionary: DictionaryDetailShort? = null
 ) {
     var showErrorDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var showPhonetics by remember { mutableStateOf(true) }
+    var showPhonetics by rememberSaveable { mutableStateOf(true) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
     val errorMessage by viewModel.errorUI.collectAsState()
-    val editedDialect by viewModel.dialect.collectAsState()
-    val selectedLanguageFrom by viewModel.selectedLanguageFrom.collectAsState()
-    val selectedLanguageTo by viewModel.selectedLanguageTo.collectAsState()
-    val words by viewModel.words.collectAsState()
-    var query by remember { mutableStateOf("") }
-    var isSearching by remember { mutableStateOf(false) }
+    val editedDialect by viewModel.dialect.collectAsStateWithLifecycle()
+    val selectedLanguageFrom by viewModel.selectedLanguageFrom.collectAsStateWithLifecycle()
+    val selectedLanguageTo by viewModel.selectedLanguageTo.collectAsStateWithLifecycle()
+    val words by viewModel.words.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+    var isSearching by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -180,18 +181,20 @@ fun AddOrEditDictionaryScreen(
         }
     }
     LaunchedEffect(Unit) {
-        viewModel.dictionaryCreated.collect { created ->
-            if (created) {
-                navController.previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.set(UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES, true)
-                navController.popBackStack()
+        launch {
+            viewModel.dictionaryCreated.collect { created ->
+                if (created) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES, true)
+                    navController.popBackStack()
+                }
             }
         }
     }
     val shakeLanguageFrom = remember { mutableIntStateOf(0) }
     val shakeLanguageTo = remember { mutableIntStateOf(0) }
-    val dialect = remember { mutableStateOf<String?>(null) }
+    val dialect = rememberSaveable { mutableStateOf<String?>(null) }
     val onSelectWord: (WordDetail) -> Unit = { item ->
         editDictionary?.let { dict ->
             navController.navigate(
