@@ -44,7 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.filterNotNull
@@ -76,7 +77,7 @@ import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 fun AddOrEditWordScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
-    viewModel: AddDictionaryWordViewModel = hiltViewModel(backStackEntry),
+    viewModel: AddDictionaryWordViewModel = hiltViewModel(backStackEntry, "AddOrEditWordScreen"),
     sharedMainViewModel: SharedMainViewModel,
     dictionary: DictionaryDetailShort? = null,
     wordDetail: WordDetail? = null
@@ -85,9 +86,9 @@ fun AddOrEditWordScreen(
     var showError by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
-    val translations by viewModel.translations.collectAsState()
-    val wordTypes by viewModel.wordTypes.collectAsState()
-    val phonetics by viewModel.phonetics.collectAsState()
+    val translations by viewModel.translations.collectAsStateWithLifecycle()
+    val wordTypes by viewModel.wordTypes.collectAsStateWithLifecycle()
+    val phonetics by viewModel.phonetics.collectAsStateWithLifecycle()
     var wordValue by rememberSaveable { mutableStateOf(wordDetail?.original ?: "") }
     var phonetic by rememberSaveable { mutableStateOf(wordDetail?.phonetic ?: "") }
     var selectedWordType by rememberSaveable { mutableStateOf(wordDetail?.type) }
@@ -350,7 +351,6 @@ private fun TranslationListItem(
                 translateText += translation.translate
                 TextFieldLabel(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
                     label = translateText
                 )
             }

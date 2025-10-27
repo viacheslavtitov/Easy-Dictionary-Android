@@ -404,13 +404,24 @@ private fun WordListItem(
 //            if (BuildConfig.DEBUG) {
 //                TextFieldLabel("${word.id} ${word.original}", Modifier.wrapContentSize())
 //            } else {
-                TextFieldLabel(word.original, Modifier.wrapContentSize())
+            TextFieldLabel(word.original, Modifier.wrapContentSize())
 //            }
             if (word.phonetic?.isNotEmpty() == true && showPhonetics) {
-                Secondary2TextFieldLabel(label = " - [${word.phonetic}]", modifier = Modifier.wrapContentWidth())
-                Secondary2TextFieldLabel(label = " $translations", modifier = Modifier.fillMaxWidth(), singleLine = true)
+                Secondary2TextFieldLabel(
+                    label = " - [${word.phonetic}]",
+                    modifier = Modifier.wrapContentWidth()
+                )
+                Secondary2TextFieldLabel(
+                    label = " $translations",
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             } else {
-                Secondary2TextFieldLabel(label = " - $translations", modifier = Modifier.fillMaxWidth(), singleLine = true)
+                Secondary2TextFieldLabel(
+                    label = " - $translations",
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
             }
         }
     }

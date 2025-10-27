@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -80,7 +81,7 @@ class AddDictionaryWordViewModel @Inject constructor(
 
     fun setWord(word: WordDetail?) {
         this.editWord = word
-        _translations.value = emptyList()
+//        _translations.value = emptyList()
         editWord?.translations?.forEach {
             addTranslation(it)
         }
@@ -110,7 +111,15 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     fun addTranslation(translation: TranslationNotCreated) {
-        Log.d(TAG, "addTranslation ${translation.translate} for existing word ${isEditMode()}")
+        Log.d(
+            TAG,
+            "addTranslation ${translation.translate} for existing word ${isEditMode()} with size ${_translations.value.size}"
+        )
+        val exist = _translations.value.find { it.translate == translation.translate } != null
+        if(exist) {
+            Log.e(TAG, "translation ${translation.translate} is already exist")
+            return
+        }
         if (!isEditMode()) {
             _translations.value = _translations.value + ComposedTranslation(
                 category = translation.category,
@@ -156,6 +165,11 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     fun addTranslation(translation: TranslationWithCategory) {
+        val exist = _translations.value.find { "${it.id}-${it.translate}" == "${translation.id}-${translation.translate}" } != null
+        if(exist) {
+            Log.e(TAG, "translation ${translation.translate} is already exist")
+            return
+        }
         _translations.value = _translations.value + ComposedTranslation(
             category = translation.category,
             translate = translation.translate,
