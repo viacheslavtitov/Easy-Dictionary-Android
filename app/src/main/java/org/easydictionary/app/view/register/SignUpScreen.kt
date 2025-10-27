@@ -1,6 +1,5 @@
 package org.easydictionary.app.view.register
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,11 +7,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,10 +23,8 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.navigation.AppNavigation
-import org.easydictionary.app.domain.models.users.User
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.register.SignUpViewModel
-import org.easydictionary.app.view.FetchDataState
 import org.easydictionary.app.view.buttons.ButtonPrimary
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.ext.clearStack
@@ -40,7 +38,36 @@ fun SignUpScreen(
     viewModel: SignUpViewModel = hiltViewModel(),
     sharedMainViewModel: SharedMainViewModel
 ) {
-    val scope = rememberCoroutineScope()
+    var showError by remember { mutableStateOf("") }
+    val loadingProgress by viewModel.loadingDataUI.collectAsState()
+    LaunchedEffect(Unit) {
+        launch {
+            viewModel.signedUpSuccess.collect { success ->
+                if (success) {
+                    navController.navigate(AppNavigation.SignInScreen.route) {
+                        clearStack()
+                    }
+                }
+            }
+        }
+        launch {
+            viewModel.errorMessage.collect { msg ->
+                showError = msg
+            }
+        }
+    }
+    sharedMainViewModel.loading(loadingProgress)
+    if (showError.isNotEmpty()) {
+        ErrorAlertDialog(
+            onDismissRequest = {
+                showError = ""
+            },
+            onConfirmation = {
+                showError = ""
+            },
+            message = showError
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -120,49 +147,7 @@ fun SignUpScreen(
         )
         Spacer(modifier = Modifier.height(6.dp))
         ButtonPrimary(title = stringResource(R.string.sign_up), enabled = isFormValid) {
-            scope.launch {
-                viewModel.signUp(email, password, firstName, lastName, "email", "").collect {
-                    when (it) {
-                        is FetchDataState.DataState<User> -> {
-                            Log.d("SignUpScreen", "User with ${it.data.uuid} registered")
-                            navController.navigate(AppNavigation.HomeScreen.route) {
-                                clearStack()
-                            }
-                        }
-
-                        is FetchDataState.ErrorStateString -> {
-                            Log.e("SignUpScreen", it.error)
-                            errorMessage = it.error
-                            showErrorDialog = true
-                        }
-
-                        is FetchDataState.ErrorState -> {
-                            Log.e("SignUpScreen", { it.exception.message }.toString())
-                            errorMessage = it.exception.message.toString()
-                            showErrorDialog = true
-                        }
-
-                        is FetchDataState.StartLoadingState -> {
-                            sharedMainViewModel.loading(true)
-                        }
-
-                        is FetchDataState.FinishLoadingState -> {
-                            sharedMainViewModel.loading(false)
-                        }
-                    }
-                }
-            }
-        }
-        if (showErrorDialog) {
-            ErrorAlertDialog(
-                onDismissRequest = {
-                    showErrorDialog = false
-                },
-                onConfirmation = {
-                    showErrorDialog = false
-                },
-                message = errorMessage
-            )
+            viewModel.signUp(email, password, firstName, lastName, "email", "")
         }
     }
 }

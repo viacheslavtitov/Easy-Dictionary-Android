@@ -1,6 +1,5 @@
 package org.easydictionary.app.view.signin
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,11 +8,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,11 +23,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
-import org.easydictionary.app.domain.models.auth.Auth
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.auth.SignInViewModel
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
-import org.easydictionary.app.view.FetchDataState
 import org.easydictionary.app.view.buttons.ButtonPrimary
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.ext.clearStack
@@ -41,7 +39,36 @@ fun SignInScreen(
     viewModel: SignInViewModel = hiltViewModel(),
     sharedMainViewModel: SharedMainViewModel
 ) {
-    val scope = rememberCoroutineScope()
+    var showError by remember { mutableStateOf("") }
+    val loadingProgress by viewModel.loadingDataUI.collectAsState()
+    LaunchedEffect(Unit) {
+        launch {
+            viewModel.signedInSuccess.collect { success ->
+                if (success) {
+                    navController.navigate(AppNavigation.HomeScreen.route) {
+                        clearStack()
+                    }
+                }
+            }
+        }
+        launch {
+            viewModel.errorMessage.collect { msg ->
+                showError = msg
+            }
+        }
+    }
+    sharedMainViewModel.loading(loadingProgress)
+    if (showError.isNotEmpty()) {
+        ErrorAlertDialog(
+            onDismissRequest = {
+                showError = ""
+            },
+            onConfirmation = {
+                showError = ""
+            },
+            message = showError
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -76,37 +103,7 @@ fun SignInScreen(
         )
         Spacer(modifier = Modifier.height(6.dp))
         ButtonPrimary(title = stringResource(R.string.log_in), enabled = isFormValid) {
-            scope.launch {
-                viewModel.signIn(email, password, "email", "").collect {
-                    when (it) {
-                        is FetchDataState.DataState<Auth> -> {
-                            navController.navigate(AppNavigation.HomeScreen.route) {
-                                clearStack()
-                            }
-                        }
-
-                        is FetchDataState.ErrorStateString -> {
-                            Log.e("SignInScreen", it.error)
-                            errorMessage = it.error
-                            showErrorDialog = true
-                        }
-
-                        is FetchDataState.ErrorState -> {
-                            Log.e("SignInScreen", { it.exception.message }.toString())
-                            errorMessage = it.exception.message.toString()
-                            showErrorDialog = true
-                        }
-
-                        is FetchDataState.StartLoadingState -> {
-                            sharedMainViewModel.loading(true)
-                        }
-
-                        is FetchDataState.FinishLoadingState -> {
-                            sharedMainViewModel.loading(false)
-                        }
-                    }
-                }
-            }
+            viewModel.signIn(email, password, "email", "")
         }
         Spacer(modifier = Modifier.height(6.dp))
         TextFieldLabel(
