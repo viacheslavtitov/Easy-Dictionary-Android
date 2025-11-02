@@ -6,6 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.easydictionary.app.BuildConfig
@@ -16,6 +18,8 @@ import org.easydictionary.app.data.remote.auth.RefreshInterceptor
 import org.easydictionary.app.data.remote.auth.TokenAuthenticator
 import org.easydictionary.app.data.remote.category.CategoryApiService
 import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
+import org.easydictionary.app.data.remote.errors.AuthEventsReadable
+import org.easydictionary.app.data.remote.errors.AuthEventsWritable
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.data.remote.language.LanguageApiService
 import org.easydictionary.app.data.remote.language.LanguageStaticApiService
@@ -42,30 +46,39 @@ object NetworkModule {
                 if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.BASIC
         }
 
+
     @Provides
     @Singleton
-    fun provideAuthEvents(): MutableSharedFlow<GlobalErrorEvent> =
+    @AuthEventsWritable
+    fun provideAuthEventsMutable(): MutableSharedFlow<GlobalErrorEvent> =
         MutableSharedFlow(extraBufferCapacity = 1)
+
+    @Provides
+    @Singleton
+    @AuthEventsReadable
+    fun provideAuthEventsReadable(
+        @AuthEventsWritable mutable: MutableSharedFlow<GlobalErrorEvent>
+    ): SharedFlow<@JvmWildcard GlobalErrorEvent> = mutable.asSharedFlow()
 
     @Provides
     fun provideAuthInterceptor(
         preferenceUtils: PreferenceUtils,
-        authEvents: MutableSharedFlow<GlobalErrorEvent>
+        @AuthEventsWritable emitter: MutableSharedFlow<GlobalErrorEvent>
     ): AuthInterceptor =
         AuthInterceptor(
             tokenProvider = { preferenceUtils.getSecureString(ACCESS_TOKEN_KEY) },
             preferenceUtils = preferenceUtils,
-            authEvents = authEvents
+            authEventsEmitter = emitter
         )
 
     @Provides
     fun provideRefreshInterceptor(
         preferenceUtils: PreferenceUtils,
-        authEvents: MutableSharedFlow<GlobalErrorEvent>
+        @AuthEventsWritable emitter: MutableSharedFlow<GlobalErrorEvent>
     ): RefreshInterceptor =
         RefreshInterceptor(
             preferenceUtils = preferenceUtils,
-            authEvents = authEvents
+            authEventsEmitter = emitter
         )
 
     @Provides
@@ -158,12 +171,12 @@ object NetworkModule {
     fun provideTokenAuthenticator(
         preferenceUtils: PreferenceUtils,
         refreshInterceptor: RefreshInterceptor,
-        authEvents: MutableSharedFlow<GlobalErrorEvent>
+        @AuthEventsWritable emitter: MutableSharedFlow<GlobalErrorEvent>
     ): TokenAuthenticator =
         TokenAuthenticator(
             tokenRefresher = { doRefreshToken(preferenceUtils, refreshInterceptor) },
             preferenceUtils,
-            authEvents
+            emitter
         )
 
     private suspend fun doRefreshToken(

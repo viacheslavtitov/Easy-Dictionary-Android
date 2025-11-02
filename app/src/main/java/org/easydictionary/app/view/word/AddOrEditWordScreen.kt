@@ -57,6 +57,7 @@ import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
 import org.easydictionary.app.domain.models.word.WordDetail
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
@@ -78,7 +79,7 @@ fun AddOrEditWordScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: AddDictionaryWordViewModel = hiltViewModel(backStackEntry, "AddOrEditWordScreen"),
-    sharedMainViewModel: SharedMainViewModel,
+    sharedMainContract: SharedMainContract = androidx.hilt.navigation.compose.hiltViewModel<SharedMainViewModel>(),
     dictionary: DictionaryDetailShort? = null,
     wordDetail: WordDetail? = null
 ) {
@@ -127,7 +128,7 @@ fun AddOrEditWordScreen(
     }
 
     val translationExistErrorMessage = stringResource(R.string.error_translation_exist)
-    sharedMainViewModel.loading(loadingProgress)
+    sharedMainContract.loading(loadingProgress)
     if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {

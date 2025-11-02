@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.navigation.AppNavigation
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
@@ -55,7 +56,7 @@ fun DictionariesScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: UserDictionaryViewModel = hiltViewModel(),
-    sharedMainViewModel: SharedMainViewModel
+    sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>()
 ) {
     LaunchedEffect(Unit) {
         viewModel.loadDictionariesDetailShort()
@@ -67,7 +68,7 @@ fun DictionariesScreen(
     LaunchedEffect(errorMessage) {
         showErrorDialog = errorMessage.isNotEmpty()
     }
-    sharedMainViewModel.loading(loadingProgress)
+    sharedMainContract.loading(loadingProgress)
     if (showErrorDialog) {
         ErrorAlertDialog(
             onDismissRequest = {

@@ -59,6 +59,7 @@ import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.word.WordDetail
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
@@ -82,7 +83,7 @@ fun AddOrEditDictionaryScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: AddUserDictionaryViewModel = hiltViewModel(backStackEntry, "AddOrEditDictionaryScreen"),
-    sharedMainViewModel: SharedMainViewModel,
+    sharedMainContract: SharedMainContract = androidx.hilt.navigation.compose.hiltViewModel<SharedMainViewModel>(),
     editDictionary: DictionaryDetailShort? = null
 ) {
     var showErrorDialog by remember { mutableStateOf(false) }
@@ -128,7 +129,7 @@ fun AddOrEditDictionaryScreen(
         showErrorDialog = errorMessage.isNotEmpty()
     }
 
-    sharedMainViewModel.loading(loadingProgress)
+    sharedMainContract.loading(loadingProgress)
     if (showErrorDialog) {
         ErrorAlertDialog(
             onDismissRequest = {

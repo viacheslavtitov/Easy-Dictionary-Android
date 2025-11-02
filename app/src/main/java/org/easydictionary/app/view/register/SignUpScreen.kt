@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.navigation.AppNavigation
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.register.SignUpViewModel
 import org.easydictionary.app.view.buttons.ButtonPrimary
@@ -36,7 +37,7 @@ import org.easydictionary.app.view.inputs.TextFieldPrimary
 fun SignUpScreen(
     navController: NavController,
     viewModel: SignUpViewModel = hiltViewModel(),
-    sharedMainViewModel: SharedMainViewModel
+    sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>()
 ) {
     var showError by remember { mutableStateOf("") }
     val loadingProgress by viewModel.loadingDataUI.collectAsState()
@@ -56,7 +57,7 @@ fun SignUpScreen(
             }
         }
     }
-    sharedMainViewModel.loading(loadingProgress)
+    sharedMainContract.loading(loadingProgress)
     if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {

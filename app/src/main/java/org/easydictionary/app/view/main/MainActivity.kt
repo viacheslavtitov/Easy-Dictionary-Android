@@ -33,6 +33,7 @@ import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.word.WordDetail
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.view.dictionary.AddOrEditDictionaryScreen
 import org.easydictionary.app.view.dictionary.DictionariesScreen
@@ -59,7 +60,9 @@ class MainActivity : ComponentActivity() {
         private val TAG = MainActivity::class.simpleName
     }
 
-    private val sharedViewModel: SharedMainViewModel by viewModels()
+    private val sharedMainContract: SharedMainContract by viewModels<SharedMainViewModel>()
+    lateinit var navController: NavHostController
+        private set
 
     @Inject
     lateinit var imageLoader: ImageLoader
@@ -68,9 +71,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            val navController = rememberNavController()
+            navController = rememberNavController()
             LaunchedEffect(Unit) {
-                sharedViewModel.authEvents.collect { event ->
+                sharedMainContract.authEvents.collect { event ->
                     Log.d(TAG, "Got global auth event $event")
                     when (event) {
                         GlobalErrorEvent.Unauthorized -> {
@@ -90,7 +93,7 @@ class MainActivity : ComponentActivity() {
 //                        .padding(WindowInsets.systemBars.asPaddingValues())
                 ) {
                     AppNavHost(navController)
-                    val loadingState by sharedViewModel.loadingUIState
+                    val loadingState by sharedMainContract.loadingUIState
                     if (loadingState) {
                         Box(
                             modifier = Modifier
@@ -117,22 +120,22 @@ class MainActivity : ComponentActivity() {
                 SplashScreen(navController)
             }
             composable(route = AppNavigation.SignInScreen.route) {
-                SignInScreen(navController, sharedMainViewModel = sharedViewModel)
+                SignInScreen(navController, sharedMainContract = sharedMainContract)
             }
             composable(route = AppNavigation.SignUpScreen.route) {
-                SignUpScreen(navController, sharedMainViewModel = sharedViewModel)
+                SignUpScreen(navController, sharedMainContract = sharedMainContract)
             }
             composable(route = AppNavigation.HomeScreen.route) { backStackEntry ->
-                HomeScreen(backStackEntry, navController, sharedMainViewModel = sharedViewModel)
+                HomeScreen(backStackEntry, navController, sharedMainContract = sharedMainContract)
             }
             composable(route = AppNavigation.DictionariesScreen.route) { backStackEntry ->
-                DictionariesScreen(backStackEntry, navController, sharedMainViewModel = sharedViewModel)
+                DictionariesScreen(backStackEntry, navController, sharedMainContract = sharedMainContract)
             }
             composable(route = AppNavigation.AddUserDictionaryScreen.route) { backStackEntry ->
                 AddOrEditDictionaryScreen(
                     backStackEntry,
                     navController,
-                    sharedMainViewModel = sharedViewModel
+                    sharedMainContract = sharedMainContract
                 )
             }
             composable(
@@ -144,7 +147,7 @@ class MainActivity : ComponentActivity() {
                 AddOrEditDictionaryScreen(
                     backStackEntry,
                     navController,
-                    sharedMainViewModel = sharedViewModel,
+                    sharedMainContract = sharedMainContract,
                     editDictionary = dictionary
                 )
             }
@@ -161,7 +164,7 @@ class MainActivity : ComponentActivity() {
                 AddOrEditWordScreen(
                     backStackEntry,
                     navController,
-                    sharedMainViewModel = sharedViewModel,
+                    sharedMainContract = sharedMainContract,
                     dictionary = dictionary,
                     wordDetail = word
                 )
@@ -175,7 +178,7 @@ class MainActivity : ComponentActivity() {
                     SelectLanguageScreen(
                         backStackEntry,
                         navController,
-                        sharedMainViewModel = sharedViewModel,
+                        sharedMainContract = sharedMainContract,
                         langType = it,
                         imageLoader = imageLoader
                     )
@@ -203,7 +206,7 @@ class MainActivity : ComponentActivity() {
                 AddOrEditWordScreen(
                     backStackEntry,
                     navController,
-                    sharedMainViewModel = sharedViewModel,
+                    sharedMainContract = sharedMainContract,
                     dictionary = dictionary
                 )
             }
@@ -216,7 +219,7 @@ class MainActivity : ComponentActivity() {
                     backStackEntry,
                     navController,
                     dictionaryId = dictionaryId,
-                    sharedMainViewModel = sharedViewModel
+                    sharedMainContract = sharedMainContract
                 )
             }
             composable(
@@ -231,7 +234,7 @@ class MainActivity : ComponentActivity() {
                 AddOrEditWordTranslationScreen(
                     backStackEntry,
                     navController,
-                    sharedMainViewModel = sharedViewModel,
+                    sharedMainContract = sharedMainContract,
                     dictionaryId = dictionaryId,
                     editTranslation = translation
                 )

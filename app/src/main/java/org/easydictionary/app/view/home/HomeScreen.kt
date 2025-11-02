@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.home.HomeViewModel
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.view.buttons.ButtonPrimary
 import org.easydictionary.app.view.dictionary.DictionariesScreen
@@ -56,7 +57,7 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeViewModel = hiltViewModel(),
     defaultSelectedRoute: String = AppNavigation.DictionariesScreen.route,
-    sharedMainViewModel: SharedMainViewModel
+    sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>()
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -160,7 +161,7 @@ fun HomeScreen(
                     AppNavigation.DictionariesScreen.route -> DictionariesScreen(
                         backStackEntry = backStackEntry,
                         navController = navController,
-                        sharedMainViewModel = sharedMainViewModel
+                        sharedMainContract = sharedMainContract
                     )
 
                     else -> {}

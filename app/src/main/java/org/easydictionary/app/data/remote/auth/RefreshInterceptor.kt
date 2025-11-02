@@ -4,12 +4,13 @@ import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import okhttp3.Interceptor
 import okhttp3.Response
+import org.easydictionary.app.data.remote.errors.AuthEventsWritable
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.domain.utils.PreferenceUtils
 
 class RefreshInterceptor(
     private val preferenceUtils: PreferenceUtils,
-    private val authEvents: MutableSharedFlow<GlobalErrorEvent>
+    @AuthEventsWritable private val authEventsEmitter: MutableSharedFlow<GlobalErrorEvent>
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val requestBuilder = chain.request().newBuilder()
@@ -23,7 +24,7 @@ class RefreshInterceptor(
         if (response.code != 200 && request.url.encodedPath.contains("refresh")) {
             Log.e("RefreshInterceptor", "Got error when try to refresh. Response code is ${response.code}")
             preferenceUtils.clear()
-            authEvents.tryEmit(GlobalErrorEvent.Unauthorized)
+            authEventsEmitter.tryEmit(GlobalErrorEvent.Unauthorized)
         }
 
         return response

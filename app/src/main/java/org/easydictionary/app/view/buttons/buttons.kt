@@ -26,15 +26,14 @@ import kotlin.math.roundToInt
 @Composable
 fun ButtonPrimary(
     title: String,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(0.dp),
+    modifier: Modifier = Modifier,
     enabled: Boolean,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Button(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth()
+            .padding(0.dp),
         contentPadding = PaddingValues(16.dp),
         shape = RoundedCornerShape(12.dp),
         onClick = onClick,

@@ -7,6 +7,7 @@ import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
+import org.easydictionary.app.data.remote.errors.AuthEventsWritable
 import org.easydictionary.app.data.remote.errors.GlobalErrorEvent
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
@@ -15,7 +16,7 @@ import javax.inject.Inject
 class TokenAuthenticator @Inject constructor(
     private val tokenRefresher: suspend () -> String?,
     private val preferenceUtils: PreferenceUtils,
-    private val authEvents: MutableSharedFlow<GlobalErrorEvent>
+    @AuthEventsWritable private val authEventsEmitter: MutableSharedFlow<GlobalErrorEvent>
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
@@ -31,7 +32,7 @@ class TokenAuthenticator @Inject constructor(
         } else {
             Log.e("AuthInterceptor", "Got error when try to refresh. Response code is ${response.code}")
             preferenceUtils.clear()
-            authEvents.tryEmit(GlobalErrorEvent.Unauthorized)
+            authEventsEmitter.tryEmit(GlobalErrorEvent.Unauthorized)
             return null
         }
     }

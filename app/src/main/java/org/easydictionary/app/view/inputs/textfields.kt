@@ -36,6 +36,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
+import org.easydictionary.app.domain.utils.isEmailValid
+import org.easydictionary.app.domain.utils.isPasswordValid
 import org.easydictionary.app.view.widget.global.TextDimen
 import org.easydictionary.app.view.widget.phonetic.PhoneticsView
 
@@ -107,7 +109,7 @@ fun EmailTextField(
     var email by remember { mutableStateOf(defaultValue) }
     var isValid by remember { mutableStateOf(false) }
     LaunchedEffect(email) {
-        val newValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        val newValid = isEmailValid(email)
         if (newValid != isValid) {
             isValid = newValid
             onValidationChanged(newValid)
@@ -160,9 +162,7 @@ fun PasswordTextField(
     LaunchedEffect(text, isRelationValidationError) {
         val relationValidationValid =
             if (otherErrorMessage == null) true else if (isRelationValidationError.value) false else true
-        val newValid = text.length >= 8 &&
-                text.any { it.isUpperCase() } &&
-                text.any { it.isLowerCase() } && relationValidationValid
+        val newValid = isPasswordValid(text) && relationValidationValid
         if (newValid != isValid) {
             isValid = newValid
             onValidationChanged(newValid)

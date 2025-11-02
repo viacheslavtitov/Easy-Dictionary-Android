@@ -41,6 +41,7 @@ import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.models.navigation.AppNavigation
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.languages.LanguagesViewModel
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
@@ -54,7 +55,7 @@ fun SelectLanguageScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
     languagesViewModel: LanguagesViewModel = hiltViewModel(),
-    sharedMainViewModel: SharedMainViewModel,
+    sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>(),
     langType: LangType,
     imageLoader: ImageLoader
 ) {
@@ -74,7 +75,7 @@ fun SelectLanguageScreen(
             }
         }
     }
-    sharedMainViewModel.loading(loadingProgress)
+    sharedMainContract.loading(loadingProgress)
     if (showErrorDialog) {
         ErrorAlertDialog(
             onDismissRequest = {

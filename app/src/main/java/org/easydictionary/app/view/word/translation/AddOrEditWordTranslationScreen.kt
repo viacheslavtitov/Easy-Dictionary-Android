@@ -45,6 +45,7 @@ import org.easydictionary.app.domain.models.category.Category
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
+import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
@@ -60,7 +61,7 @@ fun AddOrEditWordTranslationScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
     viewModel: AddTranslationVariantViewModel = hiltViewModel(backStackEntry),
-    sharedMainViewModel: SharedMainViewModel,
+    sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>(),
     dictionaryId: Int,
     editTranslation: ComposedTranslation? = null
 ) {
@@ -71,7 +72,7 @@ fun AddOrEditWordTranslationScreen(
     var translationValue by remember { mutableStateOf(editTranslation?.translate ?: "") }
     var descriptionValue by remember { mutableStateOf(editTranslation?.description ?: "") }
     var selectedCategory by remember { mutableStateOf<Category?>(editTranslation?.category) }
-    sharedMainViewModel.loading(loadingProgress)
+    sharedMainContract.loading(loadingProgress)
     LaunchedEffect(backStackEntry) {
         launch {
             backStackEntry.savedStateHandle.getStateFlow<String?>(

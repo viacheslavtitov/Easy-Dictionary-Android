@@ -8,7 +8,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
     id 'com.google.firebase.crashlytics'
-    id 'org.jetbrains.kotlin.plugin.compose' version '2.2.0'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.2.21'
     id 'kotlinx-serialization'
 }
 
@@ -45,8 +45,8 @@ android {
         versionCode 5
         versionName "0.4"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.debug
+        testInstrumentationRunner = "org.easydictionary.app.test.DictionaryHiltTestRunner"
     }
 
     buildTypes {
@@ -58,10 +58,6 @@ android {
             buildConfigField "String", "WORD_TYPES_BASE_API_URL", "\"https://word-types.dictionaryeasy.workers.dev/\""
             buildConfigField "String", "PHONETICS_BASE_API_URL", "\"https://phonetics.dictionaryeasy.workers.dev/\""
         }
-        staging {
-            signingConfig signingConfigs.qa
-            buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
-        }
         release {
             buildConfigField "String", "FIREBASE_DATABASE_URL", "\"https://easy-dictionary-b003d-default-rtdb.europe-west1.firebasedatabase.app/\""
             minifyEnabled false
@@ -69,23 +65,13 @@ android {
         }
     }
     flavorDimensions += "version"
-    productFlavors {
-        local {
-            applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev"
-        }
-        demo {
-            dimension = "version"
-            applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev"
-        }
-    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
     kotlinOptions {
         jvmTarget = "21"
+        freeCompilerArgs = ['-XXLanguage:+PropertyParamAnnotationDefaultTargetMode']
     }
     packagingOptions {
         resources.excludes.add("META-INF/*")
@@ -94,6 +80,7 @@ android {
         compose true
     }
 }
+kapt { correctErrorTypes = true }
 
 dependencies {
     //core
@@ -104,6 +91,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
     //dependency injections
     implementation("com.google.dagger:hilt-android:2.57.2")
+    implementation 'androidx.test.ext:junit-ktx:1.3.0'
+    implementation 'androidx.navigation:navigation-testing:2.9.5'
     kapt("com.google.dagger:hilt-android-compiler:2.57.2")
     //navigation
     implementation 'androidx.hilt:hilt-navigation-compose:1.3.0'
@@ -122,7 +111,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-svg:2.7.0")
-    implementation "androidx.compose.ui:ui-text-google-fonts:1.9.2"
+    implementation "androidx.compose.ui:ui-text-google-fonts:1.9.4"
     debugImplementation("androidx.compose.ui:ui-tooling")
     //firebase
     implementation platform('com.google.firebase:firebase-bom:34.3.0')
@@ -135,10 +124,21 @@ dependencies {
     implementation 'com.facebook.android:facebook-android-sdk:18.1.3'
     //ui
     implementation 'com.github.bumptech.glide:glide:4.15.1'
-    //tests
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    // Unit (JVM)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("io.mockk:mockk:1.14.6")
+    testImplementation("com.google.truth:truth:1.4.5")
+    testImplementation("app.cash.turbine:turbine:1.2.1")
+    // Hilt instrumentation
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.57.2")
+    kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.57.2")
+    // UI tests (instrumentation)
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.9.4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.9.4")
+    androidTestImplementation("app.cash.turbine:turbine:1.2.1")
 }
 
 kapt {
