@@ -20,6 +20,7 @@ import org.easydictionary.app.domain.usecases.auth.AuthUseCase
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.REFRESH_ACCESS_TOKEN_KEY
+import org.easydictionary.app.domain.viewmodels.auth.SignInEffect
 import org.easydictionary.app.domain.viewmodels.auth.SignInViewModel
 import org.easydictionary.app.setUpMockLog
 import org.junit.Before
@@ -56,18 +57,21 @@ class SignInViewModelTest {
         coEvery { authUseCase.invoke(dto) } returns flowOf(domainResult)
 
         var successEmitted = false
-        val successJob = launch { vm.signedInSuccess.collect { successEmitted = it } }
+        val successJob = launch { vm.effects.collect {
+            successEmitted = true
+        }}
+        vm.onPasswordChanged(dto.password!!)
+        vm.onEmailChanged(dto.email!!)
+        vm.onSubmit()
 
-        vm.signIn(dto.email, dto.password, dto.provider, dto.providerToken)
-
-        assertThat(vm.loadingDataUI.value).isTrue()
+        assertThat(vm.state.value.isLoading).isTrue()
 
         advanceUntilIdle()
 
         verify { preferenceUtils.putSecureString(ACCESS_TOKEN_KEY, access) }
         verify { preferenceUtils.putSecureString(REFRESH_ACCESS_TOKEN_KEY, refresh) }
         assertThat(successEmitted).isTrue()
-        assertThat(vm.loadingDataUI.value).isFalse()
+        assertThat(vm.state.value.isLoading).isFalse()
 
         successJob.cancel()
     }
@@ -79,13 +83,21 @@ class SignInViewModelTest {
         coEvery { authUseCase.invoke(dto) } returns flowOf(err)
 
         val errors = mutableListOf<String>()
-        val errorJob = launch { vm.errorMessage.collect { errors.add(it) } }
+        val errorJob = launch { vm.effects.collect { value ->
+            when(value) {
+                is SignInEffect.ShowError -> {
+                    errors.add(value.message)
+                } else -> {}
+            }
+        } }
 
-        vm.signIn(dto.email, dto.password, dto.provider, dto.providerToken)
+        vm.onPasswordChanged(dto.password!!)
+        vm.onEmailChanged(dto.email!!)
+        vm.onSubmit()
         advanceUntilIdle()
 
         assertThat(errors).containsExactly("Bad credentials")
-        assertThat(vm.loadingDataUI.value).isFalse()
+        assertThat(vm.state.value.isLoading).isFalse()
         verify(exactly = 0) { preferenceUtils.putSecureString(any(), any()) }
 
         errorJob.cancel()
@@ -99,13 +111,21 @@ class SignInViewModelTest {
         }
 
         val errors = mutableListOf<String>()
-        val errorJob = launch { vm.errorMessage.collect { errors.add(it) } }
+        val errorJob = launch { vm.effects.collect { value ->
+            when(value) {
+                is SignInEffect.ShowError -> {
+                    errors.add(value.message)
+                } else -> {}
+            }
+        } }
 
-        vm.signIn(dto.email, dto.password, dto.provider, dto.providerToken)
+        vm.onPasswordChanged(dto.password!!)
+        vm.onEmailChanged(dto.email!!)
+        vm.onSubmit()
         advanceUntilIdle()
 
         assertThat(errors).containsExactly("Any exception")
-        assertThat(vm.loadingDataUI.value).isFalse()
+        assertThat(vm.state.value.isLoading).isFalse()
         verify(exactly = 0) { preferenceUtils.putSecureString(any(), any()) }
 
         errorJob.cancel()
@@ -113,9 +133,9 @@ class SignInViewModelTest {
 
     @Test
     fun `displayError directly emit`() = runTest {
-        vm.errorMessage.test {
+        vm.effects.test {
             vm.displayError("Error")
-            assertThat(awaitItem()).isEqualTo("Error")
+            assertThat(awaitItem()).isEqualTo(SignInEffect.ShowError("Error"))
             cancelAndConsumeRemainingEvents()
         }
     }
