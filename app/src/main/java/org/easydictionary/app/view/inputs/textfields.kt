@@ -36,8 +36,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
-import org.easydictionary.app.domain.utils.isEmailValid
-import org.easydictionary.app.domain.utils.isPasswordValid
 import org.easydictionary.app.view.widget.global.TextDimen
 import org.easydictionary.app.view.widget.phonetic.PhoneticsView
 
@@ -103,24 +101,13 @@ fun TextFieldPrimary(
 fun EmailTextField(
     defaultValue: String,
     onValueChange: (String) -> Unit,
-    onValidationChanged: (Boolean) -> Unit,
+    isEmailValid: Boolean,
     label: String
 ) {
     var email by remember { mutableStateOf(defaultValue) }
-    var isValid by remember { mutableStateOf(false) }
-    LaunchedEffect(email) {
-        val newValid = isEmailValid(email)
-        if (newValid != isValid) {
-            isValid = newValid
-            onValidationChanged(newValid)
-        }
-    }
 
-    val errorMessage = when {
-        email.isEmpty() -> null
-        !android.util.Patterns.EMAIL_ADDRESS.matcher(email)
-            .matches() -> stringResource(R.string.error_email_format_failed)
-
+    val errorMessage = when(isEmailValid) {
+        false -> stringResource(R.string.error_email_format_failed)
         else -> null
     }
     OutlinedTextField(
@@ -137,7 +124,7 @@ fun EmailTextField(
             .fillMaxWidth()
             .padding(6.dp),
         singleLine = true,
-        isError = !isValid && email.isNotEmpty(),
+        isError = !isEmailValid && email.isNotEmpty(),
         supportingText = {
             if (errorMessage != null) {
                 Text(text = errorMessage, fontSize = TextDimen.TextFieldError)
@@ -150,7 +137,7 @@ fun EmailTextField(
 fun PasswordTextField(
     defaultValue: String,
     onValueChange: (String) -> Unit,
-    onValidationChanged: (Boolean) -> Unit,
+    isPasswordValid: Boolean,
     isRelationValidationError: State<Boolean> = mutableStateOf(false),
     otherErrorMessage: String? = null,
     label: String
@@ -162,10 +149,9 @@ fun PasswordTextField(
     LaunchedEffect(text, isRelationValidationError) {
         val relationValidationValid =
             if (otherErrorMessage == null) true else if (isRelationValidationError.value) false else true
-        val newValid = isPasswordValid(text) && relationValidationValid
+        val newValid = isPasswordValid && relationValidationValid
         if (newValid != isValid) {
             isValid = newValid
-            onValidationChanged(newValid)
         }
     }
 

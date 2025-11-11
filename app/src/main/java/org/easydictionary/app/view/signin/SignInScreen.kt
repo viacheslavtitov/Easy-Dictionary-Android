@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
@@ -80,20 +81,18 @@ fun SignInScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         EmailTextField(
-            "",
-            { value ->
+            defaultValue = "",
+            onValueChange = { value ->
                 contract.onEmailChanged(value)
             },
-            onValidationChanged = { isValid ->
-
-            },
+            isEmailValid = ui.isEmailValid,
             stringResource(R.string.email)
         )
         Spacer(modifier = Modifier.height(6.dp))
         PasswordTextField(
-            "",
-            { value -> contract.onPasswordChanged(value) },
-            onValidationChanged = { isValid -> },
+            defaultValue = "",
+            onValueChange = { value -> contract.onPasswordChanged(value) },
+            isPasswordValid = ui.isPasswordValid,
             label = stringResource(R.string.password)
         )
         Spacer(modifier = Modifier.height(6.dp))

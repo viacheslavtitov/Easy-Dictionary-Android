@@ -15,11 +15,11 @@ import kotlinx.coroutines.launch
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.usecases.auth.AuthParams
 import org.easydictionary.app.domain.usecases.auth.AuthUseCase
+import org.easydictionary.app.domain.utils.EmailValidator
+import org.easydictionary.app.domain.utils.PasswordValidator
 import org.easydictionary.app.domain.utils.PreferenceUtils
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.ACCESS_TOKEN_KEY
 import org.easydictionary.app.domain.utils.PreferenceUtils.Companion.REFRESH_ACCESS_TOKEN_KEY
-import org.easydictionary.app.domain.utils.isEmailValid
-import org.easydictionary.app.domain.utils.isPasswordValid
 import javax.inject.Inject
 
 sealed interface SignInEffect {
@@ -50,7 +50,9 @@ interface SignInContract {
 @HiltViewModel
 class SignInViewModel @Inject constructor(
     private val authUseCase: AuthUseCase,
-    private val preferenceUtils: PreferenceUtils
+    private val preferenceUtils: PreferenceUtils,
+    private val emailValidator: EmailValidator,
+    private val passwordValidator: PasswordValidator,
 ) : ViewModel(), SignInContract {
     companion object {
         private val TAG = SignInViewModel::class.simpleName
@@ -64,7 +66,7 @@ class SignInViewModel @Inject constructor(
 
     override fun onEmailChanged(value: String) {
         _state.update { s ->
-            val isEmailValid = isEmailValid(value)
+            val isEmailValid = emailValidator.isValid(value)
             s.copy(
                 email = value,
                 isEmailValid = isEmailValid,
@@ -75,7 +77,7 @@ class SignInViewModel @Inject constructor(
 
     override fun onPasswordChanged(value: String) {
         _state.update { s ->
-            val isPassValid = isPasswordValid(value)
+            val isPassValid = passwordValidator.isValid(value)
             s.copy(
                 password = value,
                 isPasswordValid = isPassValid,

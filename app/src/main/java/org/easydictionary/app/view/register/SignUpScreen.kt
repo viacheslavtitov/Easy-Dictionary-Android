@@ -122,30 +122,30 @@ fun SignUpScreen(
             label = stringResource(R.string.last_name)
         )
         Spacer(modifier = Modifier.height(6.dp))
-        EmailTextField(
-            "",
-            { value -> email = value },
-            onValidationChanged = { isValid ->
-                isEmailValid = isValid
-            },
-            stringResource(R.string.email)
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        PasswordTextField(
-            "",
-            { value -> password = value },
-            onValidationChanged = { isValid -> isPasswordValid = isValid },
-            label = stringResource(R.string.password)
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        PasswordTextField(
-            "",
-            { value -> confirmPassword = value },
-            onValidationChanged = { isValid -> isConfirmPasswordValid = isValid },
-            label = stringResource(R.string.confirm_password),
-            isRelationValidationError = derivedStateOf { isMismatchError },
-            otherErrorMessage = stringResource(R.string.error_passwords_not_match)
-        )
+//        EmailTextField(
+//            "",
+//            { value -> email = value },
+//            onValidationChanged = { isValid ->
+//                isEmailValid = isValid
+//            },
+//            stringResource(R.string.email)
+//        )
+//        Spacer(modifier = Modifier.height(6.dp))
+//        PasswordTextField(
+//            "",
+//            { value -> password = value },
+//            onValidationChanged = { isValid -> isPasswordValid = isValid },
+//            label = stringResource(R.string.password)
+//        )
+//        Spacer(modifier = Modifier.height(6.dp))
+//        PasswordTextField(
+//            "",
+//            { value -> confirmPassword = value },
+//            onValidationChanged = { isValid -> isConfirmPasswordValid = isValid },
+//            label = stringResource(R.string.confirm_password),
+//            isRelationValidationError = derivedStateOf { isMismatchError },
+//            otherErrorMessage = stringResource(R.string.error_passwords_not_match)
+//        )
         Spacer(modifier = Modifier.height(6.dp))
         ButtonPrimary(title = stringResource(R.string.sign_up), enabled = isFormValid) {
             viewModel.signUp(email, password, firstName, lastName, "email", "")
