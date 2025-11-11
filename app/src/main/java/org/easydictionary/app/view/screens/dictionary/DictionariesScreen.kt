@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.filterNotNull
@@ -43,6 +43,8 @@ import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
+import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryContract
+import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryEffect
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
@@ -55,56 +57,63 @@ import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 fun DictionariesScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
-    viewModel: UserDictionaryViewModel = hiltViewModel(),
+    contract: UserDictionaryContract = hiltViewModel<UserDictionaryViewModel>(),
     sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>()
 ) {
-    LaunchedEffect(Unit) {
-        viewModel.loadDictionariesDetailShort()
-    }
-    var showErrorDialog by remember { mutableStateOf(false) }
-    val dictionaries by viewModel.dictionariesDetailShort.collectAsState()
-    val loadingProgress by viewModel.loadingDataUI.collectAsState()
-    val errorMessage by viewModel.errorUI.collectAsState()
-    LaunchedEffect(errorMessage) {
-        showErrorDialog = errorMessage.isNotEmpty()
-    }
-    sharedMainContract.loading(loadingProgress)
-    if (showErrorDialog) {
+    val ui by contract.state.collectAsStateWithLifecycle()
+    var showError by remember { mutableStateOf("") }
+    sharedMainContract.loading(ui.isLoading)
+    if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {
-                showErrorDialog = false
+                showError = ""
             },
             onConfirmation = {
-                showErrorDialog = false
+                showError = ""
             },
-            message = errorMessage
+            message = showError
         )
+    }
+    LaunchedEffect(Unit) {
+        launch {
+            contract.effects.collect { eff ->
+                when (eff) {
+                    UserDictionaryEffect.LoadDictionaries -> contract.loadDictionaries()
+                    is UserDictionaryEffect.NavigateDictionaryWords -> {
+                        AppNavigation.EditDictionaryScreen.createRoute(eff.item)
+                    }
+                    is UserDictionaryEffect.ShowError -> {
+                        showError = eff.message
+                    }
+                }
+            }
+        }
     }
     LaunchedEffect(backStackEntry) {
         launch {
-            backStackEntry.savedStateHandle.getStateFlow<Boolean>(
+            backStackEntry.savedStateHandle.getStateFlow(
                 UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES, false
             ).filterNotNull().collect { shouldUpdate ->
                 if (shouldUpdate) {
-                    viewModel.loadDictionariesDetailShort()
+                    contract.loadDictionaries()
                 }
             }
         }
     }
     val openItemId = remember { mutableStateOf<Int?>(null) }
     val onEdit: (Int) -> Unit = { itemId ->
-        dictionaries.find { itemId == it.id }?.let { dictionary ->
+        ui.dictionaries.find { itemId == it.id }?.let { dictionary ->
             Log.d("DictionariesScreen", "Click on edit $itemId")
-            navController.navigate(AppNavigation.EditDictionaryScreen.createRoute(dictionary))
+            contract.onNavigateDictionaryWords(dictionary)
         }
     }
     val deleteItemId = remember { mutableStateOf<Int?>(null) }
     deleteItemId.value?.let { itemId ->
-        dictionaries.find { itemId == it.id }?.let { dictionary ->
+        ui.dictionaries.find { itemId == it.id }?.let { dictionary ->
             Log.d("DictionariesScreen", "Click on delete $itemId")
             ButtonsAlertDialog(
                 onConfirmation = {
-                    viewModel.deleteDictionary(dictionary)
+                    contract.deleteDictionary(dictionary)
                 },
                 onDismissRequest = {
                     deleteItemId.value = null
@@ -134,7 +143,7 @@ fun DictionariesScreen(
             )
     ) {
         items(
-            items = dictionaries,
+            items = ui.dictionaries,
             key = { it.id }
         ) { item ->
             DictionaryListItem(item, openItemId, onClick, onEdit, onDelete)
