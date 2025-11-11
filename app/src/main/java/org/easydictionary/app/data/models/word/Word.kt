@@ -52,5 +52,5 @@ data class WordDetail(
 data class WordsResponse(
     @SerializedName("next_last_id") val latestId: Int,
     @SerializedName("has_more") val hasMore: Boolean,
-    @SerializedName("words") val words: List<WordDetail> = emptyList()
+    @SerializedName("words") val words: List<WordDetail>? = emptyList()
 )

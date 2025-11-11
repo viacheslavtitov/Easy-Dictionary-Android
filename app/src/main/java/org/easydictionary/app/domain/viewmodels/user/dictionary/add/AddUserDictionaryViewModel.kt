@@ -5,17 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.serialization.json.Json
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
@@ -33,7 +34,44 @@ import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryParam
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryParams
 import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
+import java.util.Collections
 import javax.inject.Inject
+
+sealed interface AddOrEditUserDictionaryEffect {
+    data object DictionaryCreated : AddOrEditUserDictionaryEffect
+    data class ShowError(val message: String) : AddOrEditUserDictionaryEffect
+}
+
+data class AddOrEditUserDictionaryUiState(
+    val words: List<WordDetail> = emptyList(),
+    val isLoading: Boolean = false,
+    val dialect: String? = null,
+    val query: String? = null,
+    val latestWordsPagId: Int = 0,
+    val latestSearchWordsPagId: Int = 0,
+    val editDictionary: DictionaryDetailShort? = null,
+    val hasMore: Boolean = true,
+    val latestFetchType: FetchWordsType = FetchWordsType.All,
+    val lockLoadWords: Semaphore = Semaphore(1, acquiredPermits = 0),
+    val selectedLanguageFrom: Language? = null,
+    val selectedLanguageTo: Language? = null
+)
+
+interface AddOrEditUserDictionaryContract {
+    val state: StateFlow<AddOrEditUserDictionaryUiState>
+    val effects: Flow<AddOrEditUserDictionaryEffect>
+
+    fun loadWords()
+
+    fun onDialectChanged(dialect: String?)
+    fun onQueryChanged(query: String?, fromScroll: Boolean)
+    fun createDictionary()
+    fun updateDictionary()
+    fun deleteDictionary()
+    fun isEditMode(): Boolean
+    fun setLanguage(langType: LangType, json: String)
+    fun setEditMode(dictionaryDetailShort: DictionaryDetailShort?)
+}
 
 @HiltViewModel
 class AddUserDictionaryViewModel @Inject constructor(
@@ -43,55 +81,61 @@ class AddUserDictionaryViewModel @Inject constructor(
     private val updateDictionaryUseCase: UpdateDictionaryUseCase,
     private val getAllWordsForDictionaryUseCase: GetAllWordsForDictionaryUseCase,
     private val searchWordsForDictionaryUseCase: SearchWordsForDictionaryUseCase
-) : ViewModel() {
+) : ViewModel(), AddOrEditUserDictionaryContract {
 
     companion object {
         private val TAG = AddUserDictionaryViewModel::class.simpleName
         private const val WORDS_PAGE_SIZE = 20
     }
 
-    private var latestWordsPagId: Int = 0
-    private var latestSearchWordsPagId: Int = 0
-    private var editDictionary: DictionaryDetailShort? = null
-    private val _selectedLanguageFrom = MutableStateFlow<Language?>(null)
-    val selectedLanguageFrom: StateFlow<Language?> = _selectedLanguageFrom.asStateFlow()
-    private val _selectedLanguageTo = MutableStateFlow<Language?>(null)
-    val selectedLanguageTo: StateFlow<Language?> = _selectedLanguageTo.asStateFlow()
-    private val _loadingDataUI = MutableStateFlow<Boolean>(false)
-    val loadingDataUI: StateFlow<Boolean> = _loadingDataUI.asStateFlow()
-    private val _dialect = MutableStateFlow<String>("")
-    val dialect: StateFlow<String> = _dialect.asStateFlow()
-    private val _errorUI = MutableStateFlow<String>("")
-    val errorUI: StateFlow<String> = _errorUI.asStateFlow()
-    private val _dictionaryCreated = MutableSharedFlow<Boolean>()
-    val dictionaryCreated: SharedFlow<Boolean> = _dictionaryCreated
-    private val _words = MutableStateFlow<List<WordDetail>>(emptyList())
-    val words: StateFlow<List<WordDetail>> = _words.asStateFlow()
-    private var hasMore = true
-    private var latestFetchType: FetchWordsType = FetchWordsType.All
-    private val lockLoadWords = kotlinx.coroutines.sync.Semaphore(1, acquiredPermits = 0)
+    private val _state = MutableStateFlow(AddOrEditUserDictionaryUiState())
+    override val state: StateFlow<AddOrEditUserDictionaryUiState> = _state
 
-    fun setLanguage(langType: LangType, json: String) {
+    private val _effects =
+        MutableSharedFlow<AddOrEditUserDictionaryEffect>(extraBufferCapacity = 1, replay = 1)
+    override val effects: Flow<AddOrEditUserDictionaryEffect> = _effects
+
+    override fun setLanguage(langType: LangType, json: String) {
         val language: Language = Json.decodeFromString(json)
         when (langType) {
             LangType.FROM -> {
-                _selectedLanguageFrom.value = language
+                _state.update { it.copy(selectedLanguageFrom = language) }
             }
 
             LangType.TO -> {
-                _selectedLanguageTo.value = language
+                _state.update { it.copy(selectedLanguageTo = language) }
             }
         }
     }
 
+    override fun onDialectChanged(dialect: String?) {
+        _state.update { it.copy(dialect = dialect) }
+    }
+
+    override fun onQueryChanged(query: String?, fromScroll: Boolean) {
+        Log.d(
+            TAG,
+            "onQueryChanged = $query | fromScroll = $fromScroll | query in state = ${state.value.query}"
+        )
+        if (state.value.query == query && !state.value.hasMore) {
+            Log.e(TAG, "All words are already loaded")
+            return
+        }
+        val loadMore = !query.isNullOrEmpty() && state.value.query == query && fromScroll
+        _state.update { it.copy(query = query) }
+        searchWords(query, loadMore)
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun createDictionary(dialectValue: String? = null) {
+    override fun createDictionary() {
         val languageFrom =
-            selectedLanguageFrom.value ?: throw DictionaryValidationException.LanguageFromException
+            state.value.selectedLanguageFrom
+                ?: throw DictionaryValidationException.LanguageFromException
         val languageTo =
-            selectedLanguageTo.value ?: throw DictionaryValidationException.LanguageToException
-        Log.d(TAG, "createDictionary($dialectValue)")
-        _loadingDataUI.value = true
+            state.value.selectedLanguageTo
+                ?: throw DictionaryValidationException.LanguageToException
+        Log.d(TAG, "createDictionary(${state.value.dialect})")
+        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             combine(
                 addUserLanguageUseCase(
@@ -104,7 +148,7 @@ class AddUserDictionaryViewModel @Inject constructor(
                 if (langs.first is DomainResult.Success && langs.second is DomainResult.Success)
                     return@flatMapLatest createDictionaryUseCase(
                         CreateDictionaryParams(
-                            dialectValue,
+                            state.value.dialect,
                             (langs.first as DomainResult.Success<Language>).data.id,
                             (langs.second as DomainResult.Success<Language>).data.id
                         )
@@ -113,205 +157,255 @@ class AddUserDictionaryViewModel @Inject constructor(
                 }
             }.catch {
                 Log.d(TAG, "catch ${it.message}")
-                _errorUI.value = it.message ?: "Error"
+                _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
             }.onCompletion {
                 Log.d(TAG, "onCompletion")
-                _loadingDataUI.value = false
+                _state.update { it.copy(isLoading = false) }
             }.collect { result ->
                 when (result) {
                     is DomainResult.Success -> {
                         Log.d(TAG, "Dictionary created")
-                        _dictionaryCreated.emit(true)
+                        _effects.tryEmit(AddOrEditUserDictionaryEffect.DictionaryCreated)
                     }
 
-                    is DomainResult.Error -> _errorUI.value = result.message
+                    is DomainResult.Error -> _effects.tryEmit(
+                        AddOrEditUserDictionaryEffect.ShowError(
+                            result.message
+                        )
+                    )
                 }
             }
         }
     }
 
-    fun updateDictionary(dialectValue: String? = null) {
+    override fun updateDictionary() {
         if (!isEditMode()) return
-        Log.d(TAG, "updateDictionary $dialectValue")
-        _loadingDataUI.value = true
+        Log.d(TAG, "updateDictionary $${state.value.dialect}")
+        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             updateDictionaryUseCase(
                 UpdateDictionaryParams(
-                    id = editDictionary!!.id,
-                    dialect = dialectValue
+                    id = state.value.editDictionary!!.id,
+                    dialect = state.value.dialect
                 )
-            )
-                .catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    _errorUI.value = it.message ?: "Error"
-                }
-                .onCompletion {
-                    Log.d(TAG, "onCompletion")
-                    _loadingDataUI.value = false
-                }
-                .collect { result ->
-                    when (result) {
-                        is DomainResult.Success -> {
-                            Log.d(TAG, "Dictionary ${editDictionary?.id} updated")
-                            _dictionaryCreated.emit(true)
-                        }
-
-                        is DomainResult.Error -> _errorUI.value = result.message
+            ).catch {
+                Log.d(TAG, "catch ${it.message}")
+                _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _state.update { it.copy(isLoading = false) }
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        Log.d(TAG, "Dictionary ${state.value.editDictionary?.id} updated")
+                        _effects.tryEmit(AddOrEditUserDictionaryEffect.DictionaryCreated)
                     }
+
+                    is DomainResult.Error -> _effects.tryEmit(
+                        AddOrEditUserDictionaryEffect.ShowError(
+                            result.message
+                        )
+                    )
                 }
+            }
         }
     }
 
-    fun delete() {
+    override fun deleteDictionary() {
         if (!isEditMode()) return
-        val deleteId = editDictionary?.id ?: return
-        _loadingDataUI.value = true
+        val deleteId = state.value.editDictionary?.id ?: return
+        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             deleteDictionaryUseCase.invoke(deleteId)
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
-                    _errorUI.value = it.message ?: "Error"
+                    _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
                 }
                 .onCompletion {
                     Log.d(TAG, "onCompletion")
-                    _loadingDataUI.value = false
+                    _state.update { it.copy(isLoading = false) }
                 }
                 .collect { result ->
                     when (result) {
                         is DomainResult.Success -> {
-                            Log.d(TAG, "Dictionary $deleteId deleted")
-                            _dictionaryCreated.emit(true)
+                            Log.d(TAG, "Dictionary ${state.value.editDictionary?.id} deleted")
+                            _effects.tryEmit(AddOrEditUserDictionaryEffect.DictionaryCreated)
                         }
 
-                        is DomainResult.Error -> _errorUI.value = result.message
+                        is DomainResult.Error -> _effects.tryEmit(
+                            AddOrEditUserDictionaryEffect.ShowError(
+                                result.message
+                            )
+                        )
                     }
                 }
         }
     }
 
-    fun isEditMode() = editDictionary != null
+    override fun isEditMode() = state.value.editDictionary != null
 
-    fun setEditMode(dictionaryDetailShort: DictionaryDetailShort?) {
-        editDictionary = dictionaryDetailShort
-        _selectedLanguageFrom.value = editDictionary?.langFrom
-        _selectedLanguageTo.value = editDictionary?.langTo
-        _dialect.value = editDictionary?.dialect ?: ""
+    override fun setEditMode(dictionaryDetailShort: DictionaryDetailShort?) {
+        _state.update {
+            it.copy(
+                editDictionary = dictionaryDetailShort,
+                selectedLanguageTo = dictionaryDetailShort?.langFrom,
+                selectedLanguageFrom = dictionaryDetailShort?.langTo,
+                dialect = dictionaryDetailShort?.dialect
+            )
+        }
     }
 
-    fun loadWords() {
-        Log.d(TAG, "loadWords: hasMore = $hasMore | latestFetchType = ${latestFetchType.name}")
-        if (!hasMore && latestFetchType == FetchWordsType.All) {
+    override fun loadWords() {
+        Log.d(
+            TAG,
+            "loadWords: hasMore = ${state.value.hasMore} | latestFetchType = ${state.value.latestFetchType.name}"
+        )
+        if (!state.value.hasMore && state.value.latestFetchType == FetchWordsType.All) {
             Log.e(TAG, "loadWords blocked because hasMore is false or latestFetchType is ALL")
             return
         }
-        val dictionaryId = editDictionary?.id
+        val dictionaryId = state.value.editDictionary?.id
         if (dictionaryId == null) {
             Log.e(TAG, "dictionaryId is null")
             return
         }
-        if (!lockLoadWords.tryAcquire()) {
+        if (!state.value.lockLoadWords.tryAcquire()) {
             Log.e(TAG, "loadWords blocked because it's already running")
             return
         }
-        latestFetchType = FetchWordsType.All
-        Log.d(TAG, "loadWords($latestWordsPagId)")
-        _loadingDataUI.value = true
-        latestSearchWordsPagId = 0
+        _state.update { it.copy(latestFetchType = FetchWordsType.All) }
+        Log.d(TAG, "loadWords(${state.value.latestWordsPagId})")
+        _state.update { it.copy(latestSearchWordsPagId = 0, isLoading = true) }
         viewModelScope.launch {
-            getAllWordsForDictionaryUseCase(
-                GetAllWordsForDictionaryParams(
-                    lastPageId = latestWordsPagId,
-                    pageSize = WORDS_PAGE_SIZE,
-                    dictionaryId = dictionaryId
-                )
-            ).catch {
-                Log.d(TAG, "catch ${it.message}")
-                _errorUI.value = it.message ?: "Error"
-            }.onCompletion {
-                Log.d(TAG, "loadWords onCompletion")
-                _loadingDataUI.value = false
-                lockLoadWords.release()
-            }.collect { result ->
-                when (result) {
-                    is DomainResult.Success -> {
-                        Log.d(TAG, "Words downloaded ${result.data.words.size}")
-                        hasMore = result.data.hasMore
-                        latestWordsPagId = result.data.latestId
-                        _words.update { current ->
-                            (current + result.data.words).distinctBy { it.id }
+            try {
+                getAllWordsForDictionaryUseCase(
+                    GetAllWordsForDictionaryParams(
+                        lastPageId = state.value.latestWordsPagId,
+                        pageSize = WORDS_PAGE_SIZE,
+                        dictionaryId = dictionaryId
+                    )
+                ).catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
+                }.onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _state.update { it.copy(isLoading = false) }
+                }.collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            Log.d(TAG, "Words downloaded ${result.data.words.size}")
+                            _state.update {
+                                it.copy(
+                                    hasMore = result.data.hasMore,
+                                    latestWordsPagId = result.data.latestId,
+                                    words = it.words + result.data.words
+                                )
+                            }
+                        }
+
+                        is DomainResult.Error -> {
+                            _state.update {
+                                it.copy(
+                                    hasMore = false,
+                                    latestWordsPagId = 0
+                                )
+                            }
+                            _effects.tryEmit(
+                                AddOrEditUserDictionaryEffect.ShowError(
+                                    result.message
+                                )
+                            )
                         }
                     }
-
-                    is DomainResult.Error -> {
-                        latestWordsPagId = 0
-                        hasMore = false
-                        _errorUI.value = result.message
-                    }
                 }
+            } finally {
+                state.value.lockLoadWords.release()
             }
         }
     }
 
-    fun searchWords(query: String) {
+    private fun searchWords(query: String?, loadMore: Boolean = false) {
         Log.d(
             TAG,
-            "searchWords($query): hasMore = $hasMore | latestFetchType = ${latestFetchType.name}"
+            "searchWords($query): loadMore = $loadMore | latestFetchType = ${state.value.latestFetchType.name}"
         )
-        if (!hasMore && latestFetchType == FetchWordsType.Search) {
-            Log.e(TAG, "loadWords blocked because hasMore is false or latestFetchType is Search")
-            return
-        }
-        val dictionaryId = editDictionary?.id
+        val dictionaryId = state.value.editDictionary?.id
         if (dictionaryId == null) {
             Log.e(TAG, "dictionaryId is null")
             return
         }
-        if (query.isEmpty()) {
+        if (query.isNullOrEmpty()) {
             Log.e(TAG, "Query is empty")
             loadWords()
             return
         }
-        if (!lockLoadWords.tryAcquire()) {
+        if (!state.value.lockLoadWords.tryAcquire()) {
             Log.e(TAG, "searchWords blocked because it's already running")
             return
         }
-        latestFetchType = FetchWordsType.Search
-        Log.d(TAG, "searchWords($query - $latestSearchWordsPagId)")
-        _loadingDataUI.value = true
-        latestWordsPagId = 0
-        _words.value = emptyList()
-        viewModelScope.launch {
-            searchWordsForDictionaryUseCase(
-                SearchWordsForDictionaryParams(
-                    query = query,
-                    lastPageId = latestSearchWordsPagId,
-                    pageSize = WORDS_PAGE_SIZE,
-                    dictionaryId = dictionaryId
+        val latestSearchWordsPagId = if (loadMore) state.value.latestSearchWordsPagId else 0
+        if (latestSearchWordsPagId == 0) {
+            _state.update {
+                it.copy(
+                    words = emptyList()
                 )
-            ).catch {
-                Log.d(TAG, "catch ${it.message}")
-                _errorUI.value = it.message ?: "Error"
-            }.onCompletion {
-                Log.d(TAG, "searchWords onCompletion")
-                lockLoadWords.release()
-                _loadingDataUI.value = false
-            }.collect { result ->
-                when (result) {
-                    is DomainResult.Success -> {
-                        Log.d(TAG, "Words downloaded ${result.data.words.size}")
-                        hasMore = latestSearchWordsPagId == result.data.latestId
-                        latestSearchWordsPagId = result.data.latestId
-                        _words.update { current ->
-                            (current + result.data.words).distinctBy { it.id }
+            }
+        }
+        _state.update {
+            it.copy(
+                latestFetchType = FetchWordsType.Search,
+                latestWordsPagId = 0,
+                isLoading = true,
+                latestSearchWordsPagId = latestSearchWordsPagId
+            )
+        }
+
+        Log.d(TAG, "searchWords($query - $latestSearchWordsPagId)")
+        viewModelScope.launch {
+            try {
+                searchWordsForDictionaryUseCase(
+                    SearchWordsForDictionaryParams(
+                        query = query,
+                        lastPageId = latestSearchWordsPagId,
+                        pageSize = WORDS_PAGE_SIZE,
+                        dictionaryId = dictionaryId
+                    )
+                ).catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
+                }.onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _state.update { it.copy(isLoading = false) }
+                }.collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            Log.d(TAG, "Words downloaded ${result.data.words.size}")
+                            _state.update {
+                                it.copy(
+                                    hasMore = result.data.hasMore,
+                                    latestSearchWordsPagId = result.data.latestId,
+                                    words = it.words + result.data.words
+                                )
+                            }
+                        }
+
+                        is DomainResult.Error -> {
+                            _state.update {
+                                it.copy(
+                                    hasMore = false,
+                                    latestSearchWordsPagId = 0
+                                )
+                            }
+                            _effects.tryEmit(
+                                AddOrEditUserDictionaryEffect.ShowError(
+                                    result.message
+                                )
+                            )
                         }
                     }
-
-                    is DomainResult.Error -> {
-                        latestSearchWordsPagId = 0
-                        hasMore = false
-                        _errorUI.value = result.message
-                    }
                 }
+            } finally {
+                state.value.lockLoadWords.release()
             }
         }
     }

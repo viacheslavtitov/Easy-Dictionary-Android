@@ -97,7 +97,7 @@ class WordRepositoryImpl @Inject constructor(
                         WordsResponse(
                             latestId = result.data.latestId,
                             hasMore = result.data.hasMore,
-                            words = result.data.words.map { it.toDomain() }
+                            words = result.data.words?.map { it.toDomain() } ?: emptyList()
                         ))
                 }
 
@@ -136,7 +136,7 @@ class WordRepositoryImpl @Inject constructor(
                         WordsResponse(
                             latestId = result.data.latestId,
                             hasMore = result.data.hasMore,
-                            words = result.data.words.map { it.toDomain() }
+                            words = result.data.words?.map { it.toDomain() } ?: emptyList()
                         ))
                 }
 

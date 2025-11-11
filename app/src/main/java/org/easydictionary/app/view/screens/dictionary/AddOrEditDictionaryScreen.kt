@@ -31,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -62,6 +61,8 @@ import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.UserDictionaryViewModel
+import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddOrEditUserDictionaryContract
+import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddOrEditUserDictionaryEffect
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.AddUserDictionaryViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.DictionaryValidationException
 import org.easydictionary.app.domain.viewmodels.user.dictionary.add.languages.LanguagesViewModel
@@ -82,69 +83,37 @@ import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 fun AddOrEditDictionaryScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
-    viewModel: AddUserDictionaryViewModel = hiltViewModel(backStackEntry, "AddOrEditDictionaryScreen"),
+    contract: AddOrEditUserDictionaryContract = hiltViewModel<AddUserDictionaryViewModel>(
+        backStackEntry,
+        "AddOrEditDictionaryScreen"
+    ),
     sharedMainContract: SharedMainContract = androidx.hilt.navigation.compose.hiltViewModel<SharedMainViewModel>(),
     editDictionary: DictionaryDetailShort? = null
 ) {
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var showPhonetics by rememberSaveable { mutableStateOf(true) }
-    val loadingProgress by viewModel.loadingDataUI.collectAsState()
-    val errorMessage by viewModel.errorUI.collectAsState()
-    val editedDialect by viewModel.dialect.collectAsStateWithLifecycle()
-    val selectedLanguageFrom by viewModel.selectedLanguageFrom.collectAsStateWithLifecycle()
-    val selectedLanguageTo by viewModel.selectedLanguageTo.collectAsStateWithLifecycle()
-    val words by viewModel.words.collectAsStateWithLifecycle()
-    var query by rememberSaveable { mutableStateOf("") }
+    val ui by contract.state.collectAsStateWithLifecycle()
+    sharedMainContract.loading(ui.isLoading)
+    var showError by rememberSaveable { mutableStateOf("") }
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var isSearching by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    var showPhonetics by rememberSaveable { mutableStateOf(true) }
 
-    val shouldLoadMore by remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val total = layoutInfo.totalItemsCount
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisible >= total - 1 - 5
-        }
-    }
-
-    LaunchedEffect(listState, loadingProgress) {
-        snapshotFlow { shouldLoadMore }
-            .distinctUntilChanged()
-            .filter { it && !loadingProgress }
-            .collect {
-                if (query.isEmpty()) {
-                    viewModel.loadWords()
-                } else {
-                    viewModel.searchWords(query)
-                }
-            }
-    }
-    LaunchedEffect(query) {
-        viewModel.searchWords(query)
-    }
-    viewModel.setEditMode(editDictionary)
-    LaunchedEffect(errorMessage) {
-        showErrorDialog = errorMessage.isNotEmpty()
-    }
-
-    sharedMainContract.loading(loadingProgress)
-    if (showErrorDialog) {
+    if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {
-                showErrorDialog = false
+                showError = ""
             },
             onConfirmation = {
-                showErrorDialog = false
+                showError = ""
             },
-            message = errorMessage
+            message = showError
         )
     }
     if (showDeleteDialog) {
         ButtonsAlertDialog(
             onConfirmation = {
-                viewModel.delete()
+                contract.deleteDictionary()
                 showDeleteDialog = false
             },
             onDismissRequest = {
@@ -155,19 +124,60 @@ fun AddOrEditDictionaryScreen(
             icon = Icons.Default.Info
         )
     }
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val total = layoutInfo.totalItemsCount
+            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            lastVisible >= total - 1 - 5
+        }
+    }
+    LaunchedEffect(listState, ui.isLoading) {
+        snapshotFlow { shouldLoadMore }
+            .distinctUntilChanged()
+            .filter { it && !ui.isLoading }
+            .collect {
+                if (ui.query.isNullOrEmpty()) {
+                    contract.loadWords()
+                } else {
+                    contract.onQueryChanged(ui.query, true)
+                }
+            }
+    }
+    LaunchedEffect(Unit) {
+        launch {
+            contract.effects.collect { eff ->
+                when (eff) {
+                    AddOrEditUserDictionaryEffect.DictionaryCreated -> {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES, true)
+                        navController.popBackStack()
+                    }
+
+                    is AddOrEditUserDictionaryEffect.ShowError -> {
+                        showError = eff.message
+                    }
+                }
+            }
+        }
+    }
+    contract.setEditMode(editDictionary)
+    sharedMainContract.loading(ui.isLoading)
+
     LaunchedEffect(backStackEntry) {
         launch {
             backStackEntry.savedStateHandle.getStateFlow<String?>(
                 LanguagesViewModel.BUNDLE_SELECTED_LANGUAGE_FROM, null
             ).filterNotNull().collect { json ->
-                viewModel.setLanguage(LangType.FROM, json)
+                contract.setLanguage(LangType.FROM, json)
             }
         }
         launch {
             backStackEntry.savedStateHandle.getStateFlow<String?>(
                 LanguagesViewModel.BUNDLE_SELECTED_LANGUAGE_TO, null
             ).filterNotNull().collect { json ->
-                viewModel.setLanguage(LangType.TO, json)
+                contract.setLanguage(LangType.TO, json)
             }
         }
         launch {
@@ -175,20 +185,7 @@ fun AddOrEditDictionaryScreen(
                 AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, false
             ).filterNotNull().collect { shouldUpdate ->
                 if (shouldUpdate) {
-                    query = ""
-                    viewModel.loadWords()
-                }
-            }
-        }
-    }
-    LaunchedEffect(Unit) {
-        launch {
-            viewModel.dictionaryCreated.collect { created ->
-                if (created) {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(UserDictionaryViewModel.BUNDLE_NEED_UPDATE_DICTIONARIES, true)
-                    navController.popBackStack()
+                    contract.loadWords()
                 }
             }
         }
@@ -205,7 +202,7 @@ fun AddOrEditDictionaryScreen(
     }
     val onCreateDictionary: () -> Unit = {
         try {
-            viewModel.createDictionary(dialect.value)
+            contract.createDictionary()
         } catch (exLanguageFrom: DictionaryValidationException.LanguageFromException) {
             Log.e(
                 "AddOrEditDictionaryScreen",
@@ -223,18 +220,18 @@ fun AddOrEditDictionaryScreen(
         }
     }
     val onUpdateDictionary: () -> Unit = {
-        viewModel.updateDictionary(dialect.value)
+        contract.updateDictionary()
     }
     val onDeleteDictionary: () -> Unit = {
         showDeleteDialog = true
     }
     val title =
-        if (!viewModel.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
+        if (!contract.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
             R.string.edit_dictionary
         )
     Scaffold(
         floatingActionButton = {
-            if (viewModel.isEditMode()) {
+            if (contract.isEditMode()) {
                 ExtendedFloatingActionButton(
                     text = { Text(stringResource(R.string.add_words)) },
                     icon = { Icon(Icons.Filled.Add, contentDescription = "Add") },
@@ -249,21 +246,24 @@ fun AddOrEditDictionaryScreen(
             }
         },
         topBar = {
-            if (viewModel.isEditMode()) {
+            if (contract.isEditMode()) {
                 SearchTopBar(
                     title = title,
                     placeHolderText = stringResource(R.string.words_search_hint),
-                    query = query,
-                    onQueryChange = { query = it },
+                    query = ui.query ?: "",
+                    onQueryChange = { contract.onQueryChanged(it, false) },
                     isSearching = isSearching,
-                    onSearchToggle = { isSearching = true },
+                    onSearchToggle = {
+                        isSearching = true
+
+                    },
                     onClearQuery = {
-                        query = ""
+                        contract.onQueryChanged(null, false)
                         isSearching = false
                     },
                     actions = {
                         ToolBarActions(
-                            viewModel.isEditMode(),
+                            contract.isEditMode(),
                             onCreateDictionary,
                             onUpdateDictionary,
                             onDeleteDictionary
@@ -276,7 +276,7 @@ fun AddOrEditDictionaryScreen(
                     title = title,
                     actions = {
                         ToolBarActions(
-                            viewModel.isEditMode(),
+                            contract.isEditMode(),
                             onCreateDictionary,
                             onUpdateDictionary,
                             onDeleteDictionary
@@ -305,10 +305,10 @@ fun AddOrEditDictionaryScreen(
                         .wrapContentSize()
                 ) {
                     ButtonFilledTonalSecondary(
-                        enabled = !viewModel.isEditMode(),
+                        enabled = !contract.isEditMode(),
                         title = getLanguageButtonTitle(
                             langType = LangType.FROM,
-                            selectedLanguage = selectedLanguageFrom
+                            selectedLanguage = ui.selectedLanguageFrom
                         ), onClick = {
                             navController.navigate(
                                 AppNavigation.LanguagesScreen.createRoute(
@@ -319,10 +319,10 @@ fun AddOrEditDictionaryScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ButtonFilledTonalSecondary(
-                        enabled = !viewModel.isEditMode(),
+                        enabled = !contract.isEditMode(),
                         title = getLanguageButtonTitle(
                             langType = LangType.TO,
-                            selectedLanguage = selectedLanguageTo
+                            selectedLanguage = ui.selectedLanguageTo
                         ), onClick = {
                             navController.navigate(
                                 AppNavigation.LanguagesScreen.createRoute(
@@ -333,7 +333,7 @@ fun AddOrEditDictionaryScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     TextFieldPrimary(
-                        defaultValue = editedDialect,
+                        defaultValue = ui.dialect ?: "",
                         onValueChange = { newValue ->
                             dialect.value = newValue
                         },
@@ -341,7 +341,7 @@ fun AddOrEditDictionaryScreen(
                         supportingText = stringResource(R.string.optional)
                     )
                 }
-                if (viewModel.isEditMode()) {
+                if (contract.isEditMode()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -364,7 +364,7 @@ fun AddOrEditDictionaryScreen(
                 }
             }
             items(
-                items = words,
+                items = ui.words,
                 key = { it.original + it.id }
             ) { item ->
                 WordListItem(item, showPhonetics, onSelectWord)
