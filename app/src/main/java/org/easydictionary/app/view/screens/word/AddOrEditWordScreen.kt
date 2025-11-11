@@ -34,11 +34,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +58,8 @@ import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
+import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordContract
+import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordEffect
 import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
@@ -78,57 +78,18 @@ import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 fun AddOrEditWordScreen(
     backStackEntry: NavBackStackEntry,
     navController: NavController,
-    viewModel: AddDictionaryWordViewModel = hiltViewModel(backStackEntry, "AddOrEditWordScreen"),
+    contract: AddDictionaryWordContract = hiltViewModel<AddDictionaryWordViewModel>(
+        backStackEntry,
+        "AddOrEditWordScreen"
+    ),
     sharedMainContract: SharedMainContract = androidx.hilt.navigation.compose.hiltViewModel<SharedMainViewModel>(),
     dictionary: DictionaryDetailShort? = null,
     wordDetail: WordDetail? = null
 ) {
     val logTag = "AddOrEditWordScreen"
+    val ui by contract.state.collectAsStateWithLifecycle()
     var showError by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val loadingProgress by viewModel.loadingDataUI.collectAsState()
-    val translations by viewModel.translations.collectAsStateWithLifecycle()
-    val wordTypes by viewModel.wordTypes.collectAsStateWithLifecycle()
-    val phonetics by viewModel.phonetics.collectAsStateWithLifecycle()
-    var wordValue by rememberSaveable { mutableStateOf(wordDetail?.original ?: "") }
-    var phonetic by rememberSaveable { mutableStateOf(wordDetail?.phonetic ?: "") }
-    var selectedWordType by rememberSaveable { mutableStateOf(wordDetail?.type) }
-    LaunchedEffect(Unit) {
-        launch {
-            viewModel.errorMessage.collect { msg ->
-                showError = msg
-            }
-        }
-        launch {
-            viewModel.wordCreated.collect { created ->
-                if (created) {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
-                    navController.popBackStack()
-                }
-            }
-        }
-        launch {
-            viewModel.wordDeleted.collect { deleted ->
-                if (deleted) {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
-                    navController.popBackStack()
-                }
-            }
-        }
-        viewModel.loadWordTypes()
-        viewModel.setDictionary(dictionary)
-        viewModel.setWord(wordDetail)
-    }
-    fun onPhoneticsChanged(symbol: String) {
-        phonetic = symbol
-    }
-
-    val translationExistErrorMessage = stringResource(R.string.error_translation_exist)
-    sharedMainContract.loading(loadingProgress)
     if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {
@@ -143,7 +104,7 @@ fun AddOrEditWordScreen(
     if (showDeleteDialog) {
         ButtonsAlertDialog(
             onConfirmation = {
-                viewModel.delete()
+                contract.deleteWord()
                 showDeleteDialog = false
             },
             onDismissRequest = {
@@ -154,6 +115,40 @@ fun AddOrEditWordScreen(
             icon = Icons.Default.Info
         )
     }
+    sharedMainContract.loading(ui.isLoading)
+    LaunchedEffect(Unit) {
+        launch {
+            contract.effects.collect { eff ->
+                when (eff) {
+                    AddDictionaryWordEffect.WordCreated -> {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
+                        navController.popBackStack()
+                    }
+
+                    AddDictionaryWordEffect.WordDeleted -> {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
+                        navController.popBackStack()
+                    }
+
+                    is AddDictionaryWordEffect.ShowError -> {
+                        showError = eff.message
+                    }
+                }
+            }
+        }
+        contract.setDictionary(dictionary)
+        contract.setWord(wordDetail)
+    }
+    fun onPhoneticsChanged(symbol: String) {
+        contract.onPhoneticChanged(symbol)
+    }
+
+    val translationExistErrorMessage = stringResource(R.string.error_translation_exist)
+
     LaunchedEffect(backStackEntry) {
         launch {
             backStackEntry.savedStateHandle.getStateFlow<String?>(
@@ -162,10 +157,10 @@ fun AddOrEditWordScreen(
                 .collect { json ->
                     val translation: TranslationNotCreated = Json.decodeFromString(json)
                     Log.d(logTag, "received new translation ${translation.translate}")
-                    if (translations.find { it.translate == translation.translate } != null) {
-                        viewModel.displayError(translationExistErrorMessage)
+                    if (ui.translations.find { it.translate == translation.translate } != null) {
+                        showError = translationExistErrorMessage
                     } else {
-                        viewModel.addTranslation(translation)
+                        contract.addTranslation(translation)
                     }
                     backStackEntry.savedStateHandle.remove<String>(AddTranslationVariantViewModel.BUNDLE_NEW_TRANSLATION)
                 }
@@ -176,8 +171,11 @@ fun AddOrEditWordScreen(
             ).filterNotNull()
                 .collect { json ->
                     val translation: ComposedTranslation = Json.decodeFromString(json)
-                    Log.d(logTag, "received translation to update ${translation.translate} by id ${translation.id}")
-                    viewModel.updateTranslation(translation)
+                    Log.d(
+                        logTag,
+                        "received translation to update ${translation.translate} by id ${translation.id}"
+                    )
+                    contract.updateTranslation(translation)
                     backStackEntry.savedStateHandle.remove<String>(AddTranslationVariantViewModel.BUNDLE_NEED_UPDATE_TRANSLATION)
                 }
         }
@@ -188,7 +186,7 @@ fun AddOrEditWordScreen(
                 .collect { json ->
                     val translation: ComposedTranslation = Json.decodeFromString(json)
                     Log.d(logTag, "received translation to delete ${translation.translate}")
-                    viewModel.deleteTranslation(translation)
+                    contract.deleteTranslation(translation)
                     backStackEntry.savedStateHandle.remove<String>(AddTranslationVariantViewModel.BUNDLE_NEED_DELETE_TRANSLATION)
                 }
         }
@@ -202,7 +200,7 @@ fun AddOrEditWordScreen(
         )
     }
     val onDeleteTranslation: (ComposedTranslation) -> Unit = { item ->
-        viewModel.deleteTranslation(item)
+        contract.deleteTranslation(item)
     }
     Scaffold(
         floatingActionButton = {
@@ -220,19 +218,13 @@ fun AddOrEditWordScreen(
         },
         topBar = {
             TitleTopBar(
-                title = if (viewModel.isEditMode()) stringResource(R.string.edit_word) else stringResource(
+                title = if (contract.isEditMode()) stringResource(R.string.edit_word) else stringResource(
                     R.string.add_word
                 ),
                 actions = {
                     IconButton(onClick = {
-                        if (!viewModel.isEditMode()) {
-                            viewModel.createWord(
-                                original = wordValue,
-                                phonetic = phonetic,
-                                type = selectedWordType
-                            )
-                        } else {
-
+                        if (!contract.isEditMode()) {
+                            contract.createWord()
                         }
                     }) {
                         Icon(
@@ -240,7 +232,7 @@ fun AddOrEditWordScreen(
                             contentDescription = "Save"
                         )
                     }
-                    if (viewModel.isEditMode()) {
+                    if (contract.isEditMode()) {
                         IconButton(onClick = {
                             showDeleteDialog = true
                         }) {
@@ -269,8 +261,8 @@ fun AddOrEditWordScreen(
                     .fillMaxSize()
             ) {
                 TextFieldPrimary(
-                    defaultValue = wordValue,
-                    onValueChange = { value -> wordValue = value },
+                    defaultValue = ui.original ?: "",
+                    onValueChange = { value -> contract.onOriginalChanged(value) },
                     required = true,
                     label = stringResource(R.string.add_word),
                     supportingText = stringResource(R.string.tap_your_word),
@@ -278,16 +270,16 @@ fun AddOrEditWordScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 TextFieldPhonetic(
-                    symbols = phonetics.map { it.symbol },
-                    defaultValue = phonetic,
+                    symbols = ui.phonetics.map { it.symbol },
+                    defaultValue = ui.phonetic ?: "",
                     onValueChange = ::onPhoneticsChanged
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 WordTypesDropDown(
-                    items = wordTypes,
-                    selectedItem = selectedWordType,
+                    items = ui.wordTypes,
+                    selectedItem = ui.wordType,
                     onItemSelected = {
-                        selectedWordType = it
+                        contract.onTypeChanged(it)
                     })
                 TextFieldLabel(
                     label = stringResource(R.string.translation_variants),
@@ -300,7 +292,7 @@ fun AddOrEditWordScreen(
                         .fillMaxSize()
                 ) {
                     items(
-                        items = translations,
+                        items = ui.translations,
                         key = { "${it.id}-${it.translate}" }
                     ) { item ->
                         TranslationListItem(item, onEditTranslation, onDeleteTranslation)

@@ -26,6 +26,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,7 +62,7 @@ fun DictionariesScreen(
     sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>()
 ) {
     val ui by contract.state.collectAsStateWithLifecycle()
-    var showError by remember { mutableStateOf("") }
+    var showError by rememberSaveable { mutableStateOf("") }
     sharedMainContract.loading(ui.isLoading)
     if (showError.isNotEmpty()) {
         ErrorAlertDialog(

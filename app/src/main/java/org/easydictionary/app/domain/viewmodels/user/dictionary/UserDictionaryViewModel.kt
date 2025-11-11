@@ -56,7 +56,8 @@ class UserDictionaryViewModel @Inject constructor(
     private val _state = MutableStateFlow(UserDictionaryUiState())
     override val state: StateFlow<UserDictionaryUiState> = _state
 
-    private val _effects = MutableSharedFlow<UserDictionaryEffect>(extraBufferCapacity = 1, replay = 1)
+    private val _effects =
+        MutableSharedFlow<UserDictionaryEffect>(extraBufferCapacity = 1, replay = 1)
     override val effects: Flow<UserDictionaryEffect> = _effects
 
     init {
@@ -69,12 +70,9 @@ class UserDictionaryViewModel @Inject constructor(
 
     override fun loadDictionaries() {
         Log.d(TAG, "loadDictionaries()")
+        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             getAllDictionaryDetailShortUseCase(Unit)
-                .onStart {
-                    Log.d(TAG, "onStart")
-                    _state.update { it.copy(isLoading = true) }
-                }
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
                     _effects.tryEmit(UserDictionaryEffect.ShowError(it.message ?: "Error"))
@@ -110,12 +108,9 @@ class UserDictionaryViewModel @Inject constructor(
 
     private fun deleteDictionary(dictionaryId: Int) {
         Log.d(TAG, "deleteDictionary $dictionaryId")
+        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             deleteDictionaryUseCase.invoke(dictionaryId)
-                .onStart {
-                    Log.d(TAG, "onStart")
-                    _state.update { it.copy(isLoading = true) }
-                }
                 .catch {
                     Log.d(TAG, "catch ${it.message}")
                     _effects.tryEmit(UserDictionaryEffect.ShowError(it.message ?: "Error"))
