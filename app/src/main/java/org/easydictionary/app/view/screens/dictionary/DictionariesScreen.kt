@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.dictionary
+package org.easydictionary.app.view.screens.dictionary
 
 import android.util.Log
 import androidx.compose.foundation.background

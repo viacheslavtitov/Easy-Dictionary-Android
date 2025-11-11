@@ -6,8 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.easydictionary.app.data.remote.register.SignUpApiService
-import org.easydictionary.app.data.repositories.register.SignUpRepositoryImpl
+import org.easydictionary.app.data.remote.signup.SignUpApiService
+import org.easydictionary.app.data.repositories.signup.SignUpRepositoryImpl
 import org.easydictionary.app.domain.repository.register.SignUpRepository
 import org.easydictionary.app.domain.usecases.register.SignUpUseCase
 import retrofit2.Retrofit

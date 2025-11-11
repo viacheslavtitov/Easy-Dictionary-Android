@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.splash
+package org.easydictionary.app.view.screens.splash
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

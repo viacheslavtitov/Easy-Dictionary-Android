@@ -1,4 +1,4 @@
-package org.easydictionary.app.domain.viewmodels.register
+package org.easydictionary.app.domain.viewmodels.signup
 
 import android.util.Log
 import androidx.lifecycle.ViewModel

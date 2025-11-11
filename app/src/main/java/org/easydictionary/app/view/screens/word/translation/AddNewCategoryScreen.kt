@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.word.translation
+package org.easydictionary.app.view.screens.word.translation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

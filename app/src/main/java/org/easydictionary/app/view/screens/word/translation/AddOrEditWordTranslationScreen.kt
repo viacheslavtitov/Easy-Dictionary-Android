@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.word.translation
+package org.easydictionary.app.view.screens.word.translation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,7 +48,6 @@ import org.easydictionary.app.domain.models.translation.TranslationNotCreated
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
-import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.inputs.TextFieldPrimary

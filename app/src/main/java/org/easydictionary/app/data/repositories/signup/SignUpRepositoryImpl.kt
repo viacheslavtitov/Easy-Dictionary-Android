@@ -1,12 +1,12 @@
-package org.easydictionary.app.data.repositories.register
+package org.easydictionary.app.data.repositories.signup
 
 import android.content.res.Resources
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.easydictionary.app.R
-import org.easydictionary.app.data.models.register.SignUpRequest
+import org.easydictionary.app.data.models.signup.SignUpRequest
 import org.easydictionary.app.data.remote.ApiResult
-import org.easydictionary.app.data.remote.register.SignUpApiService
+import org.easydictionary.app.data.remote.signup.SignUpApiService
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.users.User
 import org.easydictionary.app.domain.repository.register.SignUpRepository

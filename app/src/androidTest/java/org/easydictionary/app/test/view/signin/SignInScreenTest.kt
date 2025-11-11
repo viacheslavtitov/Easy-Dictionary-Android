@@ -28,7 +28,7 @@ import kotlinx.coroutines.withTimeout
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.auth.SignInEffect
 import org.easydictionary.app.test.view.FakeSharedMainContract
-import org.easydictionary.app.view.signin.SignInScreen
+import org.easydictionary.app.view.screens.signin.SignInScreen
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

@@ -1,4 +1,4 @@
-package org.easydictionary.app.data.models.register
+package org.easydictionary.app.data.models.signup
 
 import com.google.gson.annotations.SerializedName
 

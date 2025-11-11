@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.register
+package org.easydictionary.app.view.screens.signup
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,12 +25,10 @@ import org.easydictionary.app.R
 import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
-import org.easydictionary.app.domain.viewmodels.register.SignUpViewModel
+import org.easydictionary.app.domain.viewmodels.signup.SignUpViewModel
 import org.easydictionary.app.view.buttons.ButtonPrimary
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
 import org.easydictionary.app.view.ext.clearStack
-import org.easydictionary.app.view.inputs.EmailTextField
-import org.easydictionary.app.view.inputs.PasswordTextField
 import org.easydictionary.app.view.inputs.TextFieldPrimary
 
 @Composable

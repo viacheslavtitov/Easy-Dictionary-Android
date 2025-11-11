@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.main
+package org.easydictionary.app.view.screens.main
 
 import android.os.Bundle
 import android.util.Log
@@ -35,22 +35,22 @@ import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
-import org.easydictionary.app.view.dictionary.AddOrEditDictionaryScreen
-import org.easydictionary.app.view.dictionary.DictionariesScreen
+import org.easydictionary.app.view.screens.dictionary.AddOrEditDictionaryScreen
+import org.easydictionary.app.view.screens.dictionary.DictionariesScreen
 import org.easydictionary.app.view.ext.clearStack
-import org.easydictionary.app.view.home.HomeScreen
+import org.easydictionary.app.view.screens.home.HomeScreen
 import org.easydictionary.app.view.indicators.LoadingIndicatorCircle
-import org.easydictionary.app.view.language.AddNewLanguageDialogScreen
-import org.easydictionary.app.view.language.BUNDLE_NEW_LANGUAGE
-import org.easydictionary.app.view.language.SelectLanguageScreen
-import org.easydictionary.app.view.register.SignUpScreen
-import org.easydictionary.app.view.signin.SignInScreen
-import org.easydictionary.app.view.splash.SplashScreen
+import org.easydictionary.app.view.screens.language.AddNewLanguageDialogScreen
+import org.easydictionary.app.view.screens.language.BUNDLE_NEW_LANGUAGE
+import org.easydictionary.app.view.screens.language.SelectLanguageScreen
+import org.easydictionary.app.view.screens.signup.SignUpScreen
+import org.easydictionary.app.view.screens.signin.SignInScreen
+import org.easydictionary.app.view.screens.splash.SplashScreen
 import org.easydictionary.app.view.widget.global.EasyDictionaryTheme
-import org.easydictionary.app.view.word.AddOrEditWordScreen
-import org.easydictionary.app.view.word.translation.AddNewCategoryDialogScreen
-import org.easydictionary.app.view.word.translation.AddOrEditWordTranslationScreen
-import org.easydictionary.app.view.word.translation.BUNDLE_NEW_CATEGORY
+import org.easydictionary.app.view.screens.word.AddOrEditWordScreen
+import org.easydictionary.app.view.screens.word.translation.AddNewCategoryDialogScreen
+import org.easydictionary.app.view.screens.word.translation.AddOrEditWordTranslationScreen
+import org.easydictionary.app.view.screens.word.translation.BUNDLE_NEW_CATEGORY
 import javax.inject.Inject
 
 @AndroidEntryPoint

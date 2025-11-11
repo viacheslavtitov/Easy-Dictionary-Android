@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.signin
+package org.easydictionary.app.view.screens.signin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

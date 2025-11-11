@@ -1,4 +1,4 @@
-package org.easydictionary.app.view.home
+package org.easydictionary.app.view.screens.home
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -46,7 +46,7 @@ import org.easydictionary.app.domain.viewmodels.home.HomeViewModel
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.view.buttons.ButtonPrimary
-import org.easydictionary.app.view.dictionary.DictionariesScreen
+import org.easydictionary.app.view.screens.dictionary.DictionariesScreen
 import org.easydictionary.app.view.dividers.Divider
 import org.easydictionary.app.view.topbars.DrawerTitleTopBar
 
