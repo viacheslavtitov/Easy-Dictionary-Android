@@ -35,11 +35,13 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -60,6 +62,7 @@ import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordContract
 import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordEffect
+import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordValidationException
 import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDictionaryWordViewModel
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
@@ -88,6 +91,8 @@ fun AddOrEditWordScreen(
 ) {
     val logTag = "AddOrEditWordScreen"
     val ui by contract.state.collectAsStateWithLifecycle()
+    val validationOriginalShakeFieldAnim = remember { mutableIntStateOf(0) }
+    val keyboard = LocalSoftwareKeyboardController.current
     var showError by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     if (showError.isNotEmpty()) {
@@ -148,6 +153,7 @@ fun AddOrEditWordScreen(
     }
 
     val translationExistErrorMessage = stringResource(R.string.error_translation_exist)
+    val translationsEmptyErrorMessage = stringResource(R.string.error_translations_empty)
 
     LaunchedEffect(backStackEntry) {
         launch {
@@ -224,7 +230,16 @@ fun AddOrEditWordScreen(
                 actions = {
                     IconButton(onClick = {
                         if (!contract.isEditMode()) {
-                            contract.createWord()
+                            try {
+                                keyboard?.hide()
+                                contract.createWord()
+                            } catch (ex: AddDictionaryWordValidationException.OriginalFieldException) {
+                                Log.e(logTag, "Failed validation", ex)
+                                validationOriginalShakeFieldAnim.intValue += 1
+                            } catch (ex: AddDictionaryWordValidationException.TranslationEmptyException) {
+                                Log.e(logTag, "Failed validation", ex)
+                                showError = translationsEmptyErrorMessage
+                            }
                         }
                     }) {
                         Icon(
@@ -266,7 +281,8 @@ fun AddOrEditWordScreen(
                     required = true,
                     label = stringResource(R.string.add_word),
                     supportingText = stringResource(R.string.tap_your_word),
-                    errorMessage = stringResource(R.string.field_required)
+                    errorMessage = stringResource(R.string.field_required),
+                    shakeTrigger = validationOriginalShakeFieldAnim
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 TextFieldPhonetic(

@@ -1,7 +1,9 @@
 package org.easydictionary.app.view.inputs
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
@@ -21,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,11 +36,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.easydictionary.app.R
+import org.easydictionary.app.view.anim.fieldsKeyFramesForShakeAnim
 import org.easydictionary.app.view.widget.global.TextDimen
 import org.easydictionary.app.view.widget.phonetic.PhoneticsView
+import kotlin.math.roundToInt
 
 @Composable
 fun TextFieldPrimary(
@@ -51,6 +57,7 @@ fun TextFieldPrimary(
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .padding(6.dp),
+    shakeTrigger: State<Int> = remember { mutableIntStateOf(0) }
 ) {
     var value by remember { mutableStateOf(defaultValue) }
     val isValid = remember(value) {
@@ -59,11 +66,21 @@ fun TextFieldPrimary(
     LaunchedEffect(defaultValue) {
         value = defaultValue
     }
+    val offsetX = remember { Animatable(0f) }
+    LaunchedEffect(shakeTrigger.value) {
+        if(shakeTrigger.value > 0) {
+            // shake anim
+            offsetX.animateTo(
+                targetValue = 0f,
+                animationSpec = fieldsKeyFramesForShakeAnim
+            )
+        }
+    }
 
     val errorMessage = when {
         !required && supportingText?.isNotEmpty() == true -> supportingText
-        value.isEmpty() -> null
         required && value.isEmpty() -> errorMessage
+        value.isEmpty() -> null
         else -> null
     }
     OutlinedTextField(
@@ -77,8 +94,8 @@ fun TextFieldPrimary(
             fontSize = TextDimen.TextFieldText
         ),
         singleLine = singleLine,
-        modifier = modifier,
-        isError = required && !isValid && value.isNotEmpty(),
+        modifier = modifier.offset { IntOffset(offsetX.value.roundToInt(), 0) },
+        isError = required && !isValid,
         supportingText = {
             errorMessage?.let {
                 Text(text = errorMessage, fontSize = TextDimen.TextFieldError)

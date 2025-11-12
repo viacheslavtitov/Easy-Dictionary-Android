@@ -66,7 +66,8 @@ interface AddDictionaryWordContract {
 }
 
 sealed class AddDictionaryWordValidationException(message: String) : Exception(message) {
-    object OriginalFieldException : Exception("Language from is not valid or empty")
+    object OriginalFieldException : Exception("Original field is not valid or empty")
+    object TranslationEmptyException : Exception("Translations are not valid or empty")
 }
 
 @HiltViewModel
@@ -300,9 +301,13 @@ class AddDictionaryWordViewModel @Inject constructor(
 
     override fun createWord() {
         val dictionary = state.value.dictionary ?: return
-        val original =
-            state.value.original
-                ?: throw AddDictionaryWordValidationException.OriginalFieldException
+        if(state.value.original?.trim().isNullOrEmpty()) {
+            throw AddDictionaryWordValidationException.OriginalFieldException
+        }
+        if(state.value.translations.isEmpty()) {
+            throw AddDictionaryWordValidationException.TranslationEmptyException
+        }
+        val original = state.value.original?.trim() ?: ""
         _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             addWordToDictionaryUseCase(

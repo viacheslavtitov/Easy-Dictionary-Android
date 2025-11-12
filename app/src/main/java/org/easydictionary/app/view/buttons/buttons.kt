@@ -1,7 +1,6 @@
 package org.easydictionary.app.view.buttons
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,11 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import org.easydictionary.app.view.anim.fieldsKeyFramesForShakeAnim
 import org.easydictionary.app.view.widget.global.ButtonDimen
 import kotlin.math.roundToInt
 
@@ -81,18 +80,7 @@ fun ButtonFilledTonalSecondary(
             // shake anim
             offsetX.animateTo(
                 targetValue = 0f,
-                animationSpec = keyframes {
-                    durationMillis = 1500
-                    -16f at 50
-                    16f at 100
-                    -12f at 150
-                    12f at 200
-                    -8f at 250
-                    8f at 300
-                    -4f at 350
-                    4f at 400
-                    0f at 450
-                }
+                animationSpec = fieldsKeyFramesForShakeAnim
             )
         }
     }
