@@ -87,7 +87,7 @@ fun AddOrEditDictionaryScreen(
         backStackEntry,
         "AddOrEditDictionaryScreen"
     ),
-    sharedMainContract: SharedMainContract = androidx.hilt.navigation.compose.hiltViewModel<SharedMainViewModel>(),
+    sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>(),
     editDictionary: DictionaryDetailShort? = null
 ) {
     val ui by contract.state.collectAsStateWithLifecycle()

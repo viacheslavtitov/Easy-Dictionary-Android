@@ -85,7 +85,7 @@ fun AddOrEditWordScreen(
         backStackEntry,
         "AddOrEditWordScreen"
     ),
-    sharedMainContract: SharedMainContract = androidx.hilt.navigation.compose.hiltViewModel<SharedMainViewModel>(),
+    sharedMainContract: SharedMainContract = hiltViewModel<SharedMainViewModel>(),
     dictionary: DictionaryDetailShort? = null,
     wordDetail: WordDetail? = null
 ) {
