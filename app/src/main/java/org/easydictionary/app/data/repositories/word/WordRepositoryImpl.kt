@@ -5,11 +5,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.easydictionary.app.R
 import org.easydictionary.app.data.models.word.WordRequest
+import org.easydictionary.app.data.models.word.tags.WordTagToWordRequest
 import org.easydictionary.app.data.remote.ApiResult
 import org.easydictionary.app.data.remote.word.WordApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
+import org.easydictionary.app.domain.models.word.WordTag
 import org.easydictionary.app.domain.models.word.WordsResponse
 import org.easydictionary.app.domain.repository.word.WordRepository
 import javax.inject.Inject
@@ -48,7 +50,8 @@ class WordRepositoryImpl @Inject constructor(
         original: String,
         phonetic: String?,
         type: String?,
-        translations: List<TranslationNotCreated>
+        translations: List<TranslationNotCreated>,
+        tags: List<WordTag>
     ): Flow<DomainResult<Unit>> {
         return flowOf(
             when (val result = wrapApi {
@@ -58,7 +61,14 @@ class WordRepositoryImpl @Inject constructor(
                         original = original,
                         phonetic = phonetic,
                         type = type,
-                        translations.map { it.toRequest() }
+                        translations = translations.map { it.toRequest() },
+                        tags = tags.map {
+                            WordTagToWordRequest(
+                                id = it.id,
+                                dictionaryId = it.dictionaryId,
+                                name = it.name
+                            )
+                        }
                     )
                 )
             }) {

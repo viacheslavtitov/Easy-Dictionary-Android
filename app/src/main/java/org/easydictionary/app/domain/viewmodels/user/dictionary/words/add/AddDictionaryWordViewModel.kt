@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -19,10 +20,15 @@ import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
 import org.easydictionary.app.domain.models.translation.TranslationWithCategory
 import org.easydictionary.app.domain.models.word.WordDetail
+import org.easydictionary.app.domain.models.word.WordTag
 import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryParams
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
+import org.easydictionary.app.domain.usecases.word.tags.CreateNewTagParams
+import org.easydictionary.app.domain.usecases.word.tags.CreateNewTagUseCase
+import org.easydictionary.app.domain.usecases.word.tags.GetTagsForDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.tags.GetTagsForWordUseCase
 import org.easydictionary.app.domain.usecases.word.translations.AddTranslationParams
 import org.easydictionary.app.domain.usecases.word.translations.AddTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.translations.DeleteTranslationUseCase
@@ -32,6 +38,7 @@ import javax.inject.Inject
 sealed interface AddDictionaryWordEffect {
     data object WordCreated : AddDictionaryWordEffect
     data object WordDeleted : AddDictionaryWordEffect
+    data object TagCreated : AddDictionaryWordEffect
     data class ShowError(val message: String) : AddDictionaryWordEffect
 }
 
@@ -39,6 +46,8 @@ data class AddDictionaryWordUiState(
     val translations: List<ComposedTranslation> = emptyList(),
     val wordTypes: List<String> = emptyList(),
     val phonetics: List<Phonetic> = emptyList(),
+    val tags: List<WordTag> = emptyList(),
+    val newTag: String? = null,
     val isLoading: Boolean = false,
     val dictionary: DictionaryDetailShort? = null,
     val editWord: WordDetail? = null,
@@ -54,12 +63,17 @@ interface AddDictionaryWordContract {
     fun onOriginalChanged(original: String?)
     fun onPhoneticChanged(phonetic: String?)
     fun onTypeChanged(type: String?)
+    fun onNewTagChanged(tag: String?)
+
+    fun onTagSelected(tag: WordTag, selected: Boolean)
     fun setDictionary(dictionary: DictionaryDetailShort?)
     fun setWord(word: WordDetail?)
     fun addTranslation(translation: TranslationNotCreated)
     fun addTranslation(translation: TranslationWithCategory)
     fun deleteTranslation(translation: ComposedTranslation)
     fun updateTranslation(translation: ComposedTranslation)
+
+    fun createNewTag()
     fun createWord()
     fun deleteWord()
     fun isEditMode(): Boolean
@@ -68,6 +82,7 @@ interface AddDictionaryWordContract {
 sealed class AddDictionaryWordValidationException(message: String) : Exception(message) {
     object OriginalFieldException : Exception("Original field is not valid or empty")
     object TranslationEmptyException : Exception("Translations are not valid or empty")
+    object TagEmptyException : Exception("Tag is not valid or empty")
 }
 
 @HiltViewModel
@@ -78,6 +93,9 @@ class AddDictionaryWordViewModel @Inject constructor(
     private val getWordTypesUseCase: GetWordTypesUseCase,
     private val deleteTranslationUseCase: DeleteTranslationUseCase,
     private val addTranslationUseCase: AddTranslationUseCase,
+    private val createNewTagUseCase: CreateNewTagUseCase,
+    private val getTagsForDictionaryUseCase: GetTagsForDictionaryUseCase,
+    private val getTagsForWordUseCase: GetTagsForWordUseCase,
 ) : ViewModel(), AddDictionaryWordContract {
 
     companion object {
@@ -92,6 +110,83 @@ class AddDictionaryWordViewModel @Inject constructor(
     private val _effects =
         MutableSharedFlow<AddDictionaryWordEffect>(extraBufferCapacity = 1, replay = 1)
     override val effects: Flow<AddDictionaryWordEffect> = _effects
+
+    private fun loadAndMarkTags() {
+        Log.d(
+            TAG,
+            "loadAndMarkTags for dictionary = ${state.value.dictionary?.id} and word ${state.value.editWord?.id}"
+        )
+        val dictionaryId = state.value.dictionary?.id ?: return
+        val wordId = state.value.editWord?.id ?: return
+        _state.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            combine(
+                getTagsForDictionaryUseCase(dictionaryId),
+                getTagsForWordUseCase(wordId)
+            ) { allTags, wordTags ->
+                when {
+                    allTags is DomainResult.Error -> allTags
+                    wordTags is DomainResult.Error -> allTags
+                    allTags is DomainResult.Success && wordTags is DomainResult.Success -> {
+                        val mapped = allTags.data.map { tag ->
+                            val foundId = wordTags.data.find { it.id == tag.id }?.id
+                            tag.copy(wordId = foundId, selected = foundId != null)
+                        }
+                        DomainResult.Success(mapped)
+                    }
+
+                    else -> DomainResult.Error("Unknown state")
+                }
+            }.catch {
+                Log.d(TAG, "catch ${it.message}")
+                _effects.tryEmit(AddDictionaryWordEffect.ShowError(it.message ?: "Error"))
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _state.update { it.copy(isLoading = false) }
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        Log.d(TAG, "Populated tags ${result.data.size}")
+                        _state.update { it.copy(tags = result.data) }
+                    }
+
+                    is DomainResult.Error -> _effects.tryEmit(
+                        AddDictionaryWordEffect.ShowError(
+                            result.message
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun loadTags() {
+        Log.d(TAG, "loadTags for dictionary = ${state.value.dictionary?.id}")
+        val dictionaryId = state.value.dictionary?.id ?: return
+        _state.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            getTagsForDictionaryUseCase(dictionaryId).catch {
+                Log.d(TAG, "catch ${it.message}")
+                _effects.tryEmit(AddDictionaryWordEffect.ShowError(it.message ?: "Error"))
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _state.update { it.copy(isLoading = false) }
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        Log.d(TAG, "Populated tags ${result.data.size}")
+                        _state.update { it.copy(tags = result.data) }
+                    }
+
+                    is DomainResult.Error -> _effects.tryEmit(
+                        AddDictionaryWordEffect.ShowError(
+                            result.message
+                        )
+                    )
+                }
+            }
+        }
+    }
 
     override fun onOriginalChanged(original: String?) {
         _state.update {
@@ -113,6 +208,28 @@ class AddDictionaryWordViewModel @Inject constructor(
         _state.update {
             it.copy(
                 wordType = type
+            )
+        }
+    }
+
+    override fun onNewTagChanged(tag: String?) {
+        _state.update {
+            it.copy(
+                newTag = tag
+            )
+        }
+    }
+
+    override fun onTagSelected(
+        tag: WordTag,
+        selected: Boolean
+    ) {
+        Log.d(TAG, "tag ${tag.name} selected $selected")
+        _state.update { s ->
+            s.copy(
+                tags = s.tags.map { t ->
+                    if (t.id == tag.id) t.copy(selected = selected) else t
+                }
             )
         }
     }
@@ -139,6 +256,11 @@ class AddDictionaryWordViewModel @Inject constructor(
         }
         word?.translations?.forEach {
             addTranslation(it)
+        }
+        if (isEditMode()) {
+            loadAndMarkTags()
+        } else {
+            loadTags()
         }
     }
 
@@ -301,10 +423,10 @@ class AddDictionaryWordViewModel @Inject constructor(
 
     override fun createWord() {
         val dictionary = state.value.dictionary ?: return
-        if(state.value.original?.trim().isNullOrEmpty()) {
+        if (state.value.original?.trim().isNullOrEmpty()) {
             throw AddDictionaryWordValidationException.OriginalFieldException
         }
-        if(state.value.translations.isEmpty()) {
+        if (state.value.translations.isEmpty()) {
             throw AddDictionaryWordValidationException.TranslationEmptyException
         }
         val original = state.value.original?.trim() ?: ""
@@ -322,7 +444,9 @@ class AddDictionaryWordViewModel @Inject constructor(
                             translate = it.translate,
                             description = it.description
                         )
-                    })
+                    },
+                    tags = state.value.tags
+                )
             ).catch {
                 Log.d(TAG, "catch ${it.message}")
                 _effects.tryEmit(AddDictionaryWordEffect.ShowError(it.message ?: "Error"))
@@ -422,6 +546,57 @@ class AddDictionaryWordViewModel @Inject constructor(
         _state.update {
             it.copy(
                 translations = it.translations.map { tr -> if (tr.id == translation.id) translation else tr }
+            )
+        }
+    }
+
+    override fun createNewTag() {
+        if (state.value.newTag?.trim().isNullOrEmpty()) {
+            throw AddDictionaryWordValidationException.TagEmptyException
+        }
+        val dictionaryId = state.value.dictionary?.id ?: return
+        val name = state.value.newTag?.trim() ?: ""
+        _state.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            createNewTagUseCase(
+                CreateNewTagParams(
+                    dictionaryId = dictionaryId,
+                    name = name
+                )
+            ).catch {
+                Log.d(TAG, "catch ${it.message}")
+                _effects.tryEmit(AddDictionaryWordEffect.ShowError(it.message ?: "Error"))
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _state.update { it.copy(isLoading = false) }
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        _effects.tryEmit(AddDictionaryWordEffect.TagCreated)
+                        Log.d(TAG, "Tag created $name with id ${result.data}")
+                        addCreatedTag(result.data, dictionaryId, name)
+                    }
+
+                    is DomainResult.Error -> _effects.tryEmit(
+                        AddDictionaryWordEffect.ShowError(
+                            result.message
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun addCreatedTag(tagId: Int, dictionaryId: Int, name: String) {
+        _state.update {
+            it.copy(
+                tags = it.tags + WordTag(
+                    id = tagId,
+                    dictionaryId = dictionaryId,
+                    name = name,
+                    wordId = it.editWord?.id,
+                    selected = true
+                )
             )
         }
     }

@@ -5,18 +5,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
@@ -26,12 +28,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,6 +60,7 @@ import org.easydictionary.app.domain.models.navigation.AppNavigation
 import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
 import org.easydictionary.app.domain.models.word.WordDetail
+import org.easydictionary.app.domain.models.word.WordTag
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
 import org.easydictionary.app.domain.viewmodels.user.dictionary.translations.AddTranslationVariantViewModel
@@ -91,10 +95,13 @@ fun AddOrEditWordScreen(
 ) {
     val logTag = "AddOrEditWordScreen"
     val ui by contract.state.collectAsStateWithLifecycle()
+    val tagsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    var showTagsBottomSheet by remember { mutableStateOf(false) }
     val validationOriginalShakeFieldAnim = remember { mutableIntStateOf(0) }
     val keyboard = LocalSoftwareKeyboardController.current
     var showError by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showEmptyTagError by remember { mutableStateOf(false) }
     if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {
@@ -137,6 +144,10 @@ fun AddOrEditWordScreen(
                             ?.savedStateHandle
                             ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
                         navController.popBackStack()
+                    }
+
+                    AddDictionaryWordEffect.TagCreated -> {
+
                     }
 
                     is AddDictionaryWordEffect.ShowError -> {
@@ -208,18 +219,24 @@ fun AddOrEditWordScreen(
     val onDeleteTranslation: (ComposedTranslation) -> Unit = { item ->
         contract.deleteTranslation(item)
     }
+    val navigateToAddTranslation: () -> Unit = {
+        navController.navigate(
+            AppNavigation.AddDictionaryWordTranslationsScreen.createRoute(
+                dictionary!!.id
+            )
+        )
+    }
+    val navigateToAddTag: () -> Unit = {
+        showTagsBottomSheet = true
+    }
+    val onTagClicked: (WordTag) -> Unit = { tag ->
+        contract.onTagSelected(tag, !tag.selected)
+    }
     Scaffold(
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = { Text(stringResource(R.string.add_translation)) },
-                icon = { Icon(Icons.Filled.Add, contentDescription = "Add Translation") },
-                onClick = {
-                    navController.navigate(
-                        AppNavigation.AddDictionaryWordTranslationsScreen.createRoute(
-                            dictionary!!.id
-                        )
-                    )
-                }
+            FabMenu(
+                navigateToAddTranslation,
+                navigateToAddTag
             )
         },
         topBar = {
@@ -270,6 +287,47 @@ fun AddOrEditWordScreen(
                 .fillMaxSize()
                 .background(backgroundColor)
         ) {
+            if (showTagsBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        showTagsBottomSheet = false
+                        showEmptyTagError = false
+                    },
+                    sheetState = tagsSheetState,
+                    contentColor = backgroundColor,
+                    containerColor = backgroundColor
+                ) {
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val minH = maxHeight / 2
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = minH),
+                            content = {
+                                TagsBottomSheetModal(
+                                    items = ui.tags,
+                                    newTagFieldErrorShow = showEmptyTagError,
+                                    onAddNewClicked = {
+                                        try {
+                                            keyboard?.hide()
+                                            showEmptyTagError = false
+                                            contract.createNewTag()
+                                        } catch (ex: AddDictionaryWordValidationException.TagEmptyException) {
+                                            Log.e(logTag, "Failed validation", ex)
+                                            showEmptyTagError = true
+                                        }
+                                    },
+                                    onNewValueChanged = { tag ->
+                                        showEmptyTagError = false
+                                        contract.onNewTagChanged(tag)
+                                    },
+                                    onTagClicked = onTagClicked
+                                )
+                            }
+                        )
+                    }
+                }
+            }
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
@@ -297,6 +355,26 @@ fun AddOrEditWordScreen(
                     onItemSelected = {
                         contract.onTypeChanged(it)
                     })
+                if(ui.tags.any { it.selected }) {
+                    TextFieldLabel(
+                        label = stringResource(R.string.tags),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                    )
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ui.tags.filter { it.selected }.forEach { item ->
+                            TagChip(
+                                tag = item,
+                                onTagClicked = onTagClicked
+                            )
+                        }
+                    }
+                }
                 TextFieldLabel(
                     label = stringResource(R.string.translation_variants),
                     modifier = Modifier

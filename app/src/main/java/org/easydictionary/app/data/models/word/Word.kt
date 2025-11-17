@@ -1,6 +1,7 @@
 package org.easydictionary.app.data.models.word
 
 import com.google.gson.annotations.SerializedName
+import org.easydictionary.app.data.models.word.tags.WordTagToWordRequest
 import org.easydictionary.app.data.models.word.translation.Translation
 import org.easydictionary.app.data.models.word.translation.TranslationRequest
 import org.easydictionary.app.data.models.word.translation.TranslationWithCategory
@@ -10,7 +11,8 @@ data class WordRequest(
     @SerializedName("original") val original: String,
     @SerializedName("phonetic") val phonetic: String? = null,
     @SerializedName("type") val type: String? = null,
-    @SerializedName("translations") val translations: List<TranslationRequest>
+    @SerializedName("translations") val translations: List<TranslationRequest>,
+    @SerializedName("tags") val tags: List<WordTagToWordRequest>,
 )
 
 data class Word(

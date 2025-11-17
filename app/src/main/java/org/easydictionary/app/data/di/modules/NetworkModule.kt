@@ -26,6 +26,7 @@ import org.easydictionary.app.data.remote.language.LanguageStaticApiService
 import org.easydictionary.app.data.remote.language.PhoneticsStaticApiService
 import org.easydictionary.app.data.remote.provideGsonDateConvertor
 import org.easydictionary.app.data.remote.word.WordApiService
+import org.easydictionary.app.data.remote.word.tags.WordTagApiService
 import org.easydictionary.app.data.remote.word.translations.TranslationVariantApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.domain.utils.PreferenceUtils
@@ -166,6 +167,10 @@ object NetworkModule {
     @Provides
     fun provideTranslationVariantApiService(retrofit: Retrofit): TranslationVariantApiService =
         retrofit.create(TranslationVariantApiService::class.java)
+
+    @Provides
+    fun provideWordTagApiService(retrofit: Retrofit): WordTagApiService =
+        retrofit.create(WordTagApiService::class.java)
 
     @Provides
     fun provideTokenAuthenticator(

@@ -155,4 +155,5 @@
     <string name="error_password_lower_letter">Must be at least one lower case latter</string>
     <string name="error_passwords_not_match">Passwords are not match</string>
     <string name="error_email_format_failed">Failed email address</string>
+    <string name="error_field_empty">Field cannot be empty</string>
 </resources>

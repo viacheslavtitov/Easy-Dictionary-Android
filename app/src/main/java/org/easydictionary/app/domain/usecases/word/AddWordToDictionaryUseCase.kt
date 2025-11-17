@@ -3,6 +3,7 @@ package org.easydictionary.app.domain.usecases.word
 import kotlinx.coroutines.flow.Flow
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.translation.TranslationNotCreated
+import org.easydictionary.app.domain.models.word.WordTag
 import org.easydictionary.app.domain.repository.word.WordRepository
 import org.easydictionary.app.domain.usecases.BaseUseCase
 import javax.inject.Inject
@@ -12,7 +13,8 @@ data class AddWordToDictionaryParams(
     val original: String,
     val phonetic: String?,
     val type: String?,
-    val translations: List<TranslationNotCreated>
+    val translations: List<TranslationNotCreated>,
+    val tags: List<WordTag>
 )
 
 class AddWordToDictionaryUseCase @Inject constructor(
@@ -24,7 +26,8 @@ class AddWordToDictionaryUseCase @Inject constructor(
             params.original,
             params.phonetic,
             params.type,
-            params.translations
+            params.translations,
+            params.tags
         )
     }
 }

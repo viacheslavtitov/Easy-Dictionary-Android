@@ -14,6 +14,7 @@ import org.easydictionary.app.data.remote.language.LanguageApiService
 import org.easydictionary.app.data.remote.language.LanguageStaticApiService
 import org.easydictionary.app.data.remote.language.PhoneticsStaticApiService
 import org.easydictionary.app.data.remote.word.WordApiService
+import org.easydictionary.app.data.remote.word.tags.WordTagApiService
 import org.easydictionary.app.data.remote.word.translations.TranslationVariantApiService
 import org.easydictionary.app.data.remote.word.types.WordTypesStaticApiService
 import org.easydictionary.app.data.repositories.category.CategoryRepositoryImpl
@@ -21,12 +22,14 @@ import org.easydictionary.app.data.repositories.dictionary.DictionaryRepositoryI
 import org.easydictionary.app.data.repositories.language.LanguageRepositoryImpl
 import org.easydictionary.app.data.repositories.language.PhoneticsRepositoryImpl
 import org.easydictionary.app.data.repositories.word.WordRepositoryImpl
+import org.easydictionary.app.data.repositories.word.tags.TagRepositoryImpl
 import org.easydictionary.app.data.repositories.word.translations.TranslationVariantRepositoryImpl
 import org.easydictionary.app.domain.repository.category.CategoryRepository
 import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
 import org.easydictionary.app.domain.repository.language.LanguageRepository
 import org.easydictionary.app.domain.repository.language.PhoneticsRepository
 import org.easydictionary.app.domain.repository.word.WordRepository
+import org.easydictionary.app.domain.repository.word.tags.TagRepository
 import org.easydictionary.app.domain.repository.word.translations.TranslationVariantRepository
 import org.easydictionary.app.domain.usecases.category.AddCategoryUseCase
 import org.easydictionary.app.domain.usecases.category.GetUserDictionaryCategoriesUseCase
@@ -43,6 +46,9 @@ import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.tags.CreateNewTagUseCase
+import org.easydictionary.app.domain.usecases.word.tags.GetTagsForDictionaryUseCase
+import org.easydictionary.app.domain.usecases.word.tags.GetTagsForWordUseCase
 import org.easydictionary.app.domain.usecases.word.translations.AddTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.translations.DeleteTranslationUseCase
 import org.easydictionary.app.domain.usecases.word.translations.EditTranslationUseCase
@@ -118,6 +124,17 @@ object MainActivityModule {
         return TranslationVariantRepositoryImpl(
             context.resources,
             translationVariantApiService
+        )
+    }
+
+    @Provides
+    fun provideTagRepository(
+        @ApplicationContext context: Context,
+        wordTagApiService: WordTagApiService
+    ): TagRepository {
+        return TagRepositoryImpl(
+            context.resources,
+            wordTagApiService
         )
     }
 
@@ -249,6 +266,33 @@ object MainActivityModule {
     ): AddTranslationUseCase {
         return AddTranslationUseCase(
             translationVariantRepository
+        )
+    }
+
+    @Provides
+    fun provideCreateNewTagUseCase(
+        tagRepository: TagRepository
+    ): CreateNewTagUseCase {
+        return CreateNewTagUseCase(
+            tagRepository
+        )
+    }
+
+    @Provides
+    fun provideGetTagsForWordUseCase(
+        tagRepository: TagRepository
+    ): GetTagsForWordUseCase {
+        return GetTagsForWordUseCase(
+            tagRepository
+        )
+    }
+
+    @Provides
+    fun provideGetTagsForDictionaryUseCase(
+        tagRepository: TagRepository
+    ): GetTagsForDictionaryUseCase {
+        return GetTagsForDictionaryUseCase(
+            tagRepository
         )
     }
 
