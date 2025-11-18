@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.easydictionary.app.R
 import org.easydictionary.app.data.models.auth.AuthRequest
-import org.easydictionary.app.data.models.auth.AuthResponse
 import org.easydictionary.app.data.remote.ApiResult
 import org.easydictionary.app.data.remote.auth.AuthApiService
+import org.easydictionary.app.data.repositories.handleApiErrors
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.auth.Auth
 import org.easydictionary.app.domain.repository.auth.AuthRepository
@@ -43,12 +43,8 @@ class AuthRepositoryImpl @Inject constructor(
                     DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
                 }
 
-                is ApiResult.NetworkError -> {
-                    DomainResult.Error(resources.getString(R.string.network_error))
-                }
-
-                is ApiResult.UnknownError -> {
-                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                else -> {
+                    handleApiErrors(resources, result)
                 }
             }
         )

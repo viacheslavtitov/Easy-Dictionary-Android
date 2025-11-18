@@ -8,6 +8,7 @@ import org.easydictionary.app.data.models.word.translation.EditTranslationReques
 import org.easydictionary.app.data.models.word.translation.TranslationRequest
 import org.easydictionary.app.data.remote.ApiResult
 import org.easydictionary.app.data.remote.word.translations.TranslationVariantApiService
+import org.easydictionary.app.data.repositories.handleApiErrors
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.repository.word.translations.TranslationVariantRepository
 import javax.inject.Inject
@@ -29,12 +30,8 @@ class TranslationVariantRepositoryImpl @Inject constructor(
                     DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
                 }
 
-                is ApiResult.NetworkError -> {
-                    DomainResult.Error(resources.getString(R.string.network_error))
-                }
-
-                is ApiResult.UnknownError -> {
-                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                else -> {
+                    handleApiErrors(resources, result)
                 }
             }
         )
@@ -67,12 +64,8 @@ class TranslationVariantRepositoryImpl @Inject constructor(
                     DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
                 }
 
-                is ApiResult.NetworkError -> {
-                    DomainResult.Error(resources.getString(R.string.network_error))
-                }
-
-                is ApiResult.UnknownError -> {
-                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                else -> {
+                    handleApiErrors(resources, result)
                 }
             }
         )
@@ -103,12 +96,8 @@ class TranslationVariantRepositoryImpl @Inject constructor(
                     DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
                 }
 
-                is ApiResult.NetworkError -> {
-                    DomainResult.Error(resources.getString(R.string.network_error))
-                }
-
-                is ApiResult.UnknownError -> {
-                    DomainResult.Error(resources.getString(R.string.unknown_error))
+                else -> {
+                    handleApiErrors(resources, result)
                 }
             }
         )
