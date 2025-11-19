@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.easydictionary.app.R
 import org.easydictionary.app.data.models.word.WordRequest
+import org.easydictionary.app.data.models.word.WordUpdateRequest
 import org.easydictionary.app.data.models.word.tags.WordTagToWordRequest
 import org.easydictionary.app.data.remote.ApiResult
 import org.easydictionary.app.data.remote.word.WordApiService
@@ -66,6 +67,42 @@ class WordRepositoryImpl @Inject constructor(
                                 name = it.name
                             )
                         }
+                    )
+                )
+            }) {
+                is ApiResult.Success -> {
+                    DomainResult.Success(Unit)
+                }
+
+                is ApiResult.ApiError -> {
+                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
+                }
+
+                else -> {
+                    handleApiErrors(resources, result)
+                }
+            }
+        )
+    }
+
+    override suspend fun updateWord(
+        wordId: Int,
+        dictionaryId: Int,
+        original: String,
+        phonetic: String?,
+        type: String?,
+        tags: List<Int>
+    ): Flow<DomainResult<Unit>> {
+        return flowOf(
+            when (val result = wrapApi {
+                wordApiService.update(
+                    WordUpdateRequest(
+                        id = wordId,
+                        dictionaryId = dictionaryId,
+                        original = original,
+                        phonetic = phonetic,
+                        type = type,
+                        tags = tags
                     )
                 )
             }) {

@@ -17,6 +17,14 @@ interface WordRepository : BaseRepository {
         translations: List<TranslationNotCreated>,
         tags: List<WordTag>
     ): Flow<DomainResult<Unit>>
+    suspend fun updateWord(
+        wordId: Int,
+        dictionaryId: Int,
+        original: String,
+        phonetic: String?,
+        type: String?,
+        tags: List<Int>
+    ): Flow<DomainResult<Unit>>
 
     suspend fun getAllWordsForDictionary(
         dictionaryId: Int,

@@ -15,6 +15,15 @@ data class WordRequest(
     @SerializedName("tags") val tags: List<WordTagToWordRequest>,
 )
 
+data class WordUpdateRequest(
+    @SerializedName("id") val id: Int,
+    @SerializedName("dictionary_id") val dictionaryId: Int,
+    @SerializedName("original") val original: String,
+    @SerializedName("phonetic") val phonetic: String? = null,
+    @SerializedName("type") val type: String? = null,
+    @SerializedName("tags") val tags: List<Int>,
+)
+
 data class Word(
     @SerializedName("id") val id: Int,
     @SerializedName("dictionary_id") val dictionaryId: Int,

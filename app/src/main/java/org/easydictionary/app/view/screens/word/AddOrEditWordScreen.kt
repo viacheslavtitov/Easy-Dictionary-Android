@@ -132,7 +132,7 @@ fun AddOrEditWordScreen(
         launch {
             contract.effects.collect { eff ->
                 when (eff) {
-                    AddDictionaryWordEffect.WordCreated -> {
+                    AddDictionaryWordEffect.WordUpdated, AddDictionaryWordEffect.WordCreated -> {
                         navController.previousBackStackEntry
                             ?.savedStateHandle
                             ?.set(AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, true)
@@ -246,17 +246,19 @@ fun AddOrEditWordScreen(
                 ),
                 actions = {
                     IconButton(onClick = {
-                        if (!contract.isEditMode()) {
-                            try {
-                                keyboard?.hide()
+                        keyboard?.hide()
+                        try {
+                            if (!contract.isEditMode()) {
                                 contract.createWord()
-                            } catch (ex: AddDictionaryWordValidationException.OriginalFieldException) {
-                                Log.e(logTag, "Failed validation", ex)
-                                validationOriginalShakeFieldAnim.intValue += 1
-                            } catch (ex: AddDictionaryWordValidationException.TranslationEmptyException) {
-                                Log.e(logTag, "Failed validation", ex)
-                                showError = translationsEmptyErrorMessage
+                            } else {
+                                contract.updateWord()
                             }
+                        } catch (ex: AddDictionaryWordValidationException.OriginalFieldException) {
+                            Log.e(logTag, "Failed validation", ex)
+                            validationOriginalShakeFieldAnim.intValue += 1
+                        } catch (ex: AddDictionaryWordValidationException.TranslationEmptyException) {
+                            Log.e(logTag, "Failed validation", ex)
+                            showError = translationsEmptyErrorMessage
                         }
                     }) {
                         Icon(
@@ -355,7 +357,7 @@ fun AddOrEditWordScreen(
                     onItemSelected = {
                         contract.onTypeChanged(it)
                     })
-                if(ui.tags.any { it.selected }) {
+                if (ui.tags.any { it.selected }) {
                     TextFieldLabel(
                         label = stringResource(R.string.tags),
                         modifier = Modifier

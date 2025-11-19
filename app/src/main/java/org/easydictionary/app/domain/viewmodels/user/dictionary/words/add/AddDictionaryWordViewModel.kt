@@ -25,6 +25,8 @@ import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryParams
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
+import org.easydictionary.app.domain.usecases.word.UpdateWordUseCase
+import org.easydictionary.app.domain.usecases.word.UpdateWordUseCaseParams
 import org.easydictionary.app.domain.usecases.word.tags.CreateNewTagParams
 import org.easydictionary.app.domain.usecases.word.tags.CreateNewTagUseCase
 import org.easydictionary.app.domain.usecases.word.tags.GetTagsForDictionaryUseCase
@@ -37,6 +39,7 @@ import javax.inject.Inject
 
 sealed interface AddDictionaryWordEffect {
     data object WordCreated : AddDictionaryWordEffect
+    data object WordUpdated : AddDictionaryWordEffect
     data object WordDeleted : AddDictionaryWordEffect
     data object TagCreated : AddDictionaryWordEffect
     data class ShowError(val message: String) : AddDictionaryWordEffect
@@ -75,6 +78,7 @@ interface AddDictionaryWordContract {
 
     fun createNewTag()
     fun createWord()
+    fun updateWord()
     fun deleteWord()
     fun isEditMode(): Boolean
 }
@@ -96,6 +100,7 @@ class AddDictionaryWordViewModel @Inject constructor(
     private val createNewTagUseCase: CreateNewTagUseCase,
     private val getTagsForDictionaryUseCase: GetTagsForDictionaryUseCase,
     private val getTagsForWordUseCase: GetTagsForWordUseCase,
+    private val updateWordUseCase: UpdateWordUseCase,
 ) : ViewModel(), AddDictionaryWordContract {
 
     companion object {
@@ -422,19 +427,14 @@ class AddDictionaryWordViewModel @Inject constructor(
     }
 
     override fun createWord() {
-        val dictionary = state.value.dictionary ?: return
-        if (state.value.original?.trim().isNullOrEmpty()) {
-            throw AddDictionaryWordValidationException.OriginalFieldException
-        }
-        if (state.value.translations.isEmpty()) {
-            throw AddDictionaryWordValidationException.TranslationEmptyException
-        }
+        val (dictionaryId, _, isOk) = validateData()
+        if(!isOk) return
         val original = state.value.original?.trim() ?: ""
         _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             addWordToDictionaryUseCase(
                 AddWordToDictionaryParams(
-                    dictionary.id,
+                    dictionaryId,
                     original,
                     state.value.phonetic,
                     state.value.wordType,
@@ -467,6 +467,60 @@ class AddDictionaryWordViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun updateWord() {
+        val (dictionaryId, wordId, isOk) = validateData()
+        if(!isOk) return
+        val original = state.value.original?.trim() ?: ""
+        val type = state.value.wordType?.trim() ?: ""
+        val tagIds = state.value.tags.filter { it.selected }.map { it.id }
+        _state.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            updateWordUseCase(
+                UpdateWordUseCaseParams(
+                    wordId,
+                    dictionaryId,
+                    original,
+                    state.value.phonetic,
+                    type,
+                    tagIds
+                )
+            ).catch {
+                Log.d(TAG, "catch ${it.message}")
+                _effects.tryEmit(AddDictionaryWordEffect.ShowError(it.message ?: "Error"))
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _state.update { it.copy(isLoading = false) }
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        _effects.tryEmit(AddDictionaryWordEffect.WordUpdated)
+                    }
+
+                    is DomainResult.Error -> _effects.tryEmit(
+                        AddDictionaryWordEffect.ShowError(
+                            result.message
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun validateData(): Triple<Int, Int, Boolean> {
+        val dictionaryId = state.value.dictionary?.id ?: return Triple(-1, -1, false)
+        var wordId: Int = -1
+        if (isEditMode()) {
+            wordId = state.value.editWord?.id ?: return Triple(-1, -1, false)
+        }
+        if (state.value.original?.trim().isNullOrEmpty()) {
+            throw AddDictionaryWordValidationException.OriginalFieldException
+        }
+        if (state.value.translations.isEmpty()) {
+            throw AddDictionaryWordValidationException.TranslationEmptyException
+        }
+        return Triple(dictionaryId, wordId, true)
     }
 
     override fun deleteWord() {

@@ -1,6 +1,7 @@
 package org.easydictionary.app.data.remote.word
 
 import org.easydictionary.app.data.models.word.WordRequest
+import org.easydictionary.app.data.models.word.WordUpdateRequest
 import org.easydictionary.app.data.models.word.WordsResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -12,6 +13,9 @@ import retrofit2.http.Query
 interface WordApiService {
     @POST("word/create/translations")
     suspend fun create(@Body word: WordRequest): Unit
+
+    @POST("word/edit")
+    suspend fun update(@Body word: WordUpdateRequest): Unit
 
     @GET("word/all")
     suspend fun getAllForDictionary(
