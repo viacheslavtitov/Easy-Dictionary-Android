@@ -1,7 +1,9 @@
 package org.easydictionary.app.domain.models.dictionary
 
 import kotlinx.serialization.Serializable
+import org.easydictionary.app.domain.models.category.CategoryDictionary
 import org.easydictionary.app.domain.models.language.Language
+import org.easydictionary.app.domain.models.word.WordTag
 
 @Serializable
 data class Dictionary(
@@ -20,4 +22,15 @@ data class DictionaryDetailShort(
     val wordTagsCount: Int,
     val wordsCount: Int,
     val quizCount: Int,
+)
+
+@Serializable
+data class DictionaryDetail(
+    val id: Int,
+    val dialect: String? = null,
+    val langFrom: Language,
+    val langTo: Language,
+    val categories: List<CategoryDictionary> = emptyList(),
+    val tags: List<WordTag> = emptyList(),
+    val wordTypes: List<String> = emptyList()
 )

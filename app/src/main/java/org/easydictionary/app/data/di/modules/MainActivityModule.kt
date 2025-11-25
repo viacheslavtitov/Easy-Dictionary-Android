@@ -37,6 +37,7 @@ import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.GetAllDetailShortUseCase
 import org.easydictionary.app.domain.usecases.dictionary.GetAllDictionaryUseCase
+import org.easydictionary.app.domain.usecases.dictionary.GetDetailDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
 import org.easydictionary.app.domain.usecases.languages.GetLanguagesStaticUseCase
@@ -303,6 +304,15 @@ object MainActivityModule {
     ): UpdateWordUseCase {
         return UpdateWordUseCase(
             wordRepository
+        )
+    }
+
+    @Provides
+    fun provideGetDetailDictionaryUseCase(
+        dictionaryRepository: DictionaryRepository
+    ): GetDetailDictionaryUseCase {
+        return GetDetailDictionaryUseCase(
+            dictionaryRepository
         )
     }
 

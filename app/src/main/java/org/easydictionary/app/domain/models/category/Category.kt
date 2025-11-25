@@ -11,3 +11,10 @@ data class Category(
 ) {
     fun toJson(): String = Json.encodeToString(this)
 }
+@Serializable
+data class CategoryDictionary(
+    val id: Int,
+    val name: String
+) {
+    fun toJson(): String = Json.encodeToString(this)
+}

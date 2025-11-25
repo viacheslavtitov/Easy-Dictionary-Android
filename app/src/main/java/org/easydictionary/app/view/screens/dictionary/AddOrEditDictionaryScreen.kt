@@ -137,10 +137,10 @@ fun AddOrEditDictionaryScreen(
             .distinctUntilChanged()
             .filter { it && !ui.isLoading }
             .collect {
-                if (ui.query.isNullOrEmpty()) {
+                if (ui.filter.query.isNullOrEmpty()) {
                     contract.loadWords()
                 } else {
-                    contract.onQueryChanged(ui.query, true)
+                    contract.onQueryChanged(ui.filter.query, true)
                 }
             }
     }
@@ -250,7 +250,7 @@ fun AddOrEditDictionaryScreen(
                 SearchTopBar(
                     title = title,
                     placeHolderText = stringResource(R.string.words_search_hint),
-                    query = ui.query ?: "",
+                    query = ui.filter.query ?: "",
                     onQueryChange = { contract.onQueryChanged(it, false) },
                     isSearching = isSearching,
                     onSearchToggle = {

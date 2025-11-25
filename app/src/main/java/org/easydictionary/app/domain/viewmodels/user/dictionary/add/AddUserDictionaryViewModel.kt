@@ -26,6 +26,7 @@ import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryParams
 import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
+import org.easydictionary.app.domain.usecases.dictionary.GetDetailDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryParams
 import org.easydictionary.app.domain.usecases.dictionary.UpdateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageParams
@@ -41,21 +42,6 @@ sealed interface AddOrEditUserDictionaryEffect {
     data object DictionaryCreated : AddOrEditUserDictionaryEffect
     data class ShowError(val message: String) : AddOrEditUserDictionaryEffect
 }
-
-data class AddOrEditUserDictionaryUiState(
-    val words: List<WordDetail> = emptyList(),
-    val isLoading: Boolean = false,
-    val dialect: String? = null,
-    val query: String? = null,
-    val latestWordsPagId: Int = 0,
-    val latestSearchWordsPagId: Int = 0,
-    val editDictionary: DictionaryDetailShort? = null,
-    val hasMore: Boolean = true,
-    val latestFetchType: FetchWordsType = FetchWordsType.All,
-    val lockLoadWords: Semaphore = Semaphore(1, acquiredPermits = 0),
-    val selectedLanguageFrom: Language? = null,
-    val selectedLanguageTo: Language? = null
-)
 
 interface AddOrEditUserDictionaryContract {
     val state: StateFlow<AddOrEditUserDictionaryUiState>
@@ -80,7 +66,8 @@ class AddUserDictionaryViewModel @Inject constructor(
     private val deleteDictionaryUseCase: DeleteDictionaryUseCase,
     private val updateDictionaryUseCase: UpdateDictionaryUseCase,
     private val getAllWordsForDictionaryUseCase: GetAllWordsForDictionaryUseCase,
-    private val searchWordsForDictionaryUseCase: SearchWordsForDictionaryUseCase
+    private val searchWordsForDictionaryUseCase: SearchWordsForDictionaryUseCase,
+    private val getDetailDictionaryUseCase: GetDetailDictionaryUseCase,
 ) : ViewModel(), AddOrEditUserDictionaryContract {
 
     companion object {
@@ -115,14 +102,14 @@ class AddUserDictionaryViewModel @Inject constructor(
     override fun onQueryChanged(query: String?, fromScroll: Boolean) {
         Log.d(
             TAG,
-            "onQueryChanged = $query | fromScroll = $fromScroll | query in state = ${state.value.query}"
+            "onQueryChanged = $query | fromScroll = $fromScroll | query in state = ${state.value.filter.query}"
         )
-        if (state.value.query == query && !state.value.hasMore) {
+        if (state.value.filter.query == query && !state.value.hasMore) {
             Log.e(TAG, "All words are already loaded")
             return
         }
-        val loadMore = !query.isNullOrEmpty() && state.value.query == query && fromScroll
-        _state.update { it.copy(query = query) }
+        val loadMore = !query.isNullOrEmpty() && state.value.filter.query == query && fromScroll
+        _state.update { it.copy(filter = it.filter.copy(query = query)) }
         searchWords(query, loadMore)
     }
 
@@ -252,6 +239,9 @@ class AddUserDictionaryViewModel @Inject constructor(
                 selectedLanguageFrom = dictionaryDetailShort?.langTo,
                 dialect = dictionaryDetailShort?.dialect
             )
+        }
+        dictionaryDetailShort?.let {
+            loadDetailDictionary(it.id)
         }
     }
 
@@ -407,6 +397,36 @@ class AddUserDictionaryViewModel @Inject constructor(
             } finally {
                 state.value.lockLoadWords.release()
             }
+        }
+    }
+
+    private fun loadDetailDictionary(dictionaryId: Int) {
+        if (!isEditMode()) return
+        Log.d(TAG, "loadDetailDictionary($dictionaryId)")
+        _state.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            getDetailDictionaryUseCase.invoke(dictionaryId)
+                .catch {
+                    Log.d(TAG, "catch ${it.message}")
+                    _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
+                }
+                .onCompletion {
+                    Log.d(TAG, "onCompletion")
+                    _state.update { it.copy(isLoading = false) }
+                }
+                .collect { result ->
+                    when (result) {
+                        is DomainResult.Success -> {
+                            _state.update { it.copy(detailDictionary = result.data) }
+                        }
+
+                        is DomainResult.Error -> _effects.tryEmit(
+                            AddOrEditUserDictionaryEffect.ShowError(
+                                result.message
+                            )
+                        )
+                    }
+                }
         }
     }
 }

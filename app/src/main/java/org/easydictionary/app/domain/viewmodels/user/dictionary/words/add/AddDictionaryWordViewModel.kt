@@ -37,28 +37,6 @@ import org.easydictionary.app.domain.usecases.word.translations.DeleteTranslatio
 import org.easydictionary.app.domain.usecases.word.types.GetWordTypesUseCase
 import javax.inject.Inject
 
-sealed interface AddDictionaryWordEffect {
-    data object WordCreated : AddDictionaryWordEffect
-    data object WordUpdated : AddDictionaryWordEffect
-    data object WordDeleted : AddDictionaryWordEffect
-    data object TagCreated : AddDictionaryWordEffect
-    data class ShowError(val message: String) : AddDictionaryWordEffect
-}
-
-data class AddDictionaryWordUiState(
-    val translations: List<ComposedTranslation> = emptyList(),
-    val wordTypes: List<String> = emptyList(),
-    val phonetics: List<Phonetic> = emptyList(),
-    val tags: List<WordTag> = emptyList(),
-    val newTag: String? = null,
-    val isLoading: Boolean = false,
-    val dictionary: DictionaryDetailShort? = null,
-    val editWord: WordDetail? = null,
-    val original: String? = null,
-    val phonetic: String? = null,
-    val wordType: String? = null
-)
-
 interface AddDictionaryWordContract {
     val state: StateFlow<AddDictionaryWordUiState>
     val effects: Flow<AddDictionaryWordEffect>

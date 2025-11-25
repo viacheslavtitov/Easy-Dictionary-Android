@@ -1,5 +1,6 @@
 package org.easydictionary.app.data.remote.dictionary
 
+import org.easydictionary.app.data.models.dictionary.DictionaryDetailResponse
 import org.easydictionary.app.data.models.dictionary.DictionaryDetailShortResponse
 import org.easydictionary.app.data.models.dictionary.DictionaryEditRequest
 import org.easydictionary.app.data.models.dictionary.DictionaryRequest
@@ -15,6 +16,8 @@ interface DictionaryApiService {
     @GET("dictionary/all")
     suspend fun getAll(): Response<List<DictionaryResponse>>
 
+    @GET("dictionary/{id}")
+    suspend fun getDetailDictionary(@Path("id") id: Int): DictionaryDetailResponse
     @GET("dictionary/all/short")
     suspend fun getAllDetailShort(): Response<List<DictionaryDetailShortResponse>>
 

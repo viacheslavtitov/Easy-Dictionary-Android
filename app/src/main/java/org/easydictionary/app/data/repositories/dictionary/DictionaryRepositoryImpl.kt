@@ -11,6 +11,7 @@ import org.easydictionary.app.data.remote.dictionary.DictionaryApiService
 import org.easydictionary.app.data.repositories.handleApiErrors
 import org.easydictionary.app.domain.models.DomainResult
 import org.easydictionary.app.domain.models.dictionary.Dictionary
+import org.easydictionary.app.domain.models.dictionary.DictionaryDetail
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
 import org.easydictionary.app.domain.repository.dictionary.DictionaryRepository
 import javax.inject.Inject
@@ -19,6 +20,27 @@ class DictionaryRepositoryImpl @Inject constructor(
     private val resources: Resources,
     private val dictionaryApiService: DictionaryApiService
 ) : DictionaryRepository {
+
+    override suspend fun getDetailDictionary(id: Int): Flow<DomainResult<DictionaryDetail>> {
+        return flowOf(
+            when (val result = wrapApi {
+                dictionaryApiService.getDetailDictionary(id)
+            }) {
+                is ApiResult.Success -> {
+                    DomainResult.Success(result.data.toDomain())
+                }
+
+                is ApiResult.ApiError -> {
+                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
+                }
+
+                else -> {
+                    handleApiErrors(resources, result)
+                }
+            }
+        )
+    }
+
     override suspend fun getAllDictionaries(): Flow<DomainResult<List<Dictionary>>> {
         return flowOf(
             when (val result = wrapApi {
