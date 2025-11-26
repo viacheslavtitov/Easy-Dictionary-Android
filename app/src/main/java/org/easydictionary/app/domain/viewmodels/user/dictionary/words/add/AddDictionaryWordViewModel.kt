@@ -423,7 +423,7 @@ class AddDictionaryWordViewModel @Inject constructor(
                             description = it.description
                         )
                     },
-                    tags = state.value.tags
+                    tags = state.value.tags.filter { it.selected }
                 )
             ).catch {
                 Log.d(TAG, "catch ${it.message}")
