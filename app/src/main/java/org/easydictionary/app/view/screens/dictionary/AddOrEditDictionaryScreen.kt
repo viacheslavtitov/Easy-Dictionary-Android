@@ -145,6 +145,7 @@ fun AddOrEditDictionaryScreen(
             }
     }
     LaunchedEffect(Unit) {
+        contract.setEditMode(editDictionary)
         launch {
             contract.effects.collect { eff ->
                 when (eff) {
@@ -162,7 +163,6 @@ fun AddOrEditDictionaryScreen(
             }
         }
     }
-    contract.setEditMode(editDictionary)
     sharedMainContract.loading(ui.isLoading)
 
     LaunchedEffect(backStackEntry) {
