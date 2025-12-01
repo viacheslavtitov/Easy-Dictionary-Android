@@ -35,7 +35,7 @@ import org.easydictionary.app.domain.models.translation.ComposedTranslation
 import org.easydictionary.app.domain.models.word.WordDetail
 import org.easydictionary.app.domain.viewmodels.main.SharedMainContract
 import org.easydictionary.app.domain.viewmodels.main.SharedMainViewModel
-import org.easydictionary.app.view.screens.dictionary.AddOrEditDictionaryScreen
+import org.easydictionary.app.view.screens.dictionary.detail.AddOrEditDictionaryScreen
 import org.easydictionary.app.view.screens.dictionary.DictionariesScreen
 import org.easydictionary.app.view.ext.clearStack
 import org.easydictionary.app.view.screens.home.HomeScreen

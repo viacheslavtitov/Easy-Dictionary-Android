@@ -1,6 +1,7 @@
 package org.easydictionary.app.domain.models.dictionary
 
 import kotlinx.serialization.Serializable
+import org.easydictionary.app.domain.models.category.Category
 import org.easydictionary.app.domain.models.category.CategoryDictionary
 import org.easydictionary.app.domain.models.language.Language
 import org.easydictionary.app.domain.models.word.WordTag
@@ -25,6 +26,12 @@ data class DictionaryDetailShort(
 )
 
 @Serializable
+data class WordTypeSelectableItem(
+    val name: String,
+    val selected: Boolean = false
+)
+
+@Serializable
 data class DictionaryDetail(
     val id: Int,
     val dialect: String? = null,
@@ -32,5 +39,5 @@ data class DictionaryDetail(
     val langTo: Language,
     val categories: List<CategoryDictionary> = emptyList(),
     val tags: List<WordTag> = emptyList(),
-    val wordTypes: List<String> = emptyList()
+    val wordTypes: List<WordTypeSelectableItem> = emptyList()
 )

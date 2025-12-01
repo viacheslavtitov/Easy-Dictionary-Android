@@ -1,9 +1,12 @@
 package org.easydictionary.app.view.ext
 
 import java.nio.charset.Charset
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 fun String.decodeHex(charset: Charset): String {
-    require(length % 2 == 0) {"Bad hex string. Value is not divide 2"}
+    require(length % 2 == 0) { "Bad hex string. Value is not divide 2" }
     return chunked(2)
         .map { it.toInt(16).toByte() }
         .toByteArray()
@@ -21,7 +24,16 @@ fun String.hide(): String {
 fun String.hideWithoutSpace(): String {
     var result = ""
     this.forEach {
-        result += if(it.equals(' ', true)) it else "*"
+        result += if (it.equals(' ', true)) it else "*"
     }
     return result
+}
+
+fun String.toMillis(formatter: DateTimeFormatter): Long? {
+    if (this.isEmpty()) return null
+    val date = LocalDate.parse(this, formatter)
+    return date
+        .atStartOfDay(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
 }

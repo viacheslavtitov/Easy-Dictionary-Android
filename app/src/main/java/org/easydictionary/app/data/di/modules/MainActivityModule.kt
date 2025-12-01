@@ -46,7 +46,6 @@ import org.easydictionary.app.domain.usecases.languages.GetPhoneticsUseCase
 import org.easydictionary.app.domain.usecases.word.AddWordToDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.DeleteWordUseCase
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
-import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
 import org.easydictionary.app.domain.usecases.word.UpdateWordUseCase
 import org.easydictionary.app.domain.usecases.word.tags.CreateNewTagUseCase
 import org.easydictionary.app.domain.usecases.word.tags.GetTagsForDictionaryUseCase
@@ -145,13 +144,6 @@ object MainActivityModule {
         wordRepository: WordRepository
     ): GetAllWordsForDictionaryUseCase {
         return GetAllWordsForDictionaryUseCase(wordRepository)
-    }
-
-    @Provides
-    fun provideSearchWordsForDictionaryUseCase(
-        wordRepository: WordRepository
-    ): SearchWordsForDictionaryUseCase {
-        return SearchWordsForDictionaryUseCase(wordRepository)
     }
 
     @Provides

@@ -14,7 +14,8 @@ data class Category(
 @Serializable
 data class CategoryDictionary(
     val id: Int,
-    val name: String
+    val name: String,
+    val selected: Boolean = false
 ) {
     fun toJson(): String = Json.encodeToString(this)
 }

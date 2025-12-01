@@ -47,6 +47,9 @@
     <string name="menu">Menu</string>
     <string name="phonetic">Phonetic</string>
     <string name="close">close</string>
+    <string name="search">Search</string>
+    <string name="select_period">Select period</string>
+    <string name="select_dates">Select dates</string>
     <!-- Sign-in -->
     <string name="sign_in_error_description">%s\nDo you want to retry?</string>
     <!-- Menu -->

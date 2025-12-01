@@ -10,7 +10,13 @@ import javax.inject.Inject
 data class GetAllWordsForDictionaryParams(
     val lastPageId: Int,
     val pageSize: Int,
-    val dictionaryId: Int
+    val dictionaryId: Int,
+    val query: String,
+    val categoryIds: List<Int>,
+    val tagIds: List<Int>,
+    val wordTypes: List<String>,
+    val dateFrom: String,
+    val dateTo: String
 )
 
 class GetAllWordsForDictionaryUseCase @Inject constructor(
@@ -20,7 +26,13 @@ class GetAllWordsForDictionaryUseCase @Inject constructor(
         return wordRepository.getAllWordsForDictionary(
             params.dictionaryId,
             params.lastPageId,
-            params.pageSize
+            params.pageSize,
+            params.query,
+            params.categoryIds,
+            params.tagIds,
+            params.wordTypes,
+            params.dateFrom,
+            params.dateTo
         )
     }
 }

@@ -41,7 +41,7 @@ fun SecondaryTextFieldLabel(
         modifier = modifier,
         maxLines = maxLines,
         overflow = overflow,
-        fontSize = TextDimen.TextFieldText,
+        fontSize = TextDimen.Secondary,
         style = MaterialTheme.typography.titleMedium
     )
 }

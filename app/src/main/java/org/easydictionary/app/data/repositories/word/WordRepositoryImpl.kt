@@ -124,47 +124,26 @@ class WordRepositoryImpl @Inject constructor(
     override suspend fun getAllWordsForDictionary(
         dictionaryId: Int,
         latestPagId: Int,
-        pageSize: Int
+        pageSize: Int,
+        query: String,
+        categoryIds: List<Int>,
+        tagIds: List<Int>,
+        wordTypes: List<String>,
+        from: String,
+        to: String
     ): Flow<DomainResult<WordsResponse>> {
         return flowOf(
             when (val result = wrapApi {
                 wordApiService.getAllForDictionary(
-                    dictionaryId = dictionaryId, lastId = latestPagId, pageSize = pageSize
-                )
-            }) {
-                is ApiResult.Success -> {
-                    DomainResult.Success(
-                        WordsResponse(
-                            latestId = result.data.latestId,
-                            hasMore = result.data.hasMore,
-                            words = result.data.words?.map { it.toDomain() } ?: emptyList()
-                        ))
-                }
-
-                is ApiResult.ApiError -> {
-                    DomainResult.Error("${resources.getString(R.string.error)}: ${result.message}")
-                }
-
-                else -> {
-                    handleApiErrors(resources, result)
-                }
-            }
-        )
-    }
-
-    override suspend fun searchWordsForDictionary(
-        query: String,
-        dictionaryId: Int,
-        latestPagId: Int,
-        pageSize: Int
-    ): Flow<DomainResult<WordsResponse>> {
-        return flowOf(
-            when (val result = wrapApi {
-                wordApiService.searchWordsForDictionary(
                     dictionaryId = dictionaryId,
                     lastId = latestPagId,
                     pageSize = pageSize,
-                    query = query
+                    query = query,
+                    categoryIds = categoryIds,
+                    tagIds = tagIds,
+                    wordTypes = wordTypes,
+                    from = from,
+                    to = to
                 )
             }) {
                 is ApiResult.Success -> {

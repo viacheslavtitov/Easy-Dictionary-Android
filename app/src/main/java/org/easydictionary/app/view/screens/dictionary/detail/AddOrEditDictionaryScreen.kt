@@ -1,32 +1,27 @@
-package org.easydictionary.app.view.screens.dictionary
+package org.easydictionary.app.view.screens.dictionary.detail
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -39,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -70,11 +64,9 @@ import org.easydictionary.app.domain.viewmodels.user.dictionary.words.add.AddDic
 import org.easydictionary.app.view.buttons.ButtonFilledTonalSecondary
 import org.easydictionary.app.view.dialogs.ButtonsAlertDialog
 import org.easydictionary.app.view.dialogs.ErrorAlertDialog
-import org.easydictionary.app.view.dividers.Divider
 import org.easydictionary.app.view.inputs.TextFieldPrimary
-import org.easydictionary.app.view.texts.Secondary2TextFieldLabel
-import org.easydictionary.app.view.texts.TextFieldLabel
-import org.easydictionary.app.view.topbars.SearchTopBar
+import org.easydictionary.app.view.pickers.DateRangePickerDialog
+import org.easydictionary.app.view.topbars.FilterableSearchTopBar
 import org.easydictionary.app.view.topbars.TitleTopBar
 import org.easydictionary.app.view.widget.global.getCurrentColorScheme
 
@@ -91,14 +83,12 @@ fun AddOrEditDictionaryScreen(
     editDictionary: DictionaryDetailShort? = null
 ) {
     val ui by contract.state.collectAsStateWithLifecycle()
-    sharedMainContract.loading(ui.isLoading)
     var showError by rememberSaveable { mutableStateOf("") }
+    var showDateRangePicker by remember { mutableStateOf(false) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
-    var isSearching by rememberSaveable { mutableStateOf(false) }
+    val isSearchingState = rememberSaveable { mutableStateOf(false) }
+    val isSearching by isSearchingState
     val listState = rememberLazyListState()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    var showPhonetics by rememberSaveable { mutableStateOf(true) }
-
     if (showError.isNotEmpty()) {
         ErrorAlertDialog(
             onDismissRequest = {
@@ -124,6 +114,18 @@ fun AddOrEditDictionaryScreen(
             icon = Icons.Default.Info
         )
     }
+    if (showDateRangePicker) {
+        DateRangePickerDialog(
+            initialStart = contract.getFilterDateFromInMillis(),
+            initialEnd = contract.getFilterDateToInMillis(),
+            formatter = contract.getDateRangeFormatter(),
+            onDismiss = { showDateRangePicker = false },
+            onDateRangeSelected = { start, end ->
+                contract.onFilterDateRangeFromChanged(start)
+                contract.onFilterDateRangeToChanged(end)
+            }
+        )
+    }
     val shouldLoadMore by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
@@ -132,16 +134,17 @@ fun AddOrEditDictionaryScreen(
             lastVisible >= total - 1 - 5
         }
     }
+    val isDateRangeFilled by remember {
+        derivedStateOf {
+            ui.filter.dateFrom?.isNotEmpty() == true && ui.filter.dateTo?.isNotEmpty() == true
+        }
+    }
     LaunchedEffect(listState, ui.isLoading) {
         snapshotFlow { shouldLoadMore }
             .distinctUntilChanged()
             .filter { it && !ui.isLoading }
             .collect {
-                if (ui.filter.query.isNullOrEmpty()) {
-                    contract.loadWords()
-                } else {
-                    contract.onQueryChanged(ui.filter.query, true)
-                }
+                contract.loadWords(ui.filter.query)
             }
     }
     LaunchedEffect(Unit) {
@@ -163,7 +166,6 @@ fun AddOrEditDictionaryScreen(
             }
         }
     }
-    sharedMainContract.loading(ui.isLoading)
 
     LaunchedEffect(backStackEntry) {
         launch {
@@ -185,11 +187,12 @@ fun AddOrEditDictionaryScreen(
                 AddDictionaryWordViewModel.BUNDLE_NEED_UPDATE_WORDS, false
             ).filterNotNull().collect { shouldUpdate ->
                 if (shouldUpdate) {
-                    contract.loadWords()
+                    contract.loadWords(ui.filter.query)
                 }
             }
         }
     }
+    sharedMainContract.loading(ui.isLoading)
     val shakeLanguageFrom = remember { mutableIntStateOf(0) }
     val shakeLanguageTo = remember { mutableIntStateOf(0) }
     val dialect = rememberSaveable { mutableStateOf<String?>(null) }
@@ -225,42 +228,33 @@ fun AddOrEditDictionaryScreen(
     val onDeleteDictionary: () -> Unit = {
         showDeleteDialog = true
     }
-    val title =
-        if (!contract.isEditMode()) stringResource(R.string.add_dictionary) else stringResource(
-            R.string.edit_dictionary
-        )
+    val onSearchSubmit: (String) -> Unit = { query ->
+        contract.loadWords(query = query)
+    }
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
             if (contract.isEditMode()) {
-                ExtendedFloatingActionButton(
-                    text = { Text(stringResource(R.string.add_words)) },
-                    icon = { Icon(Icons.Filled.Add, contentDescription = "Add") },
-                    onClick = {
-                        editDictionary?.let { dictionary ->
-                            navController.navigate(
-                                AppNavigation.AddDictionaryWordScreen.createRoute(dictionary)
-                            )
+                AnimatedVisibility(visible = !isSearching) {
+                    ExtendedFloatingActionButton(
+                        text = { Text(stringResource(R.string.add_words)) },
+                        icon = { Icon(Icons.Filled.Add, contentDescription = "Add") },
+                        onClick = {
+                            contract.getDictionary()?.let { dictionary ->
+                                navController.navigate(
+                                    AppNavigation.AddDictionaryWordScreen.createRoute(dictionary)
+                                )
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         },
         topBar = {
             if (contract.isEditMode()) {
-                SearchTopBar(
-                    title = title,
-                    placeHolderText = stringResource(R.string.words_search_hint),
-                    query = ui.filter.query ?: "",
-                    onQueryChange = { contract.onQueryChanged(it, false) },
-                    isSearching = isSearching,
-                    onSearchToggle = {
-                        isSearching = true
-
-                    },
-                    onClearQuery = {
-                        contract.onQueryChanged(null, false)
-                        isSearching = false
-                    },
+                FilterableSearchTopBar(
+                    isSearchingEnabled = isSearchingState,
+                    onSearchSubmit = onSearchSubmit,
                     actions = {
                         ToolBarActions(
                             contract.isEditMode(),
@@ -269,11 +263,33 @@ fun AddOrEditDictionaryScreen(
                             onDeleteDictionary
                         )
                     },
-                    scrollBehavior = scrollBehavior
+                    onClearClicked = {
+                        contract.onFilterClearClicked()
+                    },
+                    onDateRangeClicked = {
+                        showDateRangePicker = true
+                    },
+                    isDateRangeFilled = isDateRangeFilled,
+                    expandedContent = {
+                        FilterContent(
+                            tags = ui.filter.tags,
+                            categories = ui.filter.categories,
+                            types = ui.filter.wordTypes,
+                            onTagClicked = {
+                                contract.onFilterTagClicked(it)
+                            },
+                            onTypeClicked = {
+                                contract.onFilterWordTypeClicked(it)
+                            },
+                            onCategoryClicked = {
+                                contract.onFilterCategoryClicked(it)
+                            }
+                        )
+                    }
                 )
             } else {
                 TitleTopBar(
-                    title = title,
+                    title = stringResource(R.string.add_dictionary),
                     actions = {
                         ToolBarActions(
                             contract.isEditMode(),
@@ -291,7 +307,6 @@ fun AddOrEditDictionaryScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .padding(
                     bottom = innerPadding.calculateBottomPadding(),
                     top = innerPadding.calculateTopPadding()
@@ -341,95 +356,15 @@ fun AddOrEditDictionaryScreen(
                         supportingText = stringResource(R.string.optional)
                     )
                 }
-                if (contract.isEditMode()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .clickable {
-                                showPhonetics = !showPhonetics
-                            }, verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextFieldLabel(
-                            stringResource(R.string.show_phonetics),
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(1.0.toFloat())
-                        )
-                        Checkbox(
-                            checked = showPhonetics,
-                            onCheckedChange = { showPhonetics = it }
-                        )
-                    }
-                }
             }
             items(
                 items = ui.words,
                 key = { it.original + it.id }
             ) { item ->
-                WordListItem(item, showPhonetics, onSelectWord)
+                WordListItem(item, onSelectWord)
             }
         }
     }
-}
-
-@Composable
-private fun WordListItem(
-    word: WordDetail,
-    showPhonetics: Boolean,
-    onSelect: (WordDetail) -> Unit
-) {
-    val backgroundColor = getCurrentColorScheme().secondaryContainer
-    var translations = ""
-    word.translations.forEachIndexed { index, item ->
-        translations += if (index == word.translations.size - 1) {
-            " ${item.translate}"
-        } else {
-            " ${item.translate},"
-        }
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(backgroundColor)
-            .clickable {
-                onSelect(word)
-            },
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-//            if (BuildConfig.DEBUG) {
-//                TextFieldLabel("${word.id} ${word.original}", Modifier.wrapContentSize())
-//            } else {
-            TextFieldLabel(word.original, Modifier.wrapContentSize())
-//            }
-            if (word.phonetic?.isNotEmpty() == true && showPhonetics) {
-                Secondary2TextFieldLabel(
-                    label = " - [${word.phonetic}]",
-                    modifier = Modifier.wrapContentWidth()
-                )
-                Secondary2TextFieldLabel(
-                    label = " $translations",
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            } else {
-                Secondary2TextFieldLabel(
-                    label = " - $translations",
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            }
-        }
-    }
-    Divider()
 }
 
 @Composable
@@ -442,36 +377,5 @@ private fun getLanguageButtonTitle(
             ?: stringResource(R.string.select_language_from)
 
         LangType.TO -> selectedLanguage?.name ?: stringResource(R.string.select_language_to)
-    }
-}
-
-@Composable
-private fun ToolBarActions(
-    isEditMode: Boolean,
-    onCreateDictionaryClick: () -> Unit,
-    onUpdateDictionaryClick: () -> Unit,
-    onDeleteDictionaryClick: () -> Unit,
-) {
-    IconButton(onClick = {
-        if (!isEditMode) {
-            onCreateDictionaryClick()
-        } else {
-            onUpdateDictionaryClick()
-        }
-    }) {
-        Icon(
-            imageVector = Icons.Filled.Save,
-            contentDescription = "Save"
-        )
-    }
-    if (isEditMode) {
-        IconButton(onClick = {
-            onDeleteDictionaryClick()
-        }) {
-            Icon(
-                imageVector = Icons.Filled.Delete,
-                contentDescription = "Delete"
-            )
-        }
     }
 }

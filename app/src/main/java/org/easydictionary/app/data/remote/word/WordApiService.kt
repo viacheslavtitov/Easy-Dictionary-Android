@@ -19,23 +19,15 @@ interface WordApiService {
 
     @GET("word/all")
     suspend fun getAllForDictionary(
-        @Query(
-            value = "dictionaryId",
-            encoded = false
-        ) dictionaryId: Int,
-        @Query(value = "lastId", encoded = false) lastId: Int,
-        @Query(value = "pageSize", encoded = false) pageSize: Int
-    ): WordsResponse
-
-    @GET("word/search")
-    suspend fun searchWordsForDictionary(
-        @Query(
-            value = "dictionaryId",
-            encoded = false
-        ) dictionaryId: Int,
+        @Query(value = "dictionaryId", encoded = false) dictionaryId: Int,
         @Query(value = "lastId", encoded = false) lastId: Int,
         @Query(value = "pageSize", encoded = false) pageSize: Int,
-        @Query(value = "query", encoded = true) query: String
+        @Query(value = "query", encoded = true) query: String,
+        @Query(value = "categoryIds", encoded = false) categoryIds: List<Int>,
+        @Query(value = "tagIds", encoded = false) tagIds: List<Int>,
+        @Query(value = "wordTypes", encoded = true) wordTypes: List<String>,
+        @Query(value = "from", encoded = true) from: String,
+        @Query(value = "to", encoded = true) to: String
     ): WordsResponse
 
     @DELETE("word/{id}")

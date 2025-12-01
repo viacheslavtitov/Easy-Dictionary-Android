@@ -29,14 +29,13 @@ interface WordRepository : BaseRepository {
     suspend fun getAllWordsForDictionary(
         dictionaryId: Int,
         latestPagId: Int,
-        pageSize: Int
-    ): Flow<DomainResult<WordsResponse>>
-
-    suspend fun searchWordsForDictionary(
+        pageSize: Int,
         query: String,
-        dictionaryId: Int,
-        latestPagId: Int,
-        pageSize: Int
+        categoryIds: List<Int> ,
+        tagIds: List<Int>,
+        wordTypes: List<String>,
+        from: String,
+        to: String
     ): Flow<DomainResult<WordsResponse>>
 
     suspend fun deleteWord(wordId: Int): Flow<DomainResult<Unit>>

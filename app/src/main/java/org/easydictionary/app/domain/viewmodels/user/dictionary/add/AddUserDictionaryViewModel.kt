@@ -13,16 +13,16 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
 import kotlinx.serialization.json.Json
 import org.easydictionary.app.domain.models.DomainResult
+import org.easydictionary.app.domain.models.category.CategoryDictionary
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
+import org.easydictionary.app.domain.models.dictionary.WordTypeSelectableItem
 import org.easydictionary.app.domain.models.language.LangType
 import org.easydictionary.app.domain.models.language.Language
-import org.easydictionary.app.domain.models.word.WordDetail
+import org.easydictionary.app.domain.models.word.WordTag
 import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryParams
 import org.easydictionary.app.domain.usecases.dictionary.CreateDictionaryUseCase
 import org.easydictionary.app.domain.usecases.dictionary.DeleteDictionaryUseCase
@@ -33,9 +33,9 @@ import org.easydictionary.app.domain.usecases.languages.AddUserLanguageParams
 import org.easydictionary.app.domain.usecases.languages.AddUserLanguageUseCase
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryParams
 import org.easydictionary.app.domain.usecases.word.GetAllWordsForDictionaryUseCase
-import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryParams
-import org.easydictionary.app.domain.usecases.word.SearchWordsForDictionaryUseCase
-import java.util.Collections
+import org.easydictionary.app.domain.utils.DateRangeFormatter
+import org.easydictionary.app.view.ext.toMillis
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 sealed interface AddOrEditUserDictionaryEffect {
@@ -47,16 +47,25 @@ interface AddOrEditUserDictionaryContract {
     val state: StateFlow<AddOrEditUserDictionaryUiState>
     val effects: Flow<AddOrEditUserDictionaryEffect>
 
-    fun loadWords()
+    fun loadWords(query: String?)
 
     fun onDialectChanged(dialect: String?)
-    fun onQueryChanged(query: String?, fromScroll: Boolean)
     fun createDictionary()
     fun updateDictionary()
     fun deleteDictionary()
     fun isEditMode(): Boolean
+    fun getDictionary(): DictionaryDetailShort?
     fun setLanguage(langType: LangType, json: String)
     fun setEditMode(dictionaryDetailShort: DictionaryDetailShort?)
+    fun onFilterTagClicked(tag: WordTag)
+    fun onFilterCategoryClicked(category: CategoryDictionary)
+    fun onFilterWordTypeClicked(type: WordTypeSelectableItem)
+    fun onFilterDateRangeFromChanged(date: String?)
+    fun onFilterDateRangeToChanged(date: String?)
+    fun onFilterClearClicked()
+    fun getDateRangeFormatter(): DateTimeFormatter
+    fun getFilterDateFromInMillis(): Long?
+    fun getFilterDateToInMillis(): Long?
 }
 
 @HiltViewModel
@@ -66,7 +75,7 @@ class AddUserDictionaryViewModel @Inject constructor(
     private val deleteDictionaryUseCase: DeleteDictionaryUseCase,
     private val updateDictionaryUseCase: UpdateDictionaryUseCase,
     private val getAllWordsForDictionaryUseCase: GetAllWordsForDictionaryUseCase,
-    private val searchWordsForDictionaryUseCase: SearchWordsForDictionaryUseCase,
+    private val dateRangeFormatter: DateRangeFormatter,
     private val getDetailDictionaryUseCase: GetDetailDictionaryUseCase,
 ) : ViewModel(), AddOrEditUserDictionaryContract {
 
@@ -97,20 +106,6 @@ class AddUserDictionaryViewModel @Inject constructor(
 
     override fun onDialectChanged(dialect: String?) {
         _state.update { it.copy(dialect = dialect) }
-    }
-
-    override fun onQueryChanged(query: String?, fromScroll: Boolean) {
-        Log.d(
-            TAG,
-            "onQueryChanged = $query | fromScroll = $fromScroll | query in state = ${state.value.filter.query}"
-        )
-        if (state.value.filter.query == query && !state.value.hasMore) {
-            Log.e(TAG, "All words are already loaded")
-            return
-        }
-        val loadMore = !query.isNullOrEmpty() && state.value.filter.query == query && fromScroll
-        _state.update { it.copy(filter = it.filter.copy(query = query)) }
-        searchWords(query, loadMore)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -230,6 +225,7 @@ class AddUserDictionaryViewModel @Inject constructor(
     }
 
     override fun isEditMode() = state.value.editDictionary != null
+    override fun getDictionary(): DictionaryDetailShort? = state.value.editDictionary
 
     override fun setEditMode(dictionaryDetailShort: DictionaryDetailShort?) {
         _state.update {
@@ -245,157 +241,164 @@ class AddUserDictionaryViewModel @Inject constructor(
         }
     }
 
-    override fun loadWords() {
-        Log.d(
-            TAG,
-            "loadWords: hasMore = ${state.value.hasMore} | latestFetchType = ${state.value.latestFetchType.name}"
-        )
-        if (!state.value.hasMore && state.value.latestFetchType == FetchWordsType.All) {
-            Log.e(TAG, "loadWords blocked because hasMore is false or latestFetchType is ALL")
-            return
-        }
-        val dictionaryId = state.value.editDictionary?.id
-        if (dictionaryId == null) {
-            Log.e(TAG, "dictionaryId is null")
-            return
-        }
-        if (!state.value.lockLoadWords.tryAcquire()) {
-            Log.e(TAG, "loadWords blocked because it's already running")
-            return
-        }
-        _state.update { it.copy(latestFetchType = FetchWordsType.All) }
-        Log.d(TAG, "loadWords(${state.value.latestWordsPagId})")
-        _state.update { it.copy(latestSearchWordsPagId = 0, isLoading = true) }
-        viewModelScope.launch {
-            try {
-                getAllWordsForDictionaryUseCase(
-                    GetAllWordsForDictionaryParams(
-                        lastPageId = state.value.latestWordsPagId,
-                        pageSize = WORDS_PAGE_SIZE,
-                        dictionaryId = dictionaryId
-                    )
-                ).catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
-                }.onCompletion {
-                    Log.d(TAG, "onCompletion")
-                    _state.update { it.copy(isLoading = false) }
-                }.collect { result ->
-                    when (result) {
-                        is DomainResult.Success -> {
-                            Log.d(TAG, "Words downloaded ${result.data.words.size}")
-                            _state.update {
-                                it.copy(
-                                    hasMore = result.data.hasMore,
-                                    latestWordsPagId = result.data.latestId,
-                                    words = it.words + result.data.words
-                                )
-                            }
-                        }
-
-                        is DomainResult.Error -> {
-                            _state.update {
-                                it.copy(
-                                    hasMore = false,
-                                    latestWordsPagId = 0
-                                )
-                            }
-                            _effects.tryEmit(
-                                AddOrEditUserDictionaryEffect.ShowError(
-                                    result.message
-                                )
-                            )
-                        }
-                    }
-                }
-            } finally {
-                state.value.lockLoadWords.release()
-            }
+    override fun onFilterTagClicked(tag: WordTag) {
+        _state.update {
+            it.copy(
+                filter = it.filter.copy(tags = it.filter.tags.map { t ->
+                    if (t.id == tag.id) t.copy(
+                        selected = !tag.selected
+                    ) else t
+                })
+            )
         }
     }
 
-    private fun searchWords(query: String?, loadMore: Boolean = false) {
+    override fun onFilterCategoryClicked(category: CategoryDictionary) {
+        _state.update {
+            it.copy(
+                filter = it.filter.copy(categories = it.filter.categories.map { c ->
+                    if (c.id == category.id) c.copy(
+                        selected = !category.selected
+                    ) else c
+                })
+            )
+        }
+    }
+
+    override fun onFilterWordTypeClicked(type: WordTypeSelectableItem) {
+        _state.update {
+            it.copy(
+                filter = it.filter.copy(wordTypes = it.filter.wordTypes.map { t ->
+                    if (t.name == type.name) t.copy(
+                        selected = !type.selected
+                    ) else t
+                })
+            )
+        }
+    }
+
+    override fun onFilterDateRangeFromChanged(date: String?) {
+        _state.update {
+            it.copy(
+                filter = it.filter.copy(dateFrom = date)
+            )
+        }
+    }
+
+    override fun onFilterDateRangeToChanged(date: String?) {
+        _state.update {
+            it.copy(
+                filter = it.filter.copy(dateTo = date)
+            )
+        }
+    }
+
+    override fun onFilterClearClicked() {
+        _state.update {
+            it.copy(
+                filter = it.filter.copy(
+                    wordTypes = it.filter.wordTypes.map { t ->
+                        t.copy(selected = false)
+                    },
+                    tags = it.filter.tags.map { t ->
+                        t.copy(selected = false)
+                    },
+                    categories = it.filter.categories.map { t ->
+                        t.copy(selected = false)
+                    },
+                )
+            )
+        }
+    }
+
+    override fun getDateRangeFormatter(): DateTimeFormatter {
+        return dateRangeFormatter.format()
+    }
+
+    override fun getFilterDateFromInMillis(): Long? {
+        return state.value.filter.dateFrom?.toMillis(dateRangeFormatter.format())
+    }
+
+    override fun getFilterDateToInMillis(): Long? {
+        return state.value.filter.dateTo?.toMillis(dateRangeFormatter.format())
+    }
+
+    override fun loadWords(query: String?) {
         Log.d(
             TAG,
-            "searchWords($query): loadMore = $loadMore | latestFetchType = ${state.value.latestFetchType.name}"
+            "loadWords: hasMore = ${state.value.hasMore}"
         )
+        var isNewLoad = false
         val dictionaryId = state.value.editDictionary?.id
         if (dictionaryId == null) {
             Log.e(TAG, "dictionaryId is null")
             return
         }
-        if (query.isNullOrEmpty()) {
-            Log.e(TAG, "Query is empty")
-            loadWords()
+        if (state.value.isLoading) {
+            Log.e(TAG, "words loading is in progress")
             return
         }
-        if (!state.value.lockLoadWords.tryAcquire()) {
-            Log.e(TAG, "searchWords blocked because it's already running")
-            return
-        }
-        val latestSearchWordsPagId = if (loadMore) state.value.latestSearchWordsPagId else 0
-        if (latestSearchWordsPagId == 0) {
+        _state.update { it.copy(filter = it.filter.copy(query = query)) }
+        if (state.value.latestAppliedFilter != state.value.filter) {
+            Log.d(
+                TAG,
+                "Latest filter is not equal with new. HasMore and pagination id will be zeroed"
+            )
             _state.update {
                 it.copy(
-                    words = emptyList()
+                    hasMore = true,
+                    latestWordsPagId = 0,
                 )
             }
+            isNewLoad = true
         }
-        _state.update {
-            it.copy(
-                latestFetchType = FetchWordsType.Search,
-                latestWordsPagId = 0,
-                isLoading = true,
-                latestSearchWordsPagId = latestSearchWordsPagId
-            )
+        if (!state.value.hasMore) {
+            Log.e(TAG, "loadWords blocked because hasMore is false")
+            return
         }
-
-        Log.d(TAG, "searchWords($query - $latestSearchWordsPagId)")
+        Log.d(TAG, "loadWords(${state.value.latestWordsPagId})")
+        _state.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            try {
-                searchWordsForDictionaryUseCase(
-                    SearchWordsForDictionaryParams(
-                        query = query,
-                        lastPageId = latestSearchWordsPagId,
-                        pageSize = WORDS_PAGE_SIZE,
-                        dictionaryId = dictionaryId
-                    )
-                ).catch {
-                    Log.d(TAG, "catch ${it.message}")
-                    _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
-                }.onCompletion {
-                    Log.d(TAG, "onCompletion")
-                    _state.update { it.copy(isLoading = false) }
-                }.collect { result ->
-                    when (result) {
-                        is DomainResult.Success -> {
-                            Log.d(TAG, "Words downloaded ${result.data.words.size}")
-                            _state.update {
-                                it.copy(
-                                    hasMore = result.data.hasMore,
-                                    latestSearchWordsPagId = result.data.latestId,
-                                    words = it.words + result.data.words
-                                )
-                            }
-                        }
-
-                        is DomainResult.Error -> {
-                            _state.update {
-                                it.copy(
-                                    hasMore = false,
-                                    latestSearchWordsPagId = 0
-                                )
-                            }
-                            _effects.tryEmit(
-                                AddOrEditUserDictionaryEffect.ShowError(
-                                    result.message
-                                )
+            getAllWordsForDictionaryUseCase(
+                GetAllWordsForDictionaryParams(
+                    lastPageId = state.value.latestWordsPagId,
+                    pageSize = WORDS_PAGE_SIZE,
+                    dictionaryId = dictionaryId,
+                    query = state.value.filter.query ?: "",
+                    categoryIds = state.value.filter.toCategoryIds(),
+                    wordTypes = state.value.filter.toWordTypes(),
+                    tagIds = state.value.filter.toTagIds(),
+                    dateFrom = state.value.filter.dateFrom ?: "",
+                    dateTo = state.value.filter.dateTo ?: ""
+                )
+            ).catch {
+                Log.d(TAG, "catch ${it.message}")
+                _effects.tryEmit(AddOrEditUserDictionaryEffect.ShowError(it.message ?: "Error"))
+            }.onCompletion {
+                Log.d(TAG, "onCompletion")
+                _state.update { it.copy(isLoading = false) }
+            }.collect { result ->
+                when (result) {
+                    is DomainResult.Success -> {
+                        Log.d(TAG, "Words downloaded ${result.data.words.size}")
+                        _state.update {
+                            it.copy(
+                                hasMore = result.data.hasMore,
+                                latestWordsPagId = result.data.latestId,
+                                words = if (isNewLoad) result.data.words else it.words + result.data.words,
+                                latestAppliedFilter = it.filter.copy()
                             )
                         }
                     }
+
+                    is DomainResult.Error -> {
+                        _effects.tryEmit(
+                            AddOrEditUserDictionaryEffect.ShowError(
+                                result.message
+                            )
+                        )
+                    }
                 }
-            } finally {
-                state.value.lockLoadWords.release()
             }
         }
     }
@@ -417,7 +420,15 @@ class AddUserDictionaryViewModel @Inject constructor(
                 .collect { result ->
                     when (result) {
                         is DomainResult.Success -> {
-                            _state.update { it.copy(detailDictionary = result.data) }
+                            _state.update {
+                                it.copy(
+                                    detailDictionary = result.data, filter = WordsFilterUIState(
+                                        tags = result.data.tags,
+                                        categories = result.data.categories,
+                                        wordTypes = result.data.wordTypes
+                                    )
+                                )
+                            }
                         }
 
                         is DomainResult.Error -> _effects.tryEmit(

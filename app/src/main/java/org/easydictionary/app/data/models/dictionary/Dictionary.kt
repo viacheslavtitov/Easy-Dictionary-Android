@@ -7,6 +7,7 @@ import org.easydictionary.app.data.models.word.tags.WordTagEntity
 import org.easydictionary.app.domain.models.dictionary.Dictionary
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetail
 import org.easydictionary.app.domain.models.dictionary.DictionaryDetailShort
+import org.easydictionary.app.domain.models.dictionary.WordTypeSelectableItem
 
 data class DictionaryResponse(
     @SerializedName("dialect") val dialect: String? = null,
@@ -23,11 +24,13 @@ data class DictionaryResponse(
         )
     }
 }
+
 data class DictionaryRequest(
     @SerializedName("dialect") val dialect: String? = null,
     @SerializedName("lang_from_id") val langFromId: Int,
     @SerializedName("lang_to_id") val langToId: Int
 )
+
 data class DictionaryEditRequest(
     @SerializedName("id") val id: Int,
     @SerializedName("dialect") val dialect: String? = null
@@ -72,7 +75,7 @@ data class DictionaryDetailResponse(
             langTo = langTo.toDomain(),
             categories = categories.map { it.toDomain() },
             tags = tags.map { it.toDomain() },
-            wordTypes = wordTypes
+            wordTypes = wordTypes.map { WordTypeSelectableItem(it) }
         )
     }
 }
